@@ -36,8 +36,8 @@ Completed results on 2026-08-12:
 - Vitest: 2/2 pass
 - static migration/RLS assertions: pass
 - Next production build: pass; `/`, `/countriesusa`, and `/cms` prerender
-- Playwright: desktop/mobile shell, sidebar/drawer, notifications, complex USA tabs, CMS boundary, and four visual comparisons pass
-- visual first-fold changed pixels: homepage desktop 0.00%, homepage mobile 0.23%, USA desktop 0.07%, USA mobile 0.05% (threshold 6%; deterministic animation/transition CSS disabled)
+- Playwright: 14/14 pass across desktop/mobile shell, sidebar/drawer, notifications, premium overlays, complex USA tabs, CMS boundary, and four visual comparisons
+- latest visual first-fold changed pixels: homepage desktop 0.00%, homepage mobile 0.22%, USA desktop 0.00%, USA mobile 0.05% (threshold 6%; deterministic animation/transition CSS disabled)
 
 ## Remaining differences and blockers
 
