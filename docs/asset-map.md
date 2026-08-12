@@ -40,7 +40,7 @@ Legacy dynamic/private files appear under public paths such as `assets/documents
 
 The completed Hostinger snapshot reconciliation found 16 missing literal references. Their active/stale status and alternate-path decisions are recorded in [`asset-gap-resolution.md`](asset-gap-resolution.md). Most importantly, `/assets/demos/marketing/marketing.css` is referenced by active public templates but is absent from the ZIP/repository and returns HTTP 404 in the deployed product. It therefore contributes no rules to the rendered legacy baseline and is intentionally not approximated in V3.
 
-The proof slice pins 94 actually required files (63,450,313 bytes) in `legacy-assets.json`. Each file was extracted from `public_html.zip`, verified as real bytes, and checked by SHA-256. The source ZIP itself remains excluded.
+The Batch 1 usage-traced set pins 217 required files (152,129,388 bytes) in `legacy-assets.json`. Each file was extracted from `public_html.zip`, verified as real bytes, and checked by SHA-256. Same-origin absolute `purpleguide.study` references are normalized and included; student documents remain excluded. The source ZIP itself remains excluded.
 
 ## Migration sequence
 

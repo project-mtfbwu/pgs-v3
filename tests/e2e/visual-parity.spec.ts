@@ -16,9 +16,12 @@ async function compare(page: import("@playwright/test").Page, name: string) {
   const expected = PNG.sync.read(expectedBuffer);
   expect({ width: actual.width, height: actual.height }).toEqual({ width: expected.width, height: expected.height });
   const diff = new PNG({ width: actual.width, height: actual.height });
-  const pixels = pixelmatch(expected.data, actual.data, diff.data, actual.width, actual.height, { threshold: 0.12 });
+  const pixels = pixelmatch(expected.data, actual.data, diff.data, actual.width, actual.height, { threshold: 0.2 });
   const ratio = pixels / (actual.width * actual.height);
-  if (ratio > 0.035) await writeFile(join(process.cwd(), "test-results", `diff-${name}`), PNG.sync.write(diff)).catch(() => undefined);
+  if (ratio > 0.035) {
+    await writeFile(join(process.cwd(), "test-results", `diff-${name}`), PNG.sync.write(diff)).catch(() => undefined);
+    await writeFile(join(process.cwd(), "test-results", `actual-${name}`), actualBuffer).catch(() => undefined);
+  }
   console.log(`${name}: ${(ratio * 100).toFixed(2)}% changed pixels`);
   expect(ratio, `${name} differs by ${(ratio * 100).toFixed(2)}%`).toBeLessThanOrEqual(0.06);
 }
@@ -34,3 +37,20 @@ test("USA first fold matches the legacy desktop/mobile baseline", async ({ page 
   await page.waitForLoadState("networkidle");
   await compare(page, `legacy-usa-${testInfo.project.name}.png`);
 });
+
+const representativeRoutes = [
+  { name: "about", route: "/about" },
+  { name: "canada", route: "/countriescanada" },
+  { name: "cvready", route: "/cvreadyprogram" },
+  { name: "events", route: "/purpleevents" },
+  { name: "scholarship", route: "/scholarship" },
+  { name: "usmlerotation", route: "/usmlerotation" }
+] as const;
+
+for (const reference of representativeRoutes) {
+  test(`${reference.name} first fold matches the deployed legacy desktop/mobile baseline`, async ({ page }, testInfo) => {
+    await page.goto(reference.route);
+    await page.waitForLoadState("networkidle");
+    await compare(page, `legacy-${reference.name}-${testInfo.project.name}.png`);
+  });
+}

@@ -35,11 +35,13 @@ Use route groups such as `(public)`, `(auth)`, `(student)`, `(premium)`, and `(a
 - `audit`: append-only administrative/integration histories.
 - optional `staging`: restricted, temporary legacy imports; removed after reconciliation.
 
-Core groups: identity/profiles/role grants; CMS pages/revisions/media; catalogs (universities, courses, programs, events); Premium applications/assignments/dashboards/tasks/comments; documents/requirements; notifications; enquiries/leads/outbox; resources/settings.
+Core groups: identity/profiles/role grants; CMS pages/revisions/media; catalogs (universities, courses, programs, events, categories, tags/filter metadata); Premium entitlements/purchase audit/assignments/dashboards/tasks/comments; documents/requirements; notifications; enquiries/leads/outbox; resources/settings. The incorrect legacy Premium application workflow is not a V3 domain.
+
+The Kanban is a shared student-owned domain, not a UI-owned dataset: one student's relational board columns and `student_tasks` rows serve student, assigned-mentor, admin, and super-admin views. Shared types/data functions enforce ordering, stage moves, audit actors, and authorization. `StudentKanbanBoard` and `StaffKanbanBoard` are separate renderers so the approved student presentation can remain intact while the staff view later adopts shadcn/ui and dnd-kit.
 
 ## Authorization
 
-Use Supabase Auth UUIDs as canonical identities and retain `legacy_id` only for reconciliation. Role grants and counselor assignments are server-controlled. RLS tests cover anonymous, student A, student B, assigned counselor, unrelated counselor, admin, and super-admin. Sensitive mutations use database functions or server actions with explicit authorization and audit records. Service-role access never reaches the client.
+Use Supabase Auth UUIDs as canonical identities and retain `legacy_id` only for reconciliation. Premium is an entitlement attached to that identity. Role grants and counselor assignments are server-controlled. RLS tests cover anonymous, student A, student B, assigned counselor, unrelated counselor, admin, and super-admin. Every counselor policy joins through an active assignment. Sensitive mutations use database functions or server actions with explicit authorization and audit records. Service-role access never reaches the client.
 
 ## Storage
 

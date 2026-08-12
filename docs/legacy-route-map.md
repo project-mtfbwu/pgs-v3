@@ -96,4 +96,4 @@ CodeIgniter defines only a default controller (`Home` publicly, `Users` in admin
 
 ## Route dispositions
 
-No route is silently removed. During implementation each row must gain a V3 route, role, data source, test, and disposition (`PORTED`, `REPLACED SECURELY`, `MERGED`, or owner-approved deprecation). Helper-like public methods in `Purpleevents` should become internal utilities rather than public endpoints, but their formatting behavior remains in scope.
+No route is silently removed. The complete 84-endpoint Batch 1 reconciliation, including protected-batch dependencies and missing-view blockers, is recorded in [`public-route-status.md`](public-route-status.md). Helper-like public methods in `Purpleevents` are merged into internal utilities rather than exposed as callable endpoints.

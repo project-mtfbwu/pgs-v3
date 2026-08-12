@@ -26,7 +26,7 @@ Implement Supabase Auth, activation/reset, Google provider, profile, student das
 
 ## Phase 5 — Purple Premium
 
-Port landing/apply/pending/approved/rejected states, counselor assignments, dashboard metrics, university selections, tasks/Kanban, comments, review queue, notes, alerts, documents, video/meetup and notifications. Preserve locked/unlocked layouts.
+Apply the owner override in `owner-business-rules.md`: Premium is an audited entitlement on a normal student identity. Implement idempotent automatic activation after confirmed purchase plus Admin/Super Admin grant, revoke, and reactivate. Do not port the incorrect request/application/accept/reject workflow. Port counselor assignments, dashboard metrics, university selections, tasks/Kanban, comments, review queue, notes, alerts, documents, video/meetup and notifications. Use one relational board dataset per student, shared data/types, and separate `StudentKanbanBoard`/`StaffKanbanBoard` renderers. Preserve locked/unlocked layouts and deny unassigned counselor access through RLS plus server authorization.
 
 ## Phase 6 — admin and CMS
 

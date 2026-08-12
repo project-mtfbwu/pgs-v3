@@ -1,5 +1,7 @@
 # Literal asset-reference resolution
 
+> The table records the original full-audit gaps. Batch 1's usage-traced anonymous public set has eight known deployed/stale gaps; its current set and checksum totals are recorded in `batch-1-public-migration-report.md` and `legacy-assets.json`.
+
 This record closes the 16 exact-path gaps found by the completed audit. “Active” means the reference occurs in a reachable legacy template or compiled CSS; it does not mean the missing resource affects the two proof pages. No replacement was invented.
 
 | Missing literal path | Use finding | Alternate-path finding | Proof decision |

@@ -16,7 +16,13 @@ for (const profile of profiles) {
   const page = await context.newPage();
   for (const route of [
     { name: "home", url: "https://purpleguide.study/" },
-    { name: "usa", url: "https://purpleguide.study/countriesusa" }
+    { name: "usa", url: "https://purpleguide.study/countriesusa" },
+    { name: "about", url: "https://purpleguide.study/about" },
+    { name: "canada", url: "https://purpleguide.study/countriescanada" },
+    { name: "cvready", url: "https://purpleguide.study/cvreadyprogram" },
+    { name: "events", url: "https://purpleguide.study/purpleevents" },
+    { name: "scholarship", url: "https://purpleguide.study/scholarship" },
+    { name: "usmlerotation", url: "https://purpleguide.study/usmlerotation" }
   ]) {
     await page.goto(route.url, { waitUntil: "networkidle", timeout: 60_000 });
     await page.addStyleTag({ content: "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}" });
@@ -29,4 +35,4 @@ for (const profile of profiles) {
 }
 
 await browser.close();
-console.log("Captured four legacy first-fold baselines");
+console.log("Captured sixteen legacy first-fold baselines");

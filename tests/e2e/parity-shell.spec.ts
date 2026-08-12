@@ -11,6 +11,7 @@ test("homepage preserves the legacy shell and content order", async ({ page }) =
 
 test("notification panel, fixed sidebar and drawer retain their legacy states", async ({ page }, testInfo) => {
   await page.goto("/");
+  await expect(page.locator("[data-legacy-page]")).toHaveAttribute("data-interactions-ready", "true");
   if (testInfo.project.name === "mobile") {
     await page.locator('button.btn-toggle-mobile:has(img[src*="toggle-lines"])').click();
     await expect(page.locator("#drawer")).toHaveClass(/active/);
@@ -20,21 +21,22 @@ test("notification panel, fixed sidebar and drawer retain their legacy states", 
     await page.locator(".mobile-notification-wrapper").click();
     await expect(page.locator("#siteNotificationMenuMobile")).toHaveClass(/open/);
   } else {
-    await page.locator("#close_Btn").evaluate((element) => (element as HTMLElement).click());
+    await page.locator("#sidebar #close_Btn").dispatchEvent("click");
     await expect(page.locator("#sidebar")).toHaveClass(/active/);
     await page.locator(".header-notification-wrapper").click();
     await expect(page.locator("#siteNotificationMenuDesktop")).toHaveClass(/open/);
   }
 });
 
-test("global premium overlays open without changing the retained layout", async ({ page }) => {
+test("public lead overlays remain while Premium application surfaces are replaced securely", async ({ page }) => {
   await page.goto("/");
   await page.locator('[data-text="Request it here"]').first().evaluate((element) => (element as HTMLElement).click());
   await expect(page.locator("#applicantPremiumModal")).toHaveCSS("display", "flex");
 
   await page.goto("/countriesusa");
+  await expect(page.locator("#countriesUsaJoinPremiumModal, #ppPremiumModal, #premiumModal")).toHaveCount(0);
   await page.locator('[href="#contact"]').first().evaluate((element) => (element as HTMLElement).click());
-  await expect(page.locator("#countriesUsaJoinPremiumModal")).toHaveCSS("display", "flex");
+  await page.waitForURL("**/contact");
 });
 
 test("USA destination keeps its complex tabbed content", async ({ page }) => {

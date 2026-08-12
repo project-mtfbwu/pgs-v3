@@ -37,7 +37,7 @@ The original code-derived audit identified 60 table names or table-like domains.
 
 | Legacy table | Feature/relationship | Proposed V3 and RLS |
 |---|---|---|
-| `purplepremium_applications` | user → Premium application/status | `premium_applications`; own read/create, staff decision |
+| `purplepremium_applications` | Incorrect legacy application/status workflow | Do not migrate as an active workflow. Reconcile only for history if approved; V3 uses `premium_entitlements` plus append-only `premium_entitlement_events` and purchase references |
 | `premium_dashboard_data` | per-user dashboard snapshot fields/JSON | split relational metrics/checklists/sessions where useful; user/assigned staff only |
 | `premium_finalized_universities` | user ↔ university selections | `student_university_selections` with stage/status |
 | `dashboard_comments` | student/counselor thread | `dashboard_comments`; participants only |

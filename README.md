@@ -1,8 +1,8 @@
-# PGS V3 parity proof
+# PGS V3 migration
 
-This branch proves the PurpleGuide migration method on the deployed homepage and the complex USA destination page. It uses Next.js App Router, strict TypeScript and a minimal Supabase-backed CMS while preserving the legacy DOM/classes and Hostinger assets.
+This branch extends the verified PurpleGuide parity foundation across the authoritative anonymous public-site inventory. It uses Next.js App Router, strict TypeScript, typed fixed-layout CMS slots and relational Supabase schemas while preserving the deployed legacy DOM/classes, interactions, responsive layouts and Hostinger assets.
 
-Start with [`docs/README.md`](docs/README.md), read [`AGENTS.md`](AGENTS.md), and see [`docs/parity-proof.md`](docs/parity-proof.md) for the proof boundary and verification commands.
+Start with [`docs/README.md`](docs/README.md), read [`AGENTS.md`](AGENTS.md), and see the [Batch 1 report](docs/batch-1-public-migration-report.md), [84-endpoint disposition](docs/public-route-status.md), and [owner business-rule overrides](docs/owner-business-rules.md).
 
 The legacy repository `project-mtfbwu/purpleguide` is read only. This repository is the only writable migration target. PGS V2 is not a source.
 
@@ -11,4 +11,4 @@ pnpm install
 pnpm dev
 ```
 
-The legacy ZIP and SQL snapshots are deliberately not part of this repository. Proof assets are pinned by SHA-256 in `legacy-assets.json`; `pnpm assets:verify` validates a locally recovered set, and `pnpm assets:fetch` can recover the same verified public bytes for CI/Vercel.
+The legacy ZIP and SQL snapshots are deliberately not part of this repository. Usage-traced public assets are pinned by SHA-256 in `legacy-assets.json`; `pnpm assets:verify` validates the recovered set. Production catalog/content data, private uploads and credentials are not committed.

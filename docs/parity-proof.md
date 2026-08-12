@@ -1,5 +1,7 @@
 # Parity-proof implementation report
 
+> Historical foundation report. Batch 1 extends this proof without replacing it; current totals and results are in [`batch-1-public-migration-report.md`](batch-1-public-migration-report.md).
+
 ## Scope
 
 The proof ports the anonymous homepage, USA destination page, common header/navigation, fixed desktop sidebar, mobile drawer, notification menus, footer, premium overlays, retained compiled CSS/fonts/assets/JS, and a minimum two-page Supabase CMS. It intentionally stops before the remaining public, student, Premium, counselor, and admin screens.
@@ -46,3 +48,5 @@ Completed results on 2026-08-12:
 - The 57 ZIP-authoritative images whose bytes differ from the deployed CDN must be committed/uploaded through a binary-capable Git path; checksum recovery from the live server intentionally fails.
 - No live Supabase migration was applied because this environment has no CLI/Postgres/Docker and no preview project was supplied.
 - No Vercel deployment can be claimed until the feature branch contains the authoritative binary files and the deployment is run/inspected.
+
+Batch 1 subsequently pinned the usage-traced public asset set, expanded the build to the remaining anonymous screens, and added sixteen representative desktop/mobile comparisons. Protected role/state parity remains later-batch scope.

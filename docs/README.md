@@ -1,5 +1,7 @@
 # PGS V3 legacy audit
 
+Batch 1 outcome: [`batch-1-public-migration-report.md`](batch-1-public-migration-report.md). Full 84-endpoint disposition: [`public-route-status.md`](public-route-status.md). Authoritative owner overrides: [`owner-business-rules.md`](owner-business-rules.md).
+
 Audit source: `project-mtfbwu/purpleguide` at tree `fcca51b0db31bf5c59a4b4f00f0bd12b77fb0470` (read only).
 
 Audit date: 2026-08-12.

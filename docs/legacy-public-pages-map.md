@@ -19,7 +19,7 @@ The controller layer references 47 public screen targets. Forty-five are present
 | Finance | `Finance` | `finance` | Custom finance content, FAQ accordion, Premium overlay |
 | Scholarships | `Scholarship` | `scholarship` | Custom content plus scholarship lead overlay |
 | Student resources | `Studentresources` | `studentresources` | Dates, deadlines, facts, stats, video and subscribe action |
-| Purple Premium landing | `Purplepremiumhome` | `purplepremiumhome`, `purplepremiumhome_1` | Anonymous/pending/approved states and video overlay |
+| Purple Premium landing | `Purplepremiumhome` | `purplepremiumhome`, `purplepremiumhome_1` | Marketing/purchase and entitlement-aware access plus video overlay; legacy request/pending/approval behavior is replaced by the owner rule |
 | Student/account | See `legacy-student-map.md` | 15 view states | Auth, profile, dashboards, saved, documents, progress |
 | 404 | `Error_404` | `404` | Custom 404 |
 
@@ -36,4 +36,4 @@ These are discovered routes, not approved deprecations. The owner must provide t
 
 ## Parity test baseline
 
-Every page must be captured from the deployed legacy site at desktop and mobile before implementation, with logged-in/Premium state captures where applicable. The repository contains markup but cannot supply runtime database content or every deployed rewrite.
+The anonymous Batch 1 screen inventory is implemented and reconciled in [`public-route-status.md`](public-route-status.md). Sixteen deterministic first-fold references now cover Home, USA, About, Canada, CV-ready programs, Events, Scholarship, and USMLE rotations at desktop/mobile sizes. Authenticated/Premium runtime states remain later-batch evidence because the repository cannot supply active identities or provider state.

@@ -7,7 +7,7 @@ This is the migration’s controlling traceability register. The legacy tree and
 | Global shell | public `header`, `footer`, `sidebar` variants; CSS/JS/assets | App Router layouts plus narrowly scoped client islands | CMS navigation/notices + auth state | desktop/mobile screenshots; anonymous/auth/Premium |
 | Notifications | header menus → `Notifications` → `student_notifications` | notification server actions/handlers and identical menus | `notifications`, RLS | badge/menu/open/delete/clear tests |
 | Home | `/` → `Home/index` → event/course/study data → `home` | page-specific `HomePage` | typed CMS + relational feeds | desktop/mobile visual diff; form/CTA tests |
-| Simple/Premium home | `Simplehome`, `Purplepremiumhome` controllers/views | state-aware page-specific components | Premium application + CMS | anonymous/pending/approved captures |
+| Simple/Premium home | `Simplehome`, `Purplepremiumhome` controllers/views plus owner override | state-aware page-specific components with no application flow | Premium entitlement/purchase audit + CMS | anonymous, purchase, active, revoked captures |
 | About | `About` → founder/advisory tables → `about` | fixed About component | CMS + people relations | accordion/slider/responsive screenshots |
 | Contact | `Contact` → `enquiries_tbl` → `contact` | fixed Contact component/action | enquiries + integration outbox | validation/success/error/map test |
 | Countries | ten country controllers → `purplepremium_applications` → ten views | ten exact components or shared internals only where DOM-equivalent | typed country content | ten desktop/mobile pages + tabs/modal states |
@@ -27,7 +27,7 @@ This is the migration’s controlling traceability register. The legacy tree and
 | Student resources | controller → six resource tables → view | exact resource page | structured content + subscription | dates/deadlines/video/subscribe tests |
 | Admin shell | admin header/footer/Users default | admin layout and preserved IA | staff roles | role menus/mobile/idle behavior |
 | Admin content CRUD | 30 modules in admin map | page-specific admin routes/forms | operational/CMS tables | CRUD/block/filter/preview/media tests |
-| Premium operations | admin Users controller → Premium/dashboard/docs/notes/Kanban tables → present views/partials | exact admin workflows | normalized protected relations | accept/reject/assignment/comments/docs/Kanban/audit |
+| Premium operations | useful legacy dashboard/docs/notes/Kanban UI plus owner override | entitlement grant/revoke/reactivate, assigned-student workspace, preserved operational UI | normalized protected relations and append-only entitlement audit | purchase activation, grant/revoke/reactivate, assignment isolation, comments/docs/Kanban/audit |
 | External integrations | SMTP/Google/maps/video/social/booking URLs and future Zoho boundary | provider adapters + outbox | integration config/status | mocked contract/retry/idempotency tests |
 
 ## Per-feature completion gate

@@ -79,13 +79,13 @@
       a.style.cursor = 'pointer';
 
       var badge = document.createElement('span');
-      badge.textContent = item.type === 'event' ? 'Event' : 'Program';
+      badge.textContent = item.type === 'event' ? 'Event' : (item.type === 'course' ? 'Course' : 'Program');
       badge.style.fontSize = '11px';
       badge.style.fontWeight = '700';
       badge.style.padding = '3px 8px';
       badge.style.borderRadius = '999px';
-      badge.style.background = item.type === 'event' ? 'rgba(127, 86, 217, 0.12)' : 'rgba(0, 123, 255, 0.12)';
-      badge.style.color = item.type === 'event' ? '#5b21b6' : '#0b5ed7';
+      badge.style.background = item.type === 'event' ? 'rgba(127, 86, 217, 0.12)' : (item.type === 'course' ? 'rgba(25, 135, 84, 0.12)' : 'rgba(0, 123, 255, 0.12)');
+      badge.style.color = item.type === 'event' ? '#5b21b6' : (item.type === 'course' ? '#126b38' : '#0b5ed7');
 
       var text = document.createElement('span');
       text.textContent = item.label;
@@ -106,11 +106,16 @@
     }
 
     var programs = items.filter(function (x) { return x.type === 'program'; });
+    var courses = items.filter(function (x) { return x.type === 'course'; });
     var events = items.filter(function (x) { return x.type === 'event'; });
 
     if (programs.length) {
       addGroup('Programs');
       programs.forEach(addItem);
+    }
+    if (courses.length) {
+      addGroup('Courses');
+      courses.forEach(addItem);
     }
     if (events.length) {
       addGroup('Events');
@@ -182,4 +187,3 @@
     initAll();
   }
 })();
-
