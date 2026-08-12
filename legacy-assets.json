@@ -1,0 +1,570 @@
+{
+  "version": 1,
+  "sourceSnapshot": "public_html.zip",
+  "assets": [
+    {
+      "path": "assets/css/icon.min.css",
+      "sha256": "022b07b389369593bd81c52b42f4bf82023ff132e2bfeb333aaf81b5c43c04d4",
+      "size": 309413,
+      "source": "https://purpleguide.study/assets/css/icon.min.css"
+    },
+    {
+      "path": "assets/css/responsive.css",
+      "sha256": "2835ce190d61b7a42336c5c30f3b2518770bba5843b93391acfec648850a7ca2",
+      "size": 416011,
+      "source": "https://purpleguide.study/assets/css/responsive.css"
+    },
+    {
+      "path": "assets/css/style.css",
+      "sha256": "bfd80f51da886d9360b76ce22abf19190220d6a8dc1764e1ed3a65bf5f7fc4ef",
+      "size": 746121,
+      "source": "https://purpleguide.study/assets/css/style.css"
+    },
+    {
+      "path": "assets/css/vendors.min.css",
+      "sha256": "311b7d8d26702239f15af05598f43e3fdeca39528ee31d5ac4f9cfbcbf059e5b",
+      "size": 302968,
+      "source": "https://purpleguide.study/assets/css/vendors.min.css"
+    },
+    {
+      "path": "assets/fonts/bootstrap-icons.woff",
+      "sha256": "bb1de989b83970f6f4e54de1cd974c5cba55b73582da5e1b225a6d0edf029483",
+      "size": 176032,
+      "source": "https://purpleguide.study/assets/fonts/bootstrap-icons.woff"
+    },
+    {
+      "path": "assets/fonts/bootstrap-icons.woff2",
+      "sha256": "476adf42b40325098fcfa8b36ab3e769186bb4f6ce6a249753e2e1a9c22bf99e",
+      "size": 130396,
+      "source": "https://purpleguide.study/assets/fonts/bootstrap-icons.woff2"
+    },
+    {
+      "path": "assets/fonts/fa-brands-400.ttf",
+      "sha256": "5656d596bc597165a42182f67b2b9f17d2ae47a9e3ef1b042b9a729739730705",
+      "size": 207972,
+      "source": "https://purpleguide.study/assets/fonts/fa-brands-400.ttf"
+    },
+    {
+      "path": "assets/fonts/fa-brands-400.woff2",
+      "sha256": "3a8924cd5203a28628716aedb5cef0943da4c3b44e3ffcee90ab06387b41c490",
+      "size": 117372,
+      "source": "https://purpleguide.study/assets/fonts/fa-brands-400.woff2"
+    },
+    {
+      "path": "assets/fonts/fa-regular-400.ttf",
+      "sha256": "5d02dc9b858e3c85a794f87e379857f4fedc4e26cf15001714a9a0e0b1d2294d",
+      "size": 68004,
+      "source": "https://purpleguide.study/assets/fonts/fa-regular-400.ttf"
+    },
+    {
+      "path": "assets/fonts/fa-regular-400.woff2",
+      "sha256": "2bccecf0bc7e96cd5ce4003abeb3ae9ee4a3d19158c4e6edfd2df32d2f0d5721",
+      "size": 25452,
+      "source": "https://purpleguide.study/assets/fonts/fa-regular-400.woff2"
+    },
+    {
+      "path": "assets/fonts/fa-solid-900.ttf",
+      "sha256": "fbbf06d7437aa30f3cd44c968380193545a8fc3eadfb7ad897bbb101eefec5a2",
+      "size": 419720,
+      "source": "https://purpleguide.study/assets/fonts/fa-solid-900.ttf"
+    },
+    {
+      "path": "assets/fonts/fa-solid-900.woff2",
+      "sha256": "9fc85f3a4544ab0d570c7f8f9bbb88db8d92c359b2707580ea8b07c75673eae2",
+      "size": 156496,
+      "source": "https://purpleguide.study/assets/fonts/fa-solid-900.woff2"
+    },
+    {
+      "path": "assets/fonts/fa-v4compatibility.ttf",
+      "sha256": "09663a36fc05e7190af8324b855105c5bb511ad94f94b81b34afee503279eca2",
+      "size": 10832,
+      "source": "https://purpleguide.study/assets/fonts/fa-v4compatibility.ttf"
+    },
+    {
+      "path": "assets/fonts/fa-v4compatibility.woff2",
+      "sha256": "4d4a2d7fd1c6684845cb174fdd7fc073bd64cb741286fb247f8b76c2b7b852c4",
+      "size": 4792,
+      "source": "https://purpleguide.study/assets/fonts/fa-v4compatibility.woff2"
+    },
+    {
+      "path": "assets/fonts/feather.eot",
+      "sha256": "93ae23284f34cdd155271e0b593aee42b58062bf0c72244abc7279ead3b43818",
+      "size": 62084,
+      "source": "https://purpleguide.study/assets/fonts/feather.eot"
+    },
+    {
+      "path": "assets/fonts/feather.svg",
+      "sha256": "7f0825fa0a9f3cddcce1311dd90840ed7d3e22328856c866cd2b6e38f95acd26",
+      "size": 214775,
+      "source": "https://purpleguide.study/assets/fonts/feather.svg"
+    },
+    {
+      "path": "assets/fonts/feather.ttf",
+      "sha256": "6920da0983cb1c5365e75edc4eddc224590967d6421ddf7958ed4f4d351377e9",
+      "size": 61920,
+      "source": "https://purpleguide.study/assets/fonts/feather.ttf"
+    },
+    {
+      "path": "assets/fonts/feather.woff",
+      "sha256": "ef3c47cb702e040372a3a4bce66d5e0ecc46c56325ec40f8c00b91da0d1d3f46",
+      "size": 29500,
+      "source": "https://purpleguide.study/assets/fonts/feather.woff"
+    },
+    {
+      "path": "assets/fonts/icomoon.eot",
+      "sha256": "3a835f8d7d4a1dda5ffdef26ddff48f7aa7a032071da0a8ce6225009409c3da1",
+      "size": 1177572,
+      "source": "https://purpleguide.study/assets/fonts/icomoon.eot"
+    },
+    {
+      "path": "assets/fonts/icomoon.svg",
+      "sha256": "36d8cef6154b092edd384889ac5b01da6c7c7d048508efb55c681b061701b72f",
+      "size": 3691407,
+      "source": "https://purpleguide.study/assets/fonts/icomoon.svg"
+    },
+    {
+      "path": "assets/fonts/icomoon.ttf",
+      "sha256": "043ce6450843f8aa38fcbb2aeef2da40928c9f0853dd8342aafbda8be9be8748",
+      "size": 1177408,
+      "source": "https://purpleguide.study/assets/fonts/icomoon.ttf"
+    },
+    {
+      "path": "assets/fonts/icomoon.woff",
+      "sha256": "55167ff2dba40b2eb3734d4653b6a3b25a33094cfce64ffb09a23205f33777f7",
+      "size": 1177484,
+      "source": "https://purpleguide.study/assets/fonts/icomoon.woff"
+    },
+    {
+      "path": "assets/fonts/themify.eot",
+      "sha256": "dff415daec911b65dca5be02071a1825b75508ff158de5b8d85976957db931cb",
+      "size": 78748,
+      "source": "https://purpleguide.study/assets/fonts/themify.eot"
+    },
+    {
+      "path": "assets/fonts/themify.svg",
+      "sha256": "2e2421027bbae2dddf9dd7f0374ad7eb9c3d75fbfa12eb64d32100d377eecf8c",
+      "size": 234630,
+      "source": "https://purpleguide.study/assets/fonts/themify.svg"
+    },
+    {
+      "path": "assets/fonts/themify.ttf",
+      "sha256": "350663a4665e00072c68a87ad3fa0be47b8a91424127f5f3e09f664197295f01",
+      "size": 78584,
+      "source": "https://purpleguide.study/assets/fonts/themify.ttf"
+    },
+    {
+      "path": "assets/fonts/themify.woff",
+      "sha256": "0db5c5a1475eb7a3e5028983ea1e642d1b2c00faff6a250a37502b0f3832a4a7",
+      "size": 56108,
+      "source": "https://purpleguide.study/assets/fonts/themify.woff"
+    },
+    {
+      "path": "assets/img/arrow-btn.png",
+      "sha256": "6f5e41e14d45cfe2de7d60705054816de6081683fdee71753a6b89c3c3f6120d",
+      "size": 2642,
+      "source": "https://purpleguide.study/assets/img/arrow-btn.png"
+    },
+    {
+      "path": "assets/img/arrow-left.png",
+      "sha256": "53b8428cf719f2b93f116fc024a3a0f84b2518ff750a3ad4f9621c70ded8a49e",
+      "size": 301,
+      "source": "https://purpleguide.study/assets/img/arrow-left.png"
+    },
+    {
+      "path": "assets/img/arrow-modal.png",
+      "sha256": "d7fd41afa7abfe0a46186524a7cb6bd7a5835d784a73228f8977507d5976d2bf",
+      "size": 3319,
+      "source": "https://purpleguide.study/assets/img/arrow-modal.png"
+    },
+    {
+      "path": "assets/img/bump.png",
+      "sha256": "e6439d768cda9249d22b612685e3cbd52e70b2ac9cbd92a94d896e239b508ceb",
+      "size": 99780,
+      "source": "https://purpleguide.study/assets/img/bump.png"
+    },
+    {
+      "path": "assets/img/calendar.png",
+      "sha256": "d9bcb16492ff713e62498d62a03ea6ba0f3f06a8eaaca69a36e86f46fca81567",
+      "size": 13231,
+      "source": "https://purpleguide.study/assets/img/calendar.png"
+    },
+    {
+      "path": "assets/img/check-12.png",
+      "sha256": "f00065b0e8d19b650aaa3d48ba4770866f71b70bface88a0962b972832a75259",
+      "size": 1708,
+      "source": "https://purpleguide.study/assets/img/check-12.png"
+    },
+    {
+      "path": "assets/img/check-icon.png",
+      "sha256": "7da527f3f034610601bf7ee7165d21e2c82b96858f736c1841e5d518e0c6d3c9",
+      "size": 652,
+      "source": "https://purpleguide.study/assets/img/check-icon.png"
+    },
+    {
+      "path": "assets/img/countriesUSA3.png",
+      "sha256": "7a1723a0a44df757644406734a130e158fcc324716603d4b452ab33ab998e004",
+      "size": 682660,
+      "source": "https://purpleguide.study/assets/img/countriesUSA3.png"
+    },
+    {
+      "path": "assets/img/county-mobile.png",
+      "sha256": "33940bc37cadcbe80c6febe11490c6696abef185cd4446fd0bc98f174fef3328",
+      "size": 136382,
+      "source": "https://purpleguide.study/assets/img/county-mobile.png"
+    },
+    {
+      "path": "assets/img/cvready-icon.png",
+      "sha256": "4ab41b28cdda524a58949c7294e70cd7f2691166c7380514cdfee35c16e69595",
+      "size": 689,
+      "source": "https://purpleguide.study/assets/img/cvready-icon.png"
+    },
+    {
+      "path": "assets/img/dashboard-gif.png",
+      "sha256": "2c258b547f815ee111a72486e9cdcf000cf274f4d8258a90e845edcab6ea2f9f",
+      "size": 293163,
+      "source": "https://purpleguide.study/assets/img/dashboard-gif.png"
+    },
+    {
+      "path": "assets/img/default-avatar.png",
+      "sha256": "bf2fd09fbdb400bbe29ecf73f979646fee8170053c3e31320bb3b9cc4c67e062",
+      "size": 17209,
+      "source": "https://purpleguide.study/assets/img/default-avatar.png"
+    },
+    {
+      "path": "assets/img/doctor.png",
+      "sha256": "a0551c2d2c374e8a6ca07a9421641d08b420f798f151ca1906deddb9baef73c5",
+      "size": 11689584,
+      "source": "https://purpleguide.study/assets/img/doctor.png"
+    },
+    {
+      "path": "assets/img/dots-top-arrow.png",
+      "sha256": "428aa1e02e92fc5410ff9c7efef7f353685f836406f8dc6400f887825463daf6",
+      "size": 668,
+      "source": "https://purpleguide.study/assets/img/dots-top-arrow.png"
+    },
+    {
+      "path": "assets/img/et.png",
+      "sha256": "1d11be1f172a67180c15329598cc10016163979e13282ff049dc8ffbdaf2145a",
+      "size": 1474,
+      "source": "https://purpleguide.study/assets/img/et.png"
+    },
+    {
+      "path": "assets/img/facebook.png",
+      "sha256": "a056eba8378985000d16e79873b6978462fb1afe60a14281c4cfcb71f2db04bb",
+      "size": 1814,
+      "source": "https://purpleguide.study/assets/img/facebook.png"
+    },
+    {
+      "path": "assets/img/finance-icon.png",
+      "sha256": "aee029ac07668a7ee18c8a40b815e2b04eb8dc5f8a31a0e05367d29955576651",
+      "size": 1242,
+      "source": "https://purpleguide.study/assets/img/finance-icon.png"
+    },
+    {
+      "path": "assets/img/football-team.png",
+      "sha256": "7ccbf544fc2d17bf6a8b0ae097d9870079258d261050ec4c9108a533a711ae94",
+      "size": 471848,
+      "source": "https://purpleguide.study/assets/img/football-team.png"
+    },
+    {
+      "path": "assets/img/Frame-1.png",
+      "sha256": "3e480a093b77f87db4f3f05be56080372908c5a299fc4d9b1d27cec8ae3adf11",
+      "size": 269156,
+      "source": "https://purpleguide.study/assets/img/Frame-1.png"
+    },
+    {
+      "path": "assets/img/Frameusa.jpeg",
+      "sha256": "1433fd0b9fa3b7effcbe7f8ab60dcc15ff97b145b465c048908d3cde8d837314",
+      "size": 2895,
+      "source": "https://purpleguide.study/assets/img/Frameusa.jpeg"
+    },
+    {
+      "path": "assets/img/girl-mentor.jpg",
+      "sha256": "b3411840600bb1cd0b88d9bb763571c86a81b668366bc7c21f3c432d4cf0ebd6",
+      "size": 29671,
+      "source": "https://purpleguide.study/assets/img/girl-mentor.jpg"
+    },
+    {
+      "path": "assets/img/google.png",
+      "sha256": "8f256f0c6cbe5c95fb746db85306ba08e1ebd90b4253fab9d10ea0296a7de28d",
+      "size": 642,
+      "source": "https://purpleguide.study/assets/img/google.png"
+    },
+    {
+      "path": "assets/img/half-cut-girl.png",
+      "sha256": "247296b93808d095816aa16a15a1372c4c94b7adfd37b5d4db76527631cd27a5",
+      "size": 60805,
+      "source": "https://purpleguide.study/assets/img/half-cut-girl.png"
+    },
+    {
+      "path": "assets/img/heart-icon.png",
+      "sha256": "e620fb0efacdd5f79f9e3020e8cf6dfcabe5b4e879eb07382652022ee05657bc",
+      "size": 721,
+      "source": "https://purpleguide.study/assets/img/heart-icon.png"
+    },
+    {
+      "path": "assets/img/heart.gif",
+      "sha256": "8039d740cdd32a473ca258e1585e13a0f30a6e66895bdf5c98aa537de8943fdf",
+      "size": 1132092,
+      "source": "https://purpleguide.study/assets/img/heart.gif"
+    },
+    {
+      "path": "assets/img/img-about-1.png",
+      "sha256": "6e19f5df0faa15dadd7013140fed080ada52107d7b03318ac45b995965561b5c",
+      "size": 1984070,
+      "source": "https://purpleguide.study/assets/img/img-about-1.png"
+    },
+    {
+      "path": "assets/img/instagram.png",
+      "sha256": "ed95b4f23ad03fafa6eeb8381ec1d3d6d8a9f78cc02e2d2f546ff598f1eec726",
+      "size": 2571,
+      "source": "https://purpleguide.study/assets/img/instagram.png"
+    },
+    {
+      "path": "assets/img/left.png",
+      "sha256": "0794131365f31dc6d42541354c65935c9f20a97cb3dc1ba5ee6d0859de0564b8",
+      "size": 840,
+      "source": "https://purpleguide.study/assets/img/left.png"
+    },
+    {
+      "path": "assets/img/lines-icon.png",
+      "sha256": "3f39962b806632f2b4dc5bffe180f578e37b836cf6d654f74f5f8869a37597e3",
+      "size": 208,
+      "source": "https://purpleguide.study/assets/img/lines-icon.png"
+    },
+    {
+      "path": "assets/img/linkdln.png",
+      "sha256": "7e565e6db4bd024b09b4f6a00013649c1f5766acb08764826ca558e2ee3dd933",
+      "size": 1471,
+      "source": "https://purpleguide.study/assets/img/linkdln.png"
+    },
+    {
+      "path": "assets/img/list-check.png",
+      "sha256": "449fa17f0e0efd753943e7c63aa3af261c1a0d0d10ac0abbf1394dbd4363780d",
+      "size": 432,
+      "source": "https://purpleguide.study/assets/img/list-check.png"
+    },
+    {
+      "path": "assets/img/loading-icon.png",
+      "sha256": "8d144e0f564fa31ad53bdcaa605f6d97dca6519de9579c10414190c2d51cbb65",
+      "size": 819,
+      "source": "https://purpleguide.study/assets/img/loading-icon.png"
+    },
+    {
+      "path": "assets/img/logo.png",
+      "sha256": "703ae7e199346dd2525b45e7781d4e2c449704317f9b19d260914c5cc9810e3f",
+      "size": 16648,
+      "source": "https://purpleguide.study/assets/img/logo.png"
+    },
+    {
+      "path": "assets/img/logout.png",
+      "sha256": "7f3fc5dbba9c3bbddfba9c79c1d11a7a5bb3ae778003e56135e2206aafc23a08",
+      "size": 568,
+      "source": "https://purpleguide.study/assets/img/logout.png"
+    },
+    {
+      "path": "assets/img/lvmint.png",
+      "sha256": "1a9c9be9858aa70008505972a1e1567a02a9fdd2393e13b1f2f28050220c9228",
+      "size": 2970,
+      "source": "https://purpleguide.study/assets/img/lvmint.png"
+    },
+    {
+      "path": "assets/img/mail.png",
+      "sha256": "fcca424ab4d57758791ab3110fdf7a919f9e745935d21fd24e82d454511bcb6c",
+      "size": 726,
+      "source": "https://purpleguide.study/assets/img/mail.png"
+    },
+    {
+      "path": "assets/img/medical.png",
+      "sha256": "d22a456880f3ffea113e61b1befecaa70950a9fc7d51b8cf7249da9c63d54531",
+      "size": 193079,
+      "source": "https://purpleguide.study/assets/img/medical.png"
+    },
+    {
+      "path": "assets/img/okk.png",
+      "sha256": "7924c81b90747d7296dedecbb2ed9cd233b721cfe0c863a90457817601901a95",
+      "size": 19732,
+      "source": "https://purpleguide.study/assets/img/okk.png"
+    },
+    {
+      "path": "assets/img/photo-2.jpg",
+      "sha256": "4dcbfecd37a23f6b6917ff19e09a4d176d600dd3697345a1da836f66aca3078c",
+      "size": 144207,
+      "source": "https://purpleguide.study/assets/img/photo-2.jpg"
+    },
+    {
+      "path": "assets/img/photo-3.jpg",
+      "sha256": "6d0281f6cb592dfadb686d7d741e50b0713471bc5030aa6794140d7e349ce990",
+      "size": 1355080,
+      "source": "https://purpleguide.study/assets/img/photo-3.jpg"
+    },
+    {
+      "path": "assets/img/player-1.png",
+      "sha256": "93d0a4d56315c67ce9c3199463197862e8d49d4d695864c0f3eb3562fb90e943",
+      "size": 51691,
+      "source": "https://purpleguide.study/assets/img/player-1.png"
+    },
+    {
+      "path": "assets/img/profile-icon.png",
+      "sha256": "cc019722b92f4ed24b3b3d2e2fce61ce839e47e0c398018dafe973de12b5bfac",
+      "size": 612,
+      "source": "https://purpleguide.study/assets/img/profile-icon.png"
+    },
+    {
+      "path": "assets/img/read-you-girl.jpg",
+      "sha256": "9ff170480fa0828ecd7caec98ff0d0d5b4e74108f3ed1c02243ef81b446524a6",
+      "size": 6992168,
+      "source": "https://purpleguide.study/assets/img/read-you-girl.jpg"
+    },
+    {
+      "path": "assets/img/resize-icon.png",
+      "sha256": "d2a45c61b1acd8e545ce4feaf5b1639178b7de14493aebc725d5463b0e6b78dc",
+      "size": 512,
+      "source": "https://purpleguide.study/assets/img/resize-icon.png"
+    },
+    {
+      "path": "assets/img/right.png",
+      "sha256": "31bb3431c3eede25dcbdda07c9c414be202aa9f49edf275fa4d0ca4f9fcb95ab",
+      "size": 828,
+      "source": "https://purpleguide.study/assets/img/right.png"
+    },
+    {
+      "path": "assets/img/scholar-icon.png",
+      "sha256": "952a9ed82e9d7a4634b2c9e661254147986c19d2a36de0b6530cec0bb6ecc530",
+      "size": 867,
+      "source": "https://purpleguide.study/assets/img/scholar-icon.png"
+    },
+    {
+      "path": "assets/img/sidebar-arrow.png",
+      "sha256": "2fa79978a0a1684b6576e73cab8ae782ed3f357a18d18c73ee0bddaa05d4d8e3",
+      "size": 449,
+      "source": "https://purpleguide.study/assets/img/sidebar-arrow.png"
+    },
+    {
+      "path": "assets/img/stemp.png",
+      "sha256": "c06a2e072262e1a76a6dd12bd1a3ddfa5f4233f5a00e32faad364a13300c45d4",
+      "size": 520,
+      "source": "https://purpleguide.study/assets/img/stemp.png"
+    },
+    {
+      "path": "assets/img/step.png",
+      "sha256": "a23aa1ed51d1007da57e91852f64867ffaaa151da596193d59c06b356006a368",
+      "size": 9424258,
+      "source": "https://purpleguide.study/assets/img/step.png"
+    },
+    {
+      "path": "assets/img/Subtract.png",
+      "sha256": "0d4e57f497f33ddd3a1841d010faf023fabe9ee025220717aafe211fc4bd65ad",
+      "size": 2865,
+      "source": "https://purpleguide.study/assets/img/Subtract.png"
+    },
+    {
+      "path": "assets/img/tc.png",
+      "sha256": "5b17c835b3d5981b59ade9593430ab1515efe13db6b53fc9d83c1d3efb36ab5c",
+      "size": 3363,
+      "source": "https://purpleguide.study/assets/img/tc.png"
+    },
+    {
+      "path": "assets/img/threads.png",
+      "sha256": "0e0080263dd734d76b5bb2fde69fb99d8ba19e993d7e35dd775e38bcb6d65c6f",
+      "size": 530,
+      "source": "https://purpleguide.study/assets/img/threads.png"
+    },
+    {
+      "path": "assets/img/toggle-lines.png",
+      "sha256": "53e8ab50e0e721f25ae285d74f58864271d8709504d6a7f6fca683a870f82619",
+      "size": 281,
+      "source": "https://purpleguide.study/assets/img/toggle-lines.png"
+    },
+    {
+      "path": "assets/img/top.png",
+      "sha256": "3165f0298e8ef4d398b0944ac3f55fbd2479a54a0e5514325b6f386e58031db0",
+      "size": 1090081,
+      "source": "https://purpleguide.study/assets/img/top.png"
+    },
+    {
+      "path": "assets/img/topy.png",
+      "sha256": "0045ce2669ea06814ec42d148efbd0d0c1adc8415bc60c735480e1f0b086e119",
+      "size": 451,
+      "source": "https://purpleguide.study/assets/img/topy.png"
+    },
+    {
+      "path": "assets/img/upload-icon.png",
+      "sha256": "9914b842df1ad7c6315f8577b82024ca83031384c9df867ec9aa0b71103d689f",
+      "size": 658,
+      "source": "https://purpleguide.study/assets/img/upload-icon.png"
+    },
+    {
+      "path": "assets/img/user-edit.png",
+      "sha256": "31438a38a3294ae49e4abc804b3aaf510273abb9bfaa146b013f59d7227f95cb",
+      "size": 621,
+      "source": "https://purpleguide.study/assets/img/user-edit.png"
+    },
+    {
+      "path": "assets/img/white-logo.png",
+      "sha256": "c83c748bbd0254d7fc9f4c1ec1e527e39976565cb5c3eebab1c84aa0ce10e48b",
+      "size": 21763,
+      "source": "https://purpleguide.study/assets/img/white-logo.png"
+    },
+    {
+      "path": "assets/img/youtube.png",
+      "sha256": "e83b519b8f295e69e209093b9110a86e65793bdd7ab6c0f9a6b454ff8954f225",
+      "size": 591,
+      "source": "https://purpleguide.study/assets/img/youtube.png"
+    },
+    {
+      "path": "assets/js/jquery.js",
+      "sha256": "c30b56bf74c6057c8b9104b92d33b4ade752667fe4dcc1a5d121fc4336fffdf1",
+      "size": 87604,
+      "source": "https://purpleguide.study/assets/js/jquery.js"
+    },
+    {
+      "path": "assets/js/main.js",
+      "sha256": "c657611c75797835a97d24f4f03e3883e68f38d629a37635a74c19cc6c7529ac",
+      "size": 185846,
+      "source": "https://purpleguide.study/assets/js/main.js"
+    },
+    {
+      "path": "assets/js/pgs-autocomplete.js",
+      "sha256": "30d1ed6063a5de3605f6c78219d7d1e397349bfb66c56fdad19aec0a869783c1",
+      "size": 5536,
+      "source": "https://purpleguide.study/assets/js/pgs-autocomplete.js"
+    },
+    {
+      "path": "assets/js/vendors.min.js",
+      "sha256": "33ce0c0ce7512617c8b0222f7d53f41541324edcdea2e79c5eec17402132d00e",
+      "size": 521141,
+      "source": "https://purpleguide.study/assets/js/vendors.min.js"
+    },
+    {
+      "path": "assets/videos/uhd_25fps.mp4",
+      "sha256": "86358a3c7c16b7d7c4f7c59d85521791335c2b7188346886ff9d4bef64039bbd",
+      "size": 10537612,
+      "source": "https://purpleguide.study/assets/videos/uhd_25fps.mp4"
+    },
+    {
+      "path": "favicon.png",
+      "sha256": "0a62903e12c801780908639aa17a0b1fe43adc8b67021ef6c679fa88729d4267",
+      "size": 876,
+      "source": "https://purpleguide.study/favicon.png"
+    },
+    {
+      "path": "pgs_admin/assets/images/18131784289445.mp4",
+      "sha256": "d5982e59ad73ee91d302e607245c6a18860055231eb7d7b0546f2a068b78ef48",
+      "size": 1623281,
+      "source": "https://purpleguide.study/pgs_admin/assets/images/18131784289445.mp4"
+    },
+    {
+      "path": "pgs_admin/assets/images/51451779437712.jpg",
+      "sha256": "c28107aa5e4c595b5fa6777a54c227c10276c3bcd540ff73373e9e2892bfe3dd",
+      "size": 3025664,
+      "source": "https://purpleguide.study/pgs_admin/assets/images/51451779437712.jpg"
+    },
+    {
+      "path": "pgs_admin/assets/images/75311780653655.webp",
+      "sha256": "873f0edfd2e0fc236ec15ab933befb55c5e459737ee7a3cfa92ba4d10a041b67",
+      "size": 100074,
+      "source": "https://purpleguide.study/pgs_admin/assets/images/75311780653655.webp"
+    }
+  ]
+}

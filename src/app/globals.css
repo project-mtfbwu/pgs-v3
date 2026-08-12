@@ -1,0 +1,27 @@
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+.pgs-cms-banner {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 10050;
+  padding: 8px 12px;
+  border: 1px solid #111;
+  border-radius: 999px;
+  background: #ffde7f;
+  color: #111;
+  font: 600 12px/1.2 Arial, sans-serif;
+  text-decoration: none;
+}
+
+@media (max-width: 767px) {
+  .pgs-cms-banner { display: none; }
+}

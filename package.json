@@ -1,0 +1,42 @@
+{
+  "name": "pgs-v3",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.0.0" },
+  "scripts": {
+    "assets:fetch": "node scripts/fetch-legacy-assets.mjs",
+    "assets:verify": "node scripts/verify-legacy-assets.mjs",
+    "predev": "pnpm assets:verify",
+    "dev": "next dev",
+    "prebuild": "node scripts/ensure-legacy-assets.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:rls": "node scripts/test-rls-migration.mjs",
+    "test:e2e": "playwright test",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm test:rls && pnpm build && pnpm test:e2e"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.112.3",
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/node": "^22.19.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "eslint": "^9.39.0",
+    "eslint-config-next": "16.3.0",
+    "jsdom": "^28.0.0",
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "4.1.10"
+  },
+  "packageManager": "pnpm@11.16.0"
+}
