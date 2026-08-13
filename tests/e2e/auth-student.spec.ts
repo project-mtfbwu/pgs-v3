@@ -47,6 +47,13 @@ test.describe("Batch 2 authentication boundary", () => {
     await goto(page, "/purplepremiumhome");
     await expect(page.locator("body")).not.toContainText(/apply for purple premium|application pending/i);
   });
+
+  test("Premium student and mentor routes enforce the server Auth boundary", async ({ page }) => {
+    for (const route of ["/dashboard", "/feed_track_progress", "/upload_your_doc", "/mentor", "/mentor/access", "/mentor/students/10000000-0000-4000-8000-000000000001"]) {
+      await goto(page, route);
+      await expect(page).toHaveURL(/\/login\?redirect=/);
+    }
+  });
 });
 
 test.describe("responsive normal-student UI contract", () => {

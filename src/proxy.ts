@@ -7,6 +7,7 @@ const legacyControllers: Record<string, string> = {
   Countriesfrance: "/countriesfrance", Countriesgermany: "/countriesgermany", Countriesmauritius: "/countriesmauritius",
   Countriesnz: "/countriesnz", Countriesothers: "/countriesothers", Countriesuk: "/countriesuk", Countriesusa: "/countriesusa",
   Cvreadyprogram: "/cvreadyprogram", Error_404: "/error_404", Explorecountries: "/explorecountries", Finance: "/finance",
+  Dashboard: "/dashboard", Feed_track_progress: "/feed_track_progress", Upload_your_doc: "/upload_your_doc",
   Forgot_password: "/forgot_password", Home: "/", Login: "/login", Programsfull: "/programsfull", Purpleamc: "/purpleamc",
   Purpleboard: "/purpleboard", Purpleevents: "/purpleevents", Purplenonmedical: "/purplenonmedical", Purpleplab: "/purpleplab",
   Purplepremiumhome: "/purplepremiumhome", Purpleusme: "/purpleusme", Reset_password: "/reset_password", Saved: "/saved",
@@ -26,7 +27,7 @@ const exactLegacyRoutes: Record<string, string> = {
   "/Saved/index": "/saved", "/Notifications/clear_all": "/notifications"
 };
 
-const protectedPaths = ["/student", "/saved", "/notifications", "/singup", "/change_password"];
+const protectedPaths = ["/student", "/saved", "/notifications", "/singup", "/change_password", "/dashboard", "/feed_track_progress", "/upload_your_doc", "/mentor"];
 
 function legacyDestination(request: NextRequest): URL | null {
   if (/^\/Notifications\/(?:open|delete)(?:\/|$)/.test(request.nextUrl.pathname)) {

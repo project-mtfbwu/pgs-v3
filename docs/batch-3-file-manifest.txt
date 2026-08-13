@@ -1,0 +1,44 @@
+# Exact Batch 3 worktree file manifest
+# Relative to the approved Batch 2 checkpoint in this worktree.
+ M .env.example
+?? docs/batch-3-file-manifest.txt
+?? docs/batch-3-premium-workspace-report.md
+?? docs/batch-3-route-status.md
+ M docs/README.md
+ M docs/legacy-student-map.md
+ M docs/migration-plan.md
+ M docs/public-route-status.md
+ M docs/security-remediation.md
+ M next.config.ts
+ M scripts/test-rls-migration.mjs
+?? src/app/api/premium/comments/route.ts
+?? src/app/api/premium/documents/[id]/route.ts
+?? src/app/api/premium/documents/route.ts
+?? src/app/api/premium/premium-routes.test.ts
+?? src/app/api/premium/purchase/route.ts
+?? src/app/api/staff/assignments/route.ts
+?? src/app/api/staff/premium/route.ts
+?? src/app/api/staff/students/[studentId]/workspace/[resource]/route.ts
+?? src/app/dashboard/page.tsx
+?? src/app/feed_track_progress/page.tsx
+ M src/app/globals.css
+?? src/app/mentor/access/page.tsx
+?? src/app/mentor/page.tsx
+?? src/app/mentor/students/[studentId]/page.tsx
+ M src/app/student/dashboard/page.tsx
+?? src/app/upload_your_doc/page.tsx
+?? src/components/document-workspace.tsx
+?? src/components/premium-comments.tsx
+?? src/components/premium-locked-state.tsx
+?? src/components/premium-workspace-shell.tsx
+?? src/components/staff-access-controls.tsx
+?? src/components/staff-kanban-board.tsx
+?? src/components/staff-workspace-controls.tsx
+?? src/components/student-kanban-board.tsx
+?? src/lib/premium-workspace.test.ts
+?? src/lib/premium-workspace.ts
+?? src/lib/supabase/admin.ts
+ M src/proxy.ts
+?? supabase/migrations/202608130003_premium_workspace.sql
+?? supabase/tests/004_premium_workspace_rls.sql
+ M tests/e2e/auth-student.spec.ts

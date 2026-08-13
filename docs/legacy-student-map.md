@@ -59,8 +59,8 @@ Counselors may access student rows only through an active assignment relationshi
 
 Signup/login/logout, redirect preservation, OAuth callback, profile completion/edit, save/unsave course/program, notification open/delete/clear, automatic Premium activation and audited grant/revoke/reactivate, comments/replies, shared-board consistency across student/staff renderers, stage/order mutations, progress lock/unlock, document upload/view/download/delete, assigned-counselor isolation, and cross-student denial.
 
-## Batch 2 implementation checkpoint
+## Batch 3 implementation checkpoint
 
-Auth, profile, the normal dashboard, saved programs/courses, notifications, private avatar architecture, logged-in navigation, and protected-route handling are implemented and reconciled in `batch-2-auth-student-report.md` and `batch-2-route-status.md`. Premium entitlement, assigned mentor, documents, comments, progress, and the shared board remain Batch 3 scope.
+Auth, profile, the normal dashboard, saved programs/courses, notifications, private avatar architecture, logged-in navigation, and protected-route handling are reconciled in the Batch 2 report. Premium entitlement, confirmed-purchase activation boundary, audited staff grant/revoke/reactivate, assigned mentor, documents, comments, progress, alerts, reviews, university selections, notes, and the shared board are now implemented and reconciled in `batch-3-premium-workspace-report.md` and `batch-3-route-status.md`.
 
-Owner correction for Batch 3: the Batch 2 student dashboard is a functional/security foundation, but its newly composed presentation is not canonical. Batch 3 must trace and preserve the legacy `user_dashboard`, `dashboard`, `feed_track_progress`, locked progress, document, and Kanban views plus their CSS/assets/deployed states. Do not propagate the Batch 2 shell into a generic student SaaS design. Staff renderers remain visually independent from the student renderer.
+The Batch 2 Auth/data foundation remains, while the student dashboard entry and all new Premium surfaces now use the traced legacy PurpleGuide markup/classes and retained CSS vocabulary. `StudentKanbanBoard` and `StaffKanbanBoard` are visually independent over one relational dataset. Authenticated role screenshot capture still requires isolated preview fixtures and is a validation gate rather than fabricated evidence.

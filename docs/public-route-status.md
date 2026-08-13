@@ -1,6 +1,6 @@
 # Public route disposition — Batch 1 reconciliation
 
-> Historical Batch 1 checkpoint. The Auth/normal-student rows that were blocked here are now reconciled in [`batch-2-route-status.md`](batch-2-route-status.md); Premium rows remain deferred to Batch 3.
+> Historical Batch 1 checkpoint. The Auth/normal-student rows that were blocked here are reconciled in [`batch-2-route-status.md`](batch-2-route-status.md); the Premium rows are now reconciled in [`batch-3-route-status.md`](batch-3-route-status.md).
 
 This inventory reconciles all 84 callable public methods identified in `legacy-route-map.md`. A controller `index` row includes both the controller base URL and its explicit `/index` alias. Status names are the required migration dispositions; `BLOCKED` rows distinguish protected Batch 2 dependencies from genuinely missing source views.
 

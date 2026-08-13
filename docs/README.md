@@ -4,6 +4,8 @@ Batch 1 outcome: [`batch-1-public-migration-report.md`](batch-1-public-migration
 
 Batch 2 outcome: [`batch-2-auth-student-report.md`](batch-2-auth-student-report.md). Auth/normal-student endpoint disposition: [`batch-2-route-status.md`](batch-2-route-status.md).
 
+Batch 3 outcome: [`batch-3-premium-workspace-report.md`](batch-3-premium-workspace-report.md). Purple Premium/mentor endpoint disposition: [`batch-3-route-status.md`](batch-3-route-status.md).
+
 Audit source: `project-mtfbwu/purpleguide` at tree `fcca51b0db31bf5c59a4b4f00f0bd12b77fb0470` (read only).
 
 Audit date: 2026-08-12.
@@ -56,6 +58,8 @@ Counting methodology is explicit in the related maps so these numbers can be rep
 - `asset-gap-resolution.md`
 - `security-remediation.md`
 - `parity-proof.md`
+- `batch-3-premium-workspace-report.md`
+- `batch-3-route-status.md`
 
 ## Completed evidence update
 
@@ -67,5 +71,5 @@ Counting methodology is explicit in the related maps so these numbers can be rep
 ## Remaining external blockers
 
 1. The local shell still has no GitHub CLI, credential helper, HTTPS token, or SSH key. The connector can publish UTF-8 files but cannot stream the 63.45 MB ZIP-derived binary set from the local filesystem. A binary-capable Git authentication/upload path is required before a complete PR/Vercel build can exist.
-2. A real Supabase CLI/Postgres/Docker runtime or preview project is required to apply the migration and execute pgTAP; the repository includes the migration, pgTAP test, and executable static RLS assertions.
+2. The linked preview Supabase migrations are applied and lint clean. Docker remains required to execute the repository's local pgTAP suites; it is not available in this workspace.
 3. Owner decisions listed in `migration-plan.md` remain prerequisites for screens beyond this deliberately limited proof.

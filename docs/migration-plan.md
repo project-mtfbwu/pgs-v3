@@ -28,6 +28,8 @@ Implement Supabase Auth, activation/reset, deployment-gated Google provider, pro
 
 Apply the owner override in `owner-business-rules.md`: Premium is an audited entitlement on a normal student identity. Implement idempotent automatic activation after confirmed purchase plus Admin/Super Admin grant, revoke, and reactivate. Do not port the incorrect request/application/accept/reject workflow. Port counselor assignments, dashboard metrics, university selections, tasks/Kanban, comments, review queue, notes, alerts, documents, video/meetup and notifications. For every student-facing surface, port the traced legacy PurpleGuide view/CSS/assets and deployed responsive evidence; do not create a generic shadcn/SaaS student dashboard. Use one relational board dataset per student, shared data/types, and visually separate `StudentKanbanBoard`/`StaffKanbanBoard` renderers. Preserve locked/unlocked layouts and deny unassigned counselor access through RLS plus server authorization.
 
+**Batch 3 checkpoint:** the entitlement/assignment/workspace/document/shared-board foundation and necessary staff operations are implemented and applied to the linked preview project. The payment-provider adapter, missing legacy `premium_meetup` view, full `premium_video` settings surface, authenticated role screenshot fixtures, and final counselor-note policy confirmation remain external/later-batch gates; none were silently fabricated.
+
 ## Phase 6 — admin and CMS
 
 Port admin shell/roles, existing operational CRUD, user/Premium operations, resource settings and previews. Add page-specific CMS editors/revisions/publish flows without changing approved layouts. Reconcile missing/dormant legacy modules with owner decisions.
