@@ -2,6 +2,15 @@
 
 These rules are authoritative and override conflicting legacy controllers, tables, views, labels, modals, and audit text. They are not optional parity deviations.
 
+## Cross-product student state
+
+- Every student-connected route uses one authoritative server-side state: `anonymous`, `authenticated_standard`, or `authenticated_premium`.
+- Standard and Premium are presentation/entitlement states on one Supabase Auth identity, never separate accounts or duplicated profiles.
+- Returning from a student dashboard to a retained legacy page must preserve the authenticated header, profile, saved, notification, and lock/CTA state without a hard refresh.
+- Active Premium unlocks the dashboard, progress, documents, mentor, and shared Kanban surfaces. Missing, revoked, or expired Premium retains the authenticated student shell and shows the approved locked/purchase-directed state.
+- Logout completes server sign-out and a fresh document navigation before the anonymous public shell is shown.
+- Supabase RLS and server authorization remain authoritative regardless of visual state.
+
 ## Batch 3 student-facing visual authority
 
 - Batch 3 student dashboard, feed, Premium, progress, documents, and Kanban surfaces must use the existing legacy PurpleGuide student views, CSS, assets, responsive behavior, interactions, and deployed evidence as their visual source of truth.

@@ -50,3 +50,17 @@
 - Marketing-public and private CMS-preview media use separate 10 MB allow-listed buckets and server-side signature validation; neither can expose `student-documents`.
 - CMS preview requires an authenticated `cms.read` session and a five-minute HttpOnly revision cookie. Publication/rollback is a separate audited permission.
 - Preview fixtures require an explicit environment acknowledgement, exact remote project-ref match, separately supplied password, and server key; no fixture credentials or real data are stored in the repository.
+
+## Batch 5 production hardening
+
+- Additive migrations 007–009 are applied to preview; migrations 001–006 were not changed. Linked schema lint reports no errors.
+- Workspace writes require both active Premium and role/assignment authority. Browser-direct avatar/document writes are removed, actor/owner fields are protected, document version allocation is serialized, and delete metadata is authoritative before private-object cleanup.
+- Staff receives one active normalized role. Staff-governance transitions are serialized, prohibit self-change, protect the final active Super Admin, require an existing Auth identity, and retain role history/audit.
+- Premium purchase replay is serialized and idempotent. Manual grant/revoke/reactivate, assignment changes, CMS save/publish, and audit histories are transactional or append-only where appropriate.
+- Viewer student-directory access is a minimized security-definer projection; it no longer grants direct reads of full student profile/contact rows.
+- Rate limiting is atomic and distributed through a server-only Postgres RPC. The application fails closed when the service key or `RATE_LIMIT_HASH_SECRET` is absent; raw IP/email values are never stored.
+- Password recovery requires a short-lived signed recovery grant and OTP/recovery AMR, password changes reauthenticate, redirect validation rejects protocol-relative/control/backslash variants, and OAuth/provider errors remain branded.
+- State-changing application APIs enforce same-origin browser requests; the signed Premium provider webhook remains separately HMAC-authenticated. CSP, framing, MIME, referrer, permissions, opener, and production HSTS headers are active.
+- Upload routes verify body size, actual file signature, allow-listed MIME, normalized display filename, randomized server path, and private signed access. Malware scanning/quarantine is not claimed and remains a deployment requirement.
+- Logs use structured event names/codes without raw provider messages or submission PII. Audit triggers redact lead/settings values and audit/event histories reject update/delete.
+- `pnpm test:security` scans source, retained generated legacy text, migrations, docs, and configuration for high-confidence credential forms. `pnpm config:check` fails production deployment when required origins/keys/32+ character secrets are absent.

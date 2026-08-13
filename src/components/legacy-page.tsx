@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-type Props = { html: string; page: string };
+type Props = { html: string; page: string; studentState?: "anonymous" | "authenticated_standard" | "authenticated_premium" };
 
 function setOpen(element: HTMLElement | null, open: boolean) {
   if (!element) return;
@@ -164,7 +164,7 @@ async function saveCatalogItem(target: HTMLElement) {
   }
 }
 
-export function LegacyPage({ html, page }: Props) {
+export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
   const router = useRouter();
 
   useEffect(() => {
@@ -341,5 +341,5 @@ export function LegacyPage({ html, page }: Props) {
     };
   }, [page, router]);
 
-  return <main data-legacy-page={page} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <main data-legacy-page={page} data-student-state={studentState} dangerouslySetInnerHTML={{ __html: html }} />;
 }

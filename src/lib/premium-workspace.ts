@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getStaffContext } from "@/lib/staff-auth";
 
 export type PremiumStatus = "active" | "revoked" | "expired" | "none";
 export type WorkspaceActor = { user: User; kind: "student" | "mentor" | "admin" | "super_admin"; studentId: string };
@@ -36,7 +37,7 @@ export async function getPremiumStatus(studentId: string): Promise<PremiumStatus
   return data.status as Exclude<PremiumStatus, "none">;
 }
 
-export async function requirePremiumActor(studentId?: string): Promise<WorkspaceActor> {
+export async function requirePremiumActor(studentId?: string, access: "read"|"manage"="read"): Promise<WorkspaceActor> {
   const supabase = await createSupabaseServerClient();
   const { data: authData } = await supabase.auth.getUser();
   const user = authData.user;
@@ -46,10 +47,12 @@ export async function requirePremiumActor(studentId?: string): Promise<Workspace
   if (status !== "active") throw new WorkspaceAccessError(403, "An active Purple Premium entitlement is required.");
   if (target === user.id) return { user, kind: "student", studentId: target };
 
-  const { data: staff } = await supabase.from("staff_profiles").select("role,status").eq("user_id", user.id).maybeSingle();
-  if (!staff || staff.status !== "active") throw new WorkspaceAccessError(403, "This student workspace is not assigned to you.");
-  if (staff.role === "admin" || staff.role === "super_admin") return { user, kind: staff.role, studentId: target };
-  if (staff.role !== "mentor") throw new WorkspaceAccessError(403, "This student workspace is not assigned to you.");
+  const staff=await getStaffContext();
+  if(!staff)throw new WorkspaceAccessError(403,"This student workspace is not assigned to you.");
+  const allPermission=access==="manage"?"student_workspace.manage_all":"student_workspace.read_all";
+  if(staff.permissions.has(allPermission))return {user,kind:staff.roles.includes("super_admin")?"super_admin":"admin",studentId:target};
+  const assignedPermission=access==="manage"?"student_workspace.manage":"student_workspace.read";
+  if(!staff.permissions.has(assignedPermission))throw new WorkspaceAccessError(403,"This student workspace is not assigned to you.");
   const { data: assignment } = await supabase.from("mentor_assignments").select("id").eq("student_id", target).eq("mentor_id", user.id).eq("status", "active").maybeSingle();
   if (!assignment) throw new WorkspaceAccessError(403, "This student workspace is not assigned to you.");
   return { user, kind: "mentor", studentId: target };
@@ -103,6 +106,12 @@ export function validDocumentSignature(bytes: Uint8Array, mime: string): boolean
   if (mime === "application/pdf") return new TextDecoder().decode(bytes.slice(0, 5)) === "%PDF-";
   if (mime === "image/jpeg") return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
   if (mime === "image/png") return [0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a].every((value, index) => bytes[index] === value);
-  if (mime === "application/msword") return [0xd0,0xcf,0x11,0xe0].every((value, index) => bytes[index] === value);
-  return bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04;
+  const names=new TextDecoder("latin1").decode(bytes);
+  if (mime === "application/msword") return [0xd0,0xcf,0x11,0xe0].every((value, index) => bytes[index] === value)&&names.includes("WordDocument");
+  return bytes[0]===0x50&&bytes[1]===0x4b&&bytes[2]===0x03&&bytes[3]===0x04&&names.includes("[Content_Types].xml")&&names.includes("word/");
+}
+
+export function safeDisplayFilename(value:string):string{
+  const cleaned=value.normalize("NFKC").replace(/[\u0000-\u001f\u007f/\\]/g,"_").replace(/\s+/g," ").trim();
+  return (cleaned||"document").slice(0,255);
 }

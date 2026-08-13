@@ -12,6 +12,7 @@ const updateUser = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: async () => ({
   auth: { getUser, signInWithPassword, signUp, signOut, resetPasswordForEmail, updateUser }, from
 }) }));
+vi.mock("@/lib/server-security",()=>({consumeRateLimit:vi.fn().mockResolvedValue({allowed:true,configured:true}),logServerError:vi.fn()}));
 
 import { POST as login } from "@/app/api/auth/login/route";
 import { POST as register } from "@/app/api/auth/register/route";

@@ -6,11 +6,11 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { signOutAndNavigate } from "@/lib/logout-navigation";
 
-export function PremiumWorkspaceShell({ name, avatarUrl, children }: { name: string; avatarUrl: string; children: ReactNode }) {
+export function PremiumWorkspaceShell({ name, avatarUrl,stateKind="authenticated_premium",children }: { name: string; avatarUrl: string;stateKind?:"authenticated_standard"|"authenticated_premium";children: ReactNode }) {
   const [sidebar, setSidebar] = useState(false);
   const [drawer, setDrawer] = useState(false);
   return <>
-    <header className="premium-legacy-header">
+    <header className="premium-legacy-header" data-student-state={stateKind}>
       <Link href="/"><Image src="/assets/img/logo.png" alt="#PGS" width={120} height={45} unoptimized /></Link>
       <nav><Link href="/dashboard">#feed</Link><Link href="/feed_track_progress">Track Your Progress</Link><Link href="/upload_your_doc">Upload Your Docs</Link><Link href="/notifications">Notifications</Link></nav>
       <button type="button" className="premium-account-pill" onClick={() => setDrawer(true)}><Image src={avatarUrl} alt="" width={36} height={36} unoptimized />{name}</button>

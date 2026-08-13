@@ -43,6 +43,8 @@ The Kanban is a shared student-owned domain, not a UI-owned dataset: one student
 
 Use Supabase Auth UUIDs as canonical identities and retain `legacy_id` only for reconciliation. Premium is an entitlement attached to that identity. Role grants and counselor assignments are server-controlled. RLS tests cover anonymous, student A, student B, assigned counselor, unrelated counselor, admin, and super-admin. Every counselor policy joins through an active assignment. Sensitive mutations use database functions or server actions with explicit authorization and audit records. Service-role access never reaches the client.
 
+`resolveStudentExperience()` is the authoritative presentation resolver for every student-connected surface. It returns exactly `anonymous`, `authenticated_standard`, or `authenticated_premium` from the verified Supabase session plus entitlement. Retained legacy pages receive server-side account-shell transforms and a state marker; React student/Premium shells receive the same resolved state. Presentation state never grants data access—RLS and server checks independently enforce ownership, active entitlement, staff permission, and active mentor assignment.
+
 ## Storage
 
 - `marketing-public`: published CMS assets, public read, staff writes.

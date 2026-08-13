@@ -44,6 +44,8 @@ Implement the outbox and explicitly configured provider adapters. Profile/stage 
 
 Run full functional, RLS, accessibility, performance and visual regression suites; perform rehearsal migration and rollback test; freeze legacy writes; delta migrate; validate; switch routing; monitor; keep rollback window; obtain owner acceptance.
 
+**Batch 5 hardening checkpoint:** forward-only migrations 007–009 are applied and linked lint is clean. Authorization/storage/IDOR constraints, distributed rate limits, Auth recovery, CSP/CSRF boundaries, audit integrity, query indexes, configuration gates, and safe failure behavior are implemented. One authoritative three-state student resolver now drives retained public pages and all student/Premium shells. Production remains gated on secrets/provider configuration, backup/restore rehearsal, malware/retention policy, monitoring, and execution of environment-gated authenticated Playwright/pgTAP scenarios.
+
 ## Completion checklist per route
 
 - Legacy trace complete: URL → controller → query/table → view → CSS/JS/assets → role/state.

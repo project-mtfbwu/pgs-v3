@@ -4,8 +4,18 @@ import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export function safeNext(value: string | null | undefined, fallback = "/student/dashboard"): string {
-  if (!value || !value.startsWith("/") || value.startsWith("//") || /[\r\n]/.test(value)) return fallback;
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\") || /[\u0000-\u001f\u007f]/.test(value)) return fallback;
   return value;
+}
+
+export function applicationOrigin(requestUrl: string): string {
+  const requestOrigin = new URL(requestUrl).origin;
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!configured) return requestOrigin;
+  try {
+    const origin = new URL(configured).origin;
+    return /^https?:$/.test(new URL(origin).protocol) ? origin : requestOrigin;
+  } catch { return requestOrigin; }
 }
 
 export async function getAuthenticatedUser(): Promise<User | null> {

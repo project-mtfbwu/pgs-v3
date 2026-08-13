@@ -48,7 +48,7 @@ export async function getStaffContext(): Promise<StaffContext | null> {
     const role = Array.isArray(relation) ? relation[0]?.key : relation?.key;
     return role ? [role] : [];
   });
-  if (!roles.length && ["super_admin","admin","mentor","viewer"].includes(profile.role)) roles.push(profile.role as StaffRoleKey);
+  if(!roles.length)return null;
   const permissions = new Set(roles.flatMap((role) => [...rolePermissions[role]]));
   return { user: auth.user, displayName: profile.display_name || auth.user.email || "Staff", status: profile.status, roles, permissions };
 }

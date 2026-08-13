@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { jsonError } from "@/lib/http";
 import { requirePremiumActor, WorkspaceAccessError } from "@/lib/premium-workspace";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { validUuid } from "@/lib/http";
+import { logServerError } from "@/lib/server-security";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -9,6 +12,7 @@ export async function GET(_request: Request, { params }: Context) {
   try {
     const actor = await requirePremiumActor();
     const { id } = await params;
+    if(!validUuid(id))return jsonError("Document not found.",404);
     const supabase = await createSupabaseServerClient();
     const { data } = await supabase.from("student_documents").select("storage_path,original_filename").eq("id", id).eq("student_id", actor.studentId).maybeSingle();
     if (!data) return jsonError("Document not found.", 404);
@@ -26,13 +30,12 @@ export async function DELETE(_request: Request, { params }: Context) {
     const actor = await requirePremiumActor();
     if (actor.kind !== "student") return jsonError("Students may delete only their own pending documents.", 403);
     const { id } = await params;
+    if(!validUuid(id))return jsonError("Document not found.",404);
     const supabase = await createSupabaseServerClient();
-    const { data } = await supabase.from("student_documents").select("storage_path,qc_status").eq("id", id).eq("student_id", actor.studentId).maybeSingle();
-    if (!data || !["pending", "rejected"].includes(data.qc_status)) return jsonError("Only pending or rejected documents can be deleted.", 403);
-    const { error: storageError } = await supabase.storage.from("student-documents").remove([data.storage_path]);
-    if (storageError) return jsonError("Unable to delete the document.", 400);
-    const { error } = await supabase.from("student_documents").delete().eq("id", id).eq("student_id", actor.studentId);
-    if (error) return jsonError("Unable to delete the document record.", 400);
+    const {data:path,error}=await supabase.rpc("delete_own_student_document",{target_document:id});
+    if(error||typeof path!=="string")return jsonError("Only pending or rejected documents can be deleted.",403);
+    const removed=await createSupabaseAdminClient().storage.from("student-documents").remove([path]);
+    if(removed.error)logServerError("student_document_object_cleanup_failed",removed.error,{document_id:id});
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof WorkspaceAccessError) return jsonError(error.message, error.status);

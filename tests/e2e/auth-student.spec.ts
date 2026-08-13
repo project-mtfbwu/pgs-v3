@@ -31,14 +31,14 @@ test.describe("Batch 2 authentication boundary", () => {
     await page.locator('form:not(#registerForm) input[name="email"]').fill("student@example.test");
     await page.locator('form:not(#registerForm) input[name="password"]').fill("incorrect-password");
     await page.locator('form:not(#registerForm) button[type="submit"]').click();
-    await expect(page.locator('form:not(#registerForm) [role="status"]')).toContainText(/Supabase Auth is not configured|Invalid email or password/i);
+    await expect(page.locator('form:not(#registerForm) [role="status"]')).toContainText(/Supabase Auth is not configured|Invalid email or password|Login is temporarily unavailable/i);
   });
 
   test("reset request is enumeration-safe", async ({ page }) => {
     await goto(page, "/forgot_password");
     await page.locator('input[name="email"]').fill("unknown@example.test");
     await page.locator('button[type="submit"]').click();
-    await expect(page.locator('[role="status"]')).toContainText(/Supabase Auth is not configured|If an account exists/i);
+    await expect(page.locator('[role="status"]')).toContainText(/Supabase Auth is not configured|If an account exists|Password recovery is temporarily unavailable/i);
   });
 
   test("normal dashboard is protected and Premium application language is absent", async ({ page }) => {

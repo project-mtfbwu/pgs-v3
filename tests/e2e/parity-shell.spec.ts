@@ -4,11 +4,20 @@ const goto = (page: import("@playwright/test").Page, route: string) => page.goto
 
 test("homepage preserves the legacy shell and content order", async ({ page }) => {
   await goto(page, "/");
+  await expect(page.locator('[data-legacy-page="home"]')).toHaveAttribute("data-student-state","anonymous");
   await expect(page.locator("header")).toBeVisible();
   await expect(page.locator("#sidebar")).toHaveCount(1);
   await expect(page.locator(".full-width-img")).toBeVisible();
   await expect(page.getByText("One of the best parts of #PGS?", { exact: false })).toBeVisible();
   await expect(page.locator(".footer-bg")).toHaveCount(1);
+});
+
+test("global security headers and same-origin mutation boundary are active",async({page,request})=>{
+  const response=await page.goto("/",{waitUntil:"domcontentloaded"});
+  expect(response?.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
+  expect(response?.headers()["x-content-type-options"]).toBe("nosniff");
+  const denied=await request.post("/api/auth/logout",{headers:{origin:"https://cross-site.example"}});
+  expect(denied.status()).toBe(403);
 });
 
 test("notification panel, fixed sidebar and drawer retain their legacy states", async ({ page }, testInfo) => {

@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabasePublicConfig } from "@/lib/supabase/config";
+import { validUuid } from "@/lib/http";
 
 export type HomeContent = {
   heroSupport: string;
@@ -40,17 +42,16 @@ export async function getPageContent<TSlug extends keyof PageContentMap>(slug: T
   const preview = (await cookies()).get("pgs_cms_preview")?.value;
   if (preview?.startsWith(`${slug}:`)) {
     const revisionId = preview.slice(slug.length + 1);
-    if (/^[0-9a-f-]{36}$/i.test(revisionId)) {
+    if (validUuid(revisionId)) {
       const server = await createSupabaseServerClient();
       const { data: revision } = await server.from("cms_page_revisions").select("content,cms_pages!inner(slug)").eq("id", revisionId).eq("cms_pages.slug", slug).maybeSingle();
       if (revision?.content && typeof revision.content === "object") return { ...defaultPageContent[slug], ...(revision.content as Partial<PageContentMap[TSlug]>) };
     }
   }
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return defaultPageContent[slug];
+  const config=getSupabasePublicConfig();
+  if(!config)return defaultPageContent[slug];
 
-  const client = createClient(url, key, { auth: { persistSession: false } });
+  const client=createClient(config.url,config.key,{auth:{persistSession:false,autoRefreshToken:false}});
   const { data: cmsPage } = await client.from("cms_pages").select("published_revision_id").eq("slug", slug).eq("status", "published").maybeSingle();
   if (cmsPage?.published_revision_id) {
     const { data: revision } = await client.from("cms_page_revisions").select("content").eq("id", cmsPage.published_revision_id).maybeSingle();

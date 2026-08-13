@@ -6,19 +6,20 @@ import { PremiumComments } from "@/components/premium-comments";
 import { PremiumLockedState } from "@/components/premium-locked-state";
 import { PremiumWorkspaceShell } from "@/components/premium-workspace-shell";
 import { StudentKanbanBoard } from "@/components/student-kanban-board";
-import { getAuthenticatedUser } from "@/lib/auth";
-import { displayName, getOwnAvatarUrl, getOwnProfile } from "@/lib/student-data";
-import { getPremiumStatus, loadPremiumWorkspace, requirePremiumActor } from "@/lib/premium-workspace";
+import { displayName, getOwnAvatarUrl } from "@/lib/student-data";
+import { loadPremiumWorkspace, requirePremiumActor } from "@/lib/premium-workspace";
+import { resolveStudentExperience } from "@/lib/student-experience";
 
 export const metadata: Metadata = { title: "Purple Premium Dashboard" };
 export const dynamic = "force-dynamic";
 
 export default async function PremiumDashboardPage() {
-  const user = await getAuthenticatedUser(); if (!user) redirect("/login?redirect=%2Fdashboard");
-  if (await getPremiumStatus(user.id) !== "active") return <PremiumLockedState feature="dashboard" />;
+  const state=await resolveStudentExperience();if(state.kind==="anonymous")redirect("/login?redirect=%2Fdashboard");
+  const user=state.user;const profile=state.profile;const avatarUrl=await getOwnAvatarUrl(profile.avatar_path);
+  if (state.kind!=="authenticated_premium") return <PremiumLockedState feature="dashboard" name={state.name} avatarUrl={avatarUrl}/>;
   await requirePremiumActor();
-  const [profile, workspace] = await Promise.all([getOwnProfile(user), loadPremiumWorkspace(user.id)]);
-  const avatarUrl = await getOwnAvatarUrl(profile.avatar_path); const name = displayName(profile, user);
+  const workspace=await loadPremiumWorkspace(user.id);
+  const name = displayName(profile, user);
   const dashboard = workspace.premiumProfile;
   return <PremiumWorkspaceShell name={name} avatarUrl={avatarUrl}>
     <section className="pt-0 mobile-student-cart about-section half-section overlap-height position-relative overflow-hidden pl-100px">

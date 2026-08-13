@@ -1,10 +1,8 @@
 import { LegacyPage } from "@/components/legacy-page";
 import { applyPublicContent, getPublicContent, type PublicContentSlug } from "@/lib/public-content";
 import { applyPremiumBusinessRule } from "@/lib/premium-business-rule";
-import { getAuthenticatedUser } from "@/lib/auth";
 import { applyAuthenticatedShell } from "@/lib/account-shell";
-import { displayName, getOwnProfile } from "@/lib/student-data";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { resolveStudentExperience } from "@/lib/student-experience";
 
 type Props<TSlug extends PublicContentSlug> = {
   slug: TSlug;
@@ -14,12 +12,9 @@ type Props<TSlug extends PublicContentSlug> = {
 export async function PublicLegacyPage<TSlug extends PublicContentSlug>({ slug, html }: Props<TSlug>) {
   const content = await getPublicContent(slug);
   let rendered = applyPremiumBusinessRule(applyPublicContent(slug, html, content));
-  const user = await getAuthenticatedUser();
-  if (user) {
-    const profile = await getOwnProfile(user);
-    const supabase = await createSupabaseServerClient();
-    const { count } = await supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null);
-    rendered = applyAuthenticatedShell(rendered, { name: displayName(profile, user), unreadCount: count ?? 0 });
+  const state = await resolveStudentExperience();
+  if (state.kind!=="anonymous") {
+    rendered = applyAuthenticatedShell(rendered, { name:state.name, unreadCount:state.unreadCount, premium:state.kind==="authenticated_premium" });
   }
-  return <LegacyPage page={slug} html={rendered} />;
+  return <LegacyPage page={slug} html={rendered} studentState={state.kind} />;
 }

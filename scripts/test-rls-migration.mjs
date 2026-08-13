@@ -7,7 +7,10 @@ const premiumMigration = await readFile(new URL("../supabase/migrations/20260813
 const adminMigration = await readFile(new URL("../supabase/migrations/202608130004_admin_cms.sql", import.meta.url), "utf8");
 const adminContentMigration = await readFile(new URL("../supabase/migrations/202608130005_admin_content_completion.sql", import.meta.url), "utf8");
 const staffProfileMigration = await readFile(new URL("../supabase/migrations/202608130006_staff_self_profile.sql", import.meta.url), "utf8");
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}`;
+const hardeningMigration = await readFile(new URL("../supabase/migrations/202608130007_production_hardening.sql", import.meta.url), "utf8");
+const rateLimitFixMigration = await readFile(new URL("../supabase/migrations/202608130008_rate_limit_timestamp_fix.sql", import.meta.url), "utf8");
+const mentorLifecycleMigration = await readFile(new URL("../supabase/migrations/202608130009_mentor_role_lifecycle.sql", import.meta.url), "utf8");
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -59,10 +62,22 @@ const required = [
   "staff read lead notes",
   "marketing-public",
   "cms-previews",
-  "update_staff_display_name"
+  "update_staff_display_name",
+  "consume_request_rate_limit",
+  "private.can_manage_premium_student",
+  "staff_role_assignments_one_active_role_idx",
+  "delete_own_student_document",
+  "staff_student_directory",
+  "save_cms_revision",
+  "prevent_audit_history_mutation",
+  "students upload own avatars\" on storage.objects",
+  "grant update(read_at) on public.notifications",
+  "end_ineligible_mentor_assignments"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
 if (missing.length) throw new Error(`RLS migration is missing: ${missing.join(", ")}`);
 if (/service[_-]?role[_-]?key|password\s*=|smtp|oauth.*secret|eyJ[a-zA-Z0-9_-]{20,}/i.test(migration)) throw new Error("Potential secret or privileged credential found in migration");
+if (!hardeningMigration.includes('drop policy if exists "students upload own avatars"')) throw new Error("Direct avatar write policy was not removed");
+if (/grant execute on function public\.consume_request_rate_limit\(text,text\) to (?:anon|authenticated)/i.test(hardeningMigration)) throw new Error("Rate-limit RPC must remain server-only");
 console.log("RLS migration static checks passed");

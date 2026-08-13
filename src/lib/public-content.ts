@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabasePublicConfig } from "@/lib/supabase/config";
+import { validUuid } from "@/lib/http";
 
 export type SeoSlots = {
   seoTitle: string;
@@ -163,17 +165,16 @@ export async function getPublicContent<TSlug extends PublicContentSlug>(slug: TS
   const preview = (await cookies()).get("pgs_cms_preview")?.value;
   if (preview?.startsWith(`${slug}:`)) {
     const revisionId = preview.slice(slug.length + 1);
-    if (/^[0-9a-f-]{36}$/i.test(revisionId)) {
+    if (validUuid(revisionId)) {
       const server = await createSupabaseServerClient();
       const { data: revision } = await server.from("cms_page_revisions").select("content,cms_pages!inner(slug)").eq("id", revisionId).eq("cms_pages.slug", slug).maybeSingle();
       if (revision?.content) return mergeKnownStringSlots(fallback, revision.content) as PublicContentMap[TSlug];
     }
   }
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return fallback;
+  const config=getSupabasePublicConfig();
+  if(!config)return fallback;
 
-  const client = createClient(url, key, { auth: { persistSession: false } });
+  const client=createClient(config.url,config.key,{auth:{persistSession:false,autoRefreshToken:false}});
   const { data: page } = await client.from("cms_pages").select("published_revision_id").eq("slug", slug).eq("status", "published").maybeSingle();
   if (!page?.published_revision_id) return fallback;
   const { data: revision } = await client.from("cms_page_revisions").select("content").eq("id", page.published_revision_id).maybeSingle();

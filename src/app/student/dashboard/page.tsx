@@ -2,28 +2,27 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { PremiumWorkspaceShell } from "@/components/premium-workspace-shell";
-import { requireAuthenticatedUser } from "@/lib/auth";
-import { displayName, getOwnAvatarUrl, getOwnProfile } from "@/lib/student-data";
+import { displayName, getOwnAvatarUrl } from "@/lib/student-data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getPremiumStatus } from "@/lib/premium-workspace";
+import { resolveStudentExperience } from "@/lib/student-experience";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = { title: "Student Dashboard" };
 export const dynamic = "force-dynamic";
 
 export default async function StudentDashboardPage() {
-  const user = await requireAuthenticatedUser("/student/dashboard");
-  const profile = await getOwnProfile(user);
+  const state=await resolveStudentExperience();if(state.kind==="anonymous")redirect("/login?redirect=%2Fstudent%2Fdashboard");const user=state.user;const profile=state.profile;
   const avatarUrl = await getOwnAvatarUrl(profile.avatar_path);
   const supabase = await createSupabaseServerClient();
-  const [programs, courses, notifications, premiumStatus] = await Promise.all([
+  const [programs, courses, notifications] = await Promise.all([
     supabase.from("saved_programs").select("program_id", { count: "exact", head: true }),
     supabase.from("saved_courses").select("course_id", { count: "exact", head: true }),
-    supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null),
-    getPremiumStatus(user.id)
+    supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null)
   ]);
+  const premiumStatus=state.premiumStatus;
   const complete = Boolean(profile.profile_completed_at);
   const name = displayName(profile, user);
-  return <PremiumWorkspaceShell name={name} avatarUrl={avatarUrl}>
+  return <PremiumWorkspaceShell name={name} avatarUrl={avatarUrl} stateKind={state.kind}>
     <section className="pgs-dashboard-identity card-box-avatar mobile-student-cart">
       <div className="avatar-info"><div className="avatar-img"><Image src={avatarUrl} alt="" width={68} height={83} unoptimized /><div className="avatar_name"><h5>{name}</h5><span>{user.email}</span></div></div><div className="title-info"><h5>#purplePremium</h5><h6>{profile.study_level ? `${profile.study_level} PATHWAY` : "STUDENT"}</h6></div></div>
       <div className="avatar-heading-right-box"><h4><Link href={premiumStatus === "active" ? "/dashboard" : "/purplepremiumhome"}>{premiumStatus === "active" ? <>OPEN<br />PREMIUM</> : <>PURCHASE TO<br />UNLOCK</>}</Link></h4></div>

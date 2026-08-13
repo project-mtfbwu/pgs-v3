@@ -12,3 +12,5 @@ pnpm dev
 ```
 
 The legacy ZIP and SQL snapshots are deliberately not part of this repository. Usage-traced public assets are pinned by SHA-256 in `legacy-assets.json`; `pnpm assets:verify` validates the recovered set. Production catalog/content data, private uploads and credentials are not committed.
+
+Production deployment must also pass `pnpm config:check`; the complete hardening evidence, required environment values, and remaining operational gates are in [`docs/batch-5-production-hardening-report.md`](docs/batch-5-production-hardening-report.md).

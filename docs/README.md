@@ -8,6 +8,8 @@ Batch 3 outcome: [`batch-3-premium-workspace-report.md`](batch-3-premium-workspa
 
 Batch 4 outcome: [`batch-4-admin-cms-report.md`](batch-4-admin-cms-report.md). Complete 228-endpoint admin disposition: [`batch-4-admin-route-status.md`](batch-4-admin-route-status.md).
 
+Batch 5 outcome: [`batch-5-production-hardening-report.md`](batch-5-production-hardening-report.md). Role/domain review: [`batch-5-authorization-matrix.md`](batch-5-authorization-matrix.md).
+
 Audit source: `project-mtfbwu/purpleguide` at tree `fcca51b0db31bf5c59a4b4f00f0bd12b77fb0470` (read only).
 
 Audit date: 2026-08-12.

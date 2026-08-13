@@ -65,14 +65,26 @@ export function sanitizeAdminValues(entity: AdminEntity, input: Record<string, u
   for (const field of entity.fields) {
     if (!(field.key in input)) { if (field.required && !partial) throw new Error(`${field.label} is required.`); continue; }
     const raw = input[field.key];
-    if (field.type === "boolean") values[field.key] = raw === true;
-    else if (field.type === "number") values[field.key] = raw === "" || raw == null ? null : Number(raw);
+    if (field.type === "boolean") {
+      if(typeof raw!=="boolean")throw new Error(`${field.label} must be true or false.`);
+      values[field.key]=raw;
+    }
+    else if (field.type === "number") {
+      if(raw===""||raw==null){values[field.key]=null;continue;}
+      const numeric=Number(raw);
+      if(!Number.isSafeInteger(numeric)||numeric<0)throw new Error(`${field.label} must be a non-negative whole number.`);
+      values[field.key]=numeric;
+    }
     else {
       const value = typeof raw === "string" ? raw.trim() : "";
       if (field.required && !value) throw new Error(`${field.label} is required.`);
       if (field.max && value.length > field.max) throw new Error(`${field.label} is too long.`);
       if (field.options && value && !field.options.includes(value)) throw new Error(`${field.label} is invalid.`);
       if (field.type === "url" && value && !/^https?:\/\//i.test(value) && !value.startsWith("/")) throw new Error(`${field.label} must be a safe URL.`);
+      if(field.type==="url"&&value.startsWith("//"))throw new Error(`${field.label} must be a safe URL.`);
+      if(field.key==="slug"&&value&&!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value))throw new Error(`${field.label} must use lowercase letters, numbers, and hyphens.`);
+      if(field.key.endsWith("_asset_id")&&value&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value))throw new Error(`${field.label} must be a valid media asset ID.`);
+      if((field.type==="date"||field.type==="datetime")&&value&&Number.isNaN(Date.parse(value)))throw new Error(`${field.label} must be a valid date.`);
       values[field.key] = value || null;
     }
   }

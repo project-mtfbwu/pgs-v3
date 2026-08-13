@@ -51,6 +51,19 @@ export async function proxy(request: NextRequest) {
   const destination = legacyDestination(request);
   if (destination) return NextResponse.redirect(destination, 308);
 
+  if (request.nextUrl.pathname.startsWith("/api/") && !["GET","HEAD","OPTIONS"].includes(request.method)
+    && request.nextUrl.pathname !== "/api/premium/purchase") {
+    const origin = request.headers.get("origin");
+    const fetchSite = request.headers.get("sec-fetch-site");
+    const forwardedHost=request.headers.get("x-forwarded-host")??request.headers.get("host");
+    const forwardedProtocol=request.headers.get("x-forwarded-proto")??request.nextUrl.protocol.replace(":","");
+    const trustedOrigins=new Set([request.nextUrl.origin,forwardedHost?`${forwardedProtocol}://${forwardedHost}`:""]);
+    try{if(process.env.NEXT_PUBLIC_SITE_URL)trustedOrigins.add(new URL(process.env.NEXT_PUBLIC_SITE_URL).origin);}catch{/* Invalid deployment URL is rejected by config:check. */}
+    if (fetchSite === "cross-site" || (origin && fetchSite!=="same-origin"&&!trustedOrigins.has(origin))) {
+      return NextResponse.json({ ok: false, message: "Cross-site mutation denied." }, { status: 403 });
+    }
+  }
+
   let response = NextResponse.next({ request });
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
