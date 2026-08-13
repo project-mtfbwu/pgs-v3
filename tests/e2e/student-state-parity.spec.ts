@@ -13,6 +13,8 @@ test.describe("authoritative standard-student presentation",()=>{
     await expect(page.locator('[data-legacy-page="home"]')).toHaveAttribute("data-student-state","authenticated_standard");
     await expect(page.locator(".pgs-auth-account")).toBeVisible();
     await expect(page.locator('a.btn-login',{hasText:"Login"})).toHaveCount(0);
+    await page.locator('.pgs-auth-account[href="/student/dashboard"]').click();
+    await expect(page).toHaveURL(/\/student\/dashboard$/);
   });
 
   test("Premium progress and documents retain the logged-in shell while locked",async({page})=>{
@@ -33,6 +35,12 @@ test.describe("authoritative Premium presentation",()=>{
     await page.goto("/dashboard");await expect(page.getByText(/Purple Premium access is locked/i)).toHaveCount(0);await expect(page.locator(".premium-kanban")).toBeVisible();
     await page.goto("/feed_track_progress");await expect(page.locator(".premium-kanban")).toBeVisible();
     await page.goto("/upload_your_doc");await expect(page.getByText(/Purple Premium access is locked/i)).toHaveCount(0);
+  });
+  test("Premium landing uses the active entitlement CTA",async({page})=>{
+    await page.goto("/purplepremiumhome");
+    await expect(page.locator('[data-legacy-page="purplepremiumhome"]')).toHaveAttribute("data-student-state","authenticated_premium");
+    await expect(page.getByText(/Open Your\s+Premium\s+Dashboard/i).first()).toBeVisible();
+    await expect(page.getByText(/Yet to\s+Unlock Full\s+Access/i)).toHaveCount(0);
   });
 });
 

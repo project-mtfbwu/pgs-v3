@@ -1,0 +1,31 @@
+Batch 6 exact changed-file manifest
+Branch: agent/full-site-migration
+Commit/push: intentionally not performed
+Database migrations: none; 001-009 unchanged
+
+NEW
+docs/batch-6-file-manifest.txt — this exact manifest
+docs/batch-6-master-route-workflow-matrix.md — final 312-endpoint and cross-workflow dispositions
+docs/batch-6-owner-review.md — dormant, missing-source, integration, and policy decisions
+docs/batch-6-parity-reconciliation-report.md — final audit/fix/test/visual results
+src/lib/public-catalog.test.ts — relational program/course/event HTML parity tests
+src/lib/public-catalog.ts — published relational program/course/event public hydration and escaping
+
+MODIFIED
+src/app/admin/students/[studentId]/page.tsx — passes full shared-workspace records to staff operations UI
+src/app/countriesusa/page.tsx — central three-state resolver and authenticated retained shell
+src/app/globals.css — retained relational catalog/event presentation and snapshot replacement selectors
+src/app/programsfull/program/[id]/page.tsx — typed program/course published-detail selection
+src/app/purpleevents/session/[id]/page.tsx — selected published event-detail hydration
+src/components/legacy-page.tsx — safe client navigation, save/unsave, journey steps, and shared modal interactions
+src/components/public-legacy-page.tsx — centralized state plus relational catalog/event orchestration
+src/components/staff-kanban-board.tsx — task title/details/due date/stage/order staff editing
+src/components/staff-workspace-controls.tsx — complete staff workspace create/update/delete UI
+src/lib/account-shell.test.ts — authenticated standard/Premium retained-shell CTA regression
+src/lib/account-shell.ts — authenticated profile and Premium entitlement CTA transforms
+src/proxy.ts — case-insensitive legacy controller/method alias reconciliation and loop guard
+tests/e2e/public-pages.spec.ts — legacy alias, footer modal, and study-journey interaction regressions
+tests/e2e/student-state-parity.spec.ts — strengthened standard/Premium navigation and landing-state coverage
+
+TOTAL
+20 changed files: 6 new, 14 modified, 0 deleted.

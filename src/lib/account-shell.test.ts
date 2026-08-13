@@ -13,4 +13,16 @@ describe("authenticated legacy shell", () => {
     expect(result).toContain("Logout");
     expect(result).not.toContain('<Student "A">');
   });
+
+  it("reconciles retained profile and Premium CTAs with entitlement", () => {
+    const html = '<span><a href="/Login">Sign in</a> to see your profile</span><a href="/Login?redirect=purplepremiumhome%3FopenPremium%3D1" class="unlock">Yet to <br> Unlock Full <br> Access</a>';
+    const standard = applyAuthenticatedShell(html, { name: "Student", unreadCount: 0, premium: false });
+    expect(standard).toContain('href="/student/profile">View your profile</a>');
+    expect(standard).toContain('href="/purplepremiumhome#purchase"');
+    expect(standard).toContain("Purchase to <br> Unlock Full <br> Access");
+    const premium = applyAuthenticatedShell(html, { name: "Premium Student", unreadCount: 0, premium: true });
+    expect(premium).toContain('href="/dashboard"');
+    expect(premium).toContain("Open Your <br> Premium <br> Dashboard");
+    expect(premium).not.toContain("Yet to");
+  });
 });

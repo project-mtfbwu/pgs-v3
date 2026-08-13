@@ -114,6 +114,23 @@ function runLegacyFormSubmission(form: HTMLFormElement, page: string, navigate: 
   });
 }
 
+function moveJourneyStep(button: HTMLButtonElement, direction: 1 | -1): boolean {
+  const form = button.closest("form");
+  if (!form) return false;
+  const steps = Array.from(form.querySelectorAll<HTMLElement>(".step"));
+  if (steps.length < 2) return false;
+  const current = button.closest<HTMLElement>(".step") ?? steps.find((step) => !step.classList.contains("hidden"));
+  if (!current) return false;
+  const next = steps[steps.indexOf(current) + direction];
+  if (!next) return false;
+  current.classList.add("hidden");
+  current.style.display = "none";
+  next.classList.remove("hidden");
+  next.style.removeProperty("display");
+  next.querySelector<HTMLElement>("input, select, textarea")?.focus();
+  return true;
+}
+
 async function submitModalPanel(modal: HTMLElement, page: string, button: HTMLButtonElement) {
   const fields: Record<string, string> = {};
   modal.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("input, select, textarea").forEach((input, index) => {
@@ -157,10 +174,13 @@ async function saveCatalogItem(target: HTMLElement) {
   const id = Number(programId ?? courseId);
   if (!Number.isSafeInteger(id) || id <= 0) return;
   const kind = programId ? "programs" : "courses";
-  const response = await fetch(`/api/student/saved/${kind}/${id}`, { method: "POST" });
+  const saved=target.classList.contains("is-saved")||owner.classList.contains("is-saved");
+  const response = await fetch(`/api/student/saved/${kind}/${id}`, { method: saved?"DELETE":"POST" });
   if (response.ok) {
-    target.classList.add("is-saved");
-    target.setAttribute("aria-label", "Saved");
+    target.classList.toggle("is-saved",!saved);
+    owner.classList.toggle("is-saved",!saved);
+    target.setAttribute("aria-label", saved?"Save":"Remove from saved");
+    if(target.matches("button"))target.textContent=saved?"♡":"♥";
   }
 }
 
@@ -210,6 +230,24 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
         const next = new URLSearchParams(window.location.search).get("redirect") || "/student/dashboard";
         router.push(`/auth/google?next=${encodeURIComponent(next)}`);
         return;
+      }
+
+      if (button?.classList.contains("btn-back") && moveJourneyStep(button, -1)) {
+        event.preventDefault();
+        return;
+      }
+
+      if (button?.classList.contains("btn-next")) {
+        const form = button.closest<HTMLFormElement>("form");
+        if (button.id === "studyJourneySubmitBtn" && form) {
+          event.preventDefault();
+          runLegacyFormSubmission(form, page, (path) => router.push(path));
+          return;
+        }
+        if (moveJourneyStep(button, 1)) {
+          event.preventDefault();
+          return;
+        }
       }
 
       if (button?.querySelector('img[src*="toggle-lines"]')) {
@@ -288,6 +326,15 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
         return;
       }
 
+      if (target.closest(".btn-join")) {
+        const modal = root.querySelector<HTMLElement>("#joinPremiumModal");
+        if (modal) {
+          event.preventDefault();
+          setOpen(modal, true);
+        }
+        return;
+      }
+
       if (target.closest('[data-text="Request it here"]')) {
         const modal = root.querySelector<HTMLElement>("#applicantPremiumModal");
         if (modal) {
@@ -332,6 +379,13 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
 
       if (target.closest(".premium-modal-close, .pgs-modal-close, .close-btn, [data-dismiss='modal']") || target.classList.contains("premium-modal-overlay")) {
         setOpen(target.closest<HTMLElement>(".premium-modal-overlay, .pgs-login-popup-overlay"), false);
+        return;
+      }
+
+      const rawHref = link?.getAttribute("href");
+      if (link && rawHref?.startsWith("/") && !rawHref.startsWith("//") && !link.hasAttribute("download") && link.target !== "_blank" && event instanceof MouseEvent && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+        event.preventDefault();
+        router.push(rawHref);
       }
     }, options);
 

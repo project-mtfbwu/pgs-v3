@@ -74,6 +74,37 @@ test("scholarship modal opens, validates, and retains its confirmation surface",
   await expect.poll(async()=>await page.locator("#SCHOapplicantPremiumModal2").evaluate((element)=>getComputedStyle(element).display)==="flex"||/temporarily unavailable/i.test(await modal.locator('[role="status"], [data-form-status]').first().textContent()??"")).toBe(true);
 });
 
+test("shared footer lead modal and study-journey steps retain their interactions", async ({ page }) => {
+  await goto(page, "/");
+  await page.locator(".btn-join").first().click();
+  await expect(page.locator("#joinPremiumModal")).toHaveCSS("display", "flex");
+  await page.locator("#joinPremiumModal .close-btn:visible").first().click();
+  const form = page.locator("form:has(.step .btn-next)").first();
+  const first = form.locator(".step").first();
+  const second = form.locator(".step").nth(1);
+  await expect(first).toBeVisible();
+  await first.locator(".btn-next").click();
+  await expect(first).toBeHidden();
+  await expect(second).toBeVisible();
+  await second.locator(".btn-back").click();
+  await expect(first).toBeVisible();
+});
+
+test("retained legacy aliases resolve to canonical V3 routes", async ({ request }, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "route aliases are viewport independent");
+  const cases = [
+    ["/Home/defaultdashboard", "/student/dashboard"],
+    ["/home/purplepremium_overview", "/purplepremiumhome"],
+    ["/Purplepremiumhome/purplepremiumhome", "/purplepremiumhome"],
+    ["/Preview/event/10", "/purpleevents/session/10"]
+  ] as const;
+  for (const [legacy, expected] of cases) {
+    const response = await request.get(legacy, { maxRedirects: 0 });
+    expect(response.status(), legacy).toBeGreaterThanOrEqual(300);
+    expect(response.headers().location, legacy).toContain(expected);
+  }
+});
+
 test("search endpoint enforces minimum query length and returns a stable shape", async ({ request }) => {
   const response = await request.get("/Search/autocomplete?q=a&limit=99");
   expect(response.ok()).toBeTruthy();

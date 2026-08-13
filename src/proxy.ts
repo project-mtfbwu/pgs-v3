@@ -2,48 +2,59 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const legacyControllers: Record<string, string> = {
-  About: "/about", Change_password: "/change_password", Contact: "/contact",
-  Countriesaus: "/countriesaus", Countriescanada: "/countriescanada", Countrieseurope: "/countrieseurope",
-  Countriesfrance: "/countriesfrance", Countriesgermany: "/countriesgermany", Countriesmauritius: "/countriesmauritius",
-  Countriesnz: "/countriesnz", Countriesothers: "/countriesothers", Countriesuk: "/countriesuk", Countriesusa: "/countriesusa",
-  Cvreadyprogram: "/cvreadyprogram", Error_404: "/error_404", Explorecountries: "/explorecountries", Finance: "/finance",
-  Dashboard: "/dashboard", Feed_track_progress: "/feed_track_progress", Upload_your_doc: "/upload_your_doc",
-  Forgot_password: "/forgot_password", Home: "/", Login: "/login", Programsfull: "/programsfull", Purpleamc: "/purpleamc",
-  Purpleboard: "/purpleboard", Purpleevents: "/purpleevents", Purplenonmedical: "/purplenonmedical", Purpleplab: "/purpleplab",
-  Purplepremiumhome: "/purplepremiumhome", Purpleusme: "/purpleusme", Reset_password: "/reset_password", Saved: "/saved",
-  Scholarship: "/scholarship", Simplehome: "/simplehome", Singup: "/singup", Studentresources: "/studentresources",
-  Unitieup: "/unitieup", Usmlerotation: "/usmlerotation", Notifications: "/notifications"
+  about: "/about", change_password: "/change_password", contact: "/contact",
+  countriesaus: "/countriesaus", countriescanada: "/countriescanada", countrieseurope: "/countrieseurope",
+  countriesfrance: "/countriesfrance", countriesgermany: "/countriesgermany", countriesmauritius: "/countriesmauritius",
+  countriesnz: "/countriesnz", countriesothers: "/countriesothers", countriesuk: "/countriesuk", countriesusa: "/countriesusa",
+  cvreadyprogram: "/cvreadyprogram", error_404: "/error_404", explorecountries: "/explorecountries", finance: "/finance",
+  dashboard: "/dashboard", feed_track_progress: "/feed_track_progress", upload_your_doc: "/upload_your_doc",
+  forgot_password: "/forgot_password", home: "/", login: "/login", programsfull: "/programsfull", purpleamc: "/purpleamc",
+  purpleboard: "/purpleboard", purpleevents: "/purpleevents", purplenonmedical: "/purplenonmedical", purpleplab: "/purpleplab",
+  purplepremiumhome: "/purplepremiumhome", purpleusme: "/purpleusme", reset_password: "/reset_password", saved: "/saved",
+  scholarship: "/scholarship", simplehome: "/simplehome", singup: "/singup", studentresources: "/studentresources",
+  unitieup: "/unitieup", usmlerotation: "/usmlerotation", notifications: "/notifications"
 };
 
 const exactLegacyRoutes: Record<string, string> = {
-  "/Home/user_dashboard": "/student/dashboard", "/Home/defaultDashboard": "/student/dashboard",
-  "/Home/user_profile": "/student/profile", "/Login/logout": "/logout",
-  "/Home/update_profile": "/api/student/profile", "/Login/login": "/login", "/Login/register": "/login",
-  "/Forgot_password/forgot_password": "/forgot_password", "/Reset_password/reset_password": "/reset_password",
-  "/Change_password/change_password": "/change_password", "/Singup/singup": "/singup",
-  "/Cvreadyprogram/toggle_save": "/saved", "/Saved/toggle_save": "/saved", "/Saved/toggle_save_course": "/saved",
-  "/Notifications/open": "/notifications", "/Notifications/delete": "/notifications",
-  "/Googlelogins/index": "/auth/google", "/Googlelogins/googleLogin": "/auth/google", "/Googlelogins/googleCallback": "/auth/callback",
-  "/Saved/index": "/saved", "/Notifications/clear_all": "/notifications"
+  "/home/user_dashboard": "/student/dashboard", "/home/defaultdashboard": "/student/dashboard",
+  "/home/user_profile": "/student/profile", "/home/purplepremium_overview": "/purplepremiumhome", "/home/apply_purplepremium": "/purplepremiumhome",
+  "/login/logout": "/logout", "/home/update_profile": "/api/student/profile", "/login/login": "/login", "/login/register": "/login",
+  "/forgot_password/forgot_password": "/forgot_password", "/reset_password/reset_password": "/reset_password",
+  "/change_password/change_password": "/change_password", "/singup/singup": "/singup",
+  "/cvreadyprogram/toggle_save": "/saved", "/saved/toggle_save": "/saved", "/saved/toggle_save_course": "/saved",
+  "/notifications/open": "/notifications", "/notifications/delete": "/notifications",
+  "/googlelogins/index": "/auth/google", "/googlelogins/googlelogin": "/auth/google", "/googlelogins/googlecallback": "/auth/callback",
+  "/saved/index": "/saved", "/notifications/clear_all": "/notifications",
+  "/purplepremiumhome/purplepremiumhome": "/purplepremiumhome", "/purplepremium_offer/data": "/purplepremiumhome"
 };
 
 const protectedPaths = ["/student", "/saved", "/notifications", "/singup", "/change_password", "/dashboard", "/feed_track_progress", "/upload_your_doc", "/mentor", "/admin", "/cms"];
 
 function legacyDestination(request: NextRequest): URL | null {
-  if (/^\/Notifications\/(?:open|delete)(?:\/|$)/.test(request.nextUrl.pathname)) {
+  if (/^\/Notifications\/(?:open|delete)(?:\/|$)/i.test(request.nextUrl.pathname)) {
     const url = request.nextUrl.clone(); url.pathname = "/notifications"; return url;
   }
-  if (/^\/(?:Saved\/(?:toggle_save|toggle_save_course)|Cvreadyprogram\/toggle_save)(?:\/|$)/.test(request.nextUrl.pathname)) {
+  if (/^\/(?:Saved\/(?:toggle_save|toggle_save_course)|Cvreadyprogram\/toggle_save)(?:\/|$)/i.test(request.nextUrl.pathname)) {
     const url = request.nextUrl.clone(); url.pathname = "/saved"; return url;
   }
-  const exact = exactLegacyRoutes[request.nextUrl.pathname];
+  const exact = exactLegacyRoutes[request.nextUrl.pathname.toLowerCase()];
   if (exact) { const url = request.nextUrl.clone(); url.pathname = exact; return url; }
   const segments = request.nextUrl.pathname.split("/").filter(Boolean);
-  const destination = segments[0] ? legacyControllers[segments[0]] : undefined;
+  if (segments[0]?.toLowerCase() === "preview" && segments[1] && segments[2]) {
+    const kind = segments[1].toLowerCase();
+    if (kind === "event" || kind === "course") {
+      const url = request.nextUrl.clone();
+      url.pathname = kind === "event" ? `/purpleevents/session/${segments[2]}` : `/programsfull/program/${segments[2]}`;
+      return url;
+    }
+  }
+  const destination = segments[0] ? legacyControllers[segments[0].toLowerCase()] : undefined;
   if (!destination) return null;
   const rest = segments.slice(1).filter((segment, index) => !(index === 0 && segment === "index"));
   const url = request.nextUrl.clone();
-  url.pathname = destination === "/" ? `/${rest.join("/")}` : `${destination}${rest.length ? `/${rest.join("/")}` : ""}`;
+  const targetPath = destination === "/" ? `/${rest.join("/")}` : `${destination}${rest.length ? `/${rest.join("/")}` : ""}`;
+  if (request.nextUrl.pathname === targetPath) return null;
+  url.pathname = targetPath;
   return url;
 }
 
