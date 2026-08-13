@@ -1,0 +1,63 @@
+# Exact Batch 2 worktree file manifest
+# Relative to the approved Batch 1 checkpoint in this worktree.
+# Status is the two-character Git porcelain status.
+?? .env.example
+ M .gitignore
+?? docs/batch-2-auth-student-report.md
+?? docs/batch-2-file-manifest.txt
+?? docs/batch-2-route-status.md
+ M docs/legacy-student-map.md
+ M docs/public-route-status.md
+ M docs/README.md
+ M docs/security-remediation.md
+ M next.config.ts
+ M package.json
+ M pnpm-lock.yaml
+ M scripts/test-rls-migration.mjs
+?? scripts/write-batch-2-manifest.mjs
+?? src/app/api/auth/change-password/route.ts
+?? src/app/api/auth/forgot-password/route.ts
+?? src/app/api/auth/login/route.ts
+?? src/app/api/auth/logout/route.ts
+?? src/app/api/auth/register/route.ts
+?? src/app/api/auth/reset-password/route.ts
+?? src/app/api/student/avatar/route.ts
+?? src/app/api/student/notifications/[id]/route.ts
+?? src/app/api/student/notifications/route.ts
+?? src/app/api/student/profile/route.ts
+?? src/app/api/student/saved/[kind]/[id]/route.ts
+?? src/app/api/student/student-routes.test.ts
+?? src/app/auth/callback/route.ts
+?? src/app/auth/google/route.ts
+ M src/app/change_password/page.tsx
+ M src/app/globals.css
+ M src/app/login/page.tsx
+?? src/app/logout/page.tsx
+?? src/app/notifications/page.tsx
+?? src/app/saved/page.tsx
+ M src/app/singup/page.tsx
+?? src/app/student/dashboard/page.tsx
+?? src/app/student/profile/page.tsx
+ M src/components/legacy-page.tsx
+?? src/components/notification-list.tsx
+?? src/components/profile-form.tsx
+ M src/components/public-legacy-page.tsx
+?? src/components/saved-list.tsx
+?? src/components/student-shell.tsx
+?? src/lib/account-shell.test.ts
+?? src/lib/account-shell.ts
+?? src/lib/auth.test.ts
+?? src/lib/auth.ts
+?? src/lib/http.ts
+?? src/lib/student-data.ts
+?? src/lib/student-validation.test.ts
+?? src/lib/student-validation.ts
+?? src/lib/supabase/config.ts
+?? src/lib/supabase/server.ts
+ M src/proxy.ts
+?? supabase/migrations/202608130002_auth_student.sql
+?? supabase/tests/003_auth_student_rls.sql
+?? tests/e2e/auth-student.spec.ts
+ M tests/e2e/parity-shell.spec.ts
+ M tests/e2e/public-pages.spec.ts
+ M tests/e2e/visual-parity.spec.ts

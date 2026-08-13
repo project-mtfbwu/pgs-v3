@@ -1,6 +1,9 @@
 .DS_Store
 node_modules/
 .pnpm-store/
+.env
+.env.*
+!.env.example
 .next/
 out/
 dist/

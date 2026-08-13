@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+const goto = (page: import("@playwright/test").Page, route: string) => page.goto(route, { waitUntil: "domcontentloaded" });
+
 const publicRoutes = [
   "/about", "/contact", "/countriesaus", "/countriescanada", "/countrieseurope", "/countriesfrance",
   "/countriesgermany", "/countriesmauritius", "/countriesnz", "/countriesothers", "/countriesuk",
@@ -21,7 +23,7 @@ test("every implemented public route returns a V3 screen", async ({ request }, t
 });
 
 test("destination pages retain page-specific country copy and filter tabs", async ({ page }) => {
-  await page.goto("/countriescanada");
+  await goto(page, "/countriescanada");
   await expect(page.getByText("Comprehensive Guide to Studying in Canada", { exact: true })).toBeVisible();
   const studyCost = page.locator('[data-filter=".tab_study_cost"]').first();
   await studyCost.click();
@@ -30,25 +32,25 @@ test("destination pages retain page-specific country copy and filter tabs", asyn
 });
 
 test("distinct information and pathway layouts remain present", async ({ page }) => {
-  await page.goto("/about");
+  await goto(page, "/about");
   await expect(page.getByText("Why 98% of Our Students Get Accepted", { exact: true })).toBeVisible();
-  await page.goto("/finance");
+  await goto(page, "/finance");
   await expect(page.getByText("Your study plan’s ready. Is your funding too ?", { exact: false })).toBeVisible();
-  await page.goto("/usmlerotation");
+  await goto(page, "/usmlerotation");
   await expect(page.getByText("USA Clinical Rotations", { exact: true }).first()).toBeVisible();
 });
 
 test("catalog listing and detail routes preserve their unique structures", async ({ page }) => {
-  await page.goto("/cvreadyprogram");
+  await goto(page, "/cvreadyprogram");
   await expect(page.getByText("Courses That Actually Count", { exact: true })).toBeVisible();
-  await page.goto("/purpleevents/session/10");
+  await goto(page, "/purpleevents/session/10");
   await expect(page.getByText("What We’ll Cover in This Session", { exact: false }).first()).toBeVisible();
-  await page.goto("/programsfull/program/preview");
+  await goto(page, "/programsfull/program/preview");
   await expect(page.getByText("explore Program Highlights", { exact: true })).toBeVisible();
 });
 
 test("contact form submits through the secure V3 handler", async ({ page }) => {
-  await page.goto("/contact");
+  await goto(page, "/contact");
   await expect(page.locator("[data-legacy-page]")).toHaveAttribute("data-interactions-ready", "true");
   const form = page.locator("#contactForm");
   await expect(form).toHaveAttribute("data-v3-submit-ready", "true");
@@ -62,7 +64,7 @@ test("contact form submits through the secure V3 handler", async ({ page }) => {
 });
 
 test("scholarship modal opens, validates, and retains its confirmation surface", async ({ page }) => {
-  await page.goto("/scholarship");
+  await goto(page, "/scholarship");
   await expect(page.locator("[data-legacy-page]")).toHaveAttribute("data-interactions-ready", "true");
   await page.locator(".graidant-border.cursor-pointer").first().click();
   const modal = page.locator("#SCHOapplicantPremiumModal");

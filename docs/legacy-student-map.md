@@ -58,3 +58,7 @@ Counselors may access student rows only through an active assignment relationshi
 ## Required tests
 
 Signup/login/logout, redirect preservation, OAuth callback, profile completion/edit, save/unsave course/program, notification open/delete/clear, automatic Premium activation and audited grant/revoke/reactivate, comments/replies, shared-board consistency across student/staff renderers, stage/order mutations, progress lock/unlock, document upload/view/download/delete, assigned-counselor isolation, and cross-student denial.
+
+## Batch 2 implementation checkpoint
+
+Auth, profile, the normal dashboard, saved programs/courses, notifications, private avatar architecture, logged-in navigation, and protected-route handling are implemented and reconciled in `batch-2-auth-student-report.md` and `batch-2-route-status.md`. Premium entitlement, assigned mentor, documents, comments, progress, and the shared board remain Batch 3 scope.

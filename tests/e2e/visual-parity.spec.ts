@@ -26,15 +26,18 @@ async function compare(page: import("@playwright/test").Page, name: string) {
   expect(ratio, `${name} differs by ${(ratio * 100).toFixed(2)}%`).toBeLessThanOrEqual(0.06);
 }
 
+async function goto(page: import("@playwright/test").Page, route: string) {
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("[data-legacy-page]")).toHaveAttribute("data-interactions-ready", "true");
+}
+
 test("homepage first fold matches the legacy desktop/mobile baseline", async ({ page }, testInfo) => {
-  await page.goto("/");
-  await page.waitForLoadState("networkidle");
+  await goto(page, "/");
   await compare(page, `legacy-home-${testInfo.project.name}.png`);
 });
 
 test("USA first fold matches the legacy desktop/mobile baseline", async ({ page }, testInfo) => {
-  await page.goto("/countriesusa");
-  await page.waitForLoadState("networkidle");
+  await goto(page, "/countriesusa");
   await compare(page, `legacy-usa-${testInfo.project.name}.png`);
 });
 
@@ -49,8 +52,7 @@ const representativeRoutes = [
 
 for (const reference of representativeRoutes) {
   test(`${reference.name} first fold matches the deployed legacy desktop/mobile baseline`, async ({ page }, testInfo) => {
-    await page.goto(reference.route);
-    await page.waitForLoadState("networkidle");
+    await goto(page, reference.route);
     await compare(page, `legacy-${reference.name}-${testInfo.project.name}.png`);
   });
 }

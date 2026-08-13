@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 
+const goto = (page: import("@playwright/test").Page, route: string) => page.goto(route, { waitUntil: "domcontentloaded" });
+
 test("homepage preserves the legacy shell and content order", async ({ page }) => {
-  await page.goto("/");
+  await goto(page, "/");
   await expect(page.locator("header")).toBeVisible();
   await expect(page.locator("#sidebar")).toHaveCount(1);
   await expect(page.locator(".full-width-img")).toBeVisible();
@@ -10,7 +12,7 @@ test("homepage preserves the legacy shell and content order", async ({ page }) =
 });
 
 test("notification panel, fixed sidebar and drawer retain their legacy states", async ({ page }, testInfo) => {
-  await page.goto("/");
+  await goto(page, "/");
   await expect(page.locator("[data-legacy-page]")).toHaveAttribute("data-interactions-ready", "true");
   if (testInfo.project.name === "mobile") {
     await page.locator('button.btn-toggle-mobile:has(img[src*="toggle-lines"])').click();
@@ -29,18 +31,18 @@ test("notification panel, fixed sidebar and drawer retain their legacy states", 
 });
 
 test("public lead overlays remain while Premium application surfaces are replaced securely", async ({ page }) => {
-  await page.goto("/");
+  await goto(page, "/");
   await page.locator('[data-text="Request it here"]').first().evaluate((element) => (element as HTMLElement).click());
   await expect(page.locator("#applicantPremiumModal")).toHaveCSS("display", "flex");
 
-  await page.goto("/countriesusa");
+  await goto(page, "/countriesusa");
   await expect(page.locator("#countriesUsaJoinPremiumModal, #ppPremiumModal, #premiumModal")).toHaveCount(0);
   await page.locator('[href="#contact"]').first().evaluate((element) => (element as HTMLElement).click());
   await page.waitForURL("**/contact");
 });
 
 test("USA destination keeps its complex tabbed content", async ({ page }) => {
-  await page.goto("/countriesusa");
+  await goto(page, "/countriesusa");
   await expect(page.locator(".countriesUSA")).toBeVisible();
   await expect(page.getByText("Comprehensive Guide to Studying in the USA", { exact: true })).toBeVisible();
   const studyCost = page.locator('[data-filter=".tab_study_cost"]');
@@ -50,7 +52,7 @@ test("USA destination keeps its complex tabbed content", async ({ page }) => {
 });
 
 test("CMS has only typed proof-page fields when Supabase is not configured", async ({ page }) => {
-  await page.goto("/cms");
+  await goto(page, "/cms");
   await expect(page.getByRole("heading", { name: "Minimum page-content editor" })).toBeVisible();
   await expect(page.getByText("cannot alter markup, classes, assets, or section order")).toBeVisible();
   await expect(page.getByRole("status")).toContainText("Supabase environment variables are not configured");
