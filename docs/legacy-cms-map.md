@@ -41,3 +41,7 @@ Each page editor supports validation, draft save, preview using the exact public
 - relational operational tables referenced by stable IDs from typed content where needed
 
 JSONB is acceptable for validated page-specific content slots; it is not acceptable for users, universities, courses, programs, events, documents, enquiries, Premium applications, notifications, or counselor workflows.
+
+## Batch 4 implementation checkpoint
+
+`/admin/content/pages` implements the page-specific allow-listed editor, SEO fields, immutable revision history, audited publish/unpublish/rollback, and a five-minute staff-authorized exact-layout preview. Structured relational modules remain separate under `/admin/content/modules/:module`; marketing/preview media remain separate from private student documents. No generic page builder or arbitrary markup editor was introduced.

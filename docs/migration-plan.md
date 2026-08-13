@@ -34,6 +34,8 @@ Apply the owner override in `owner-business-rules.md`: Premium is an audited ent
 
 Port admin shell/roles, existing operational CRUD, user/Premium operations, resource settings and previews. Add page-specific CMS editors/revisions/publish flows without changing approved layouts. Reconcile missing/dormant legacy modules with owner decisions.
 
+**Batch 4 checkpoint:** the secure multi-role control center, active operational CRUD, normalized permissions, typed CMS, content, media, leads, staff management, settings, and audit are implemented and applied to preview. One outbound enquiry-reply endpoint remains blocked by provider specifications/credentials; four unresolved legacy subsystems remain documented dormant/deprecation candidates pending owner evidence.
+
 ## Phase 7 — integration and data migration
 
 Implement the outbox and explicitly configured provider adapters. Profile/stage SQL, migrate reference/catalog/content, activate identities, migrate relationships and media/documents, reconcile counts/checksums, and run security/privacy review.

@@ -1,0 +1,8 @@
+import { notFound } from "next/navigation";
+import { AdminCmsEditor } from "@/components/admin-cms-editor";
+import { AdminPageHeader } from "@/components/admin-page-header";
+import { cmsContentDefaults } from "@/lib/cms-schema";
+import { can,requireStaffPermission } from "@/lib/staff-auth";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+export default async function CmsEditorPage({params}:{params:Promise<{slug:string}>}){const context=await requireStaffPermission("cms.read");const {slug}=await params;const defaults=cmsContentDefaults[slug];if(!defaults)notFound();const supabase=await createSupabaseServerClient();const {data:page}=await supabase.from("cms_pages").select("id,status,seo_title,seo_description,published_revision_id").eq("slug",slug).maybeSingle();const {data:revisions}=page?await supabase.from("cms_page_revisions").select("id,created_at,revision_note,content").eq("page_id",page.id).order("created_at",{ascending:false}).limit(30):{data:[]};return <main className="ops-page"><AdminPageHeader eyebrow="CMS page" title={slug.replaceAll("-"," ")} description="Drafts change content only. Preview opens the retained public layout; publish is a separate audited permission."/><AdminCmsEditor slug={slug} defaults={defaults} page={page} revisions={(revisions??[]) as Array<{id:string;created_at:string;revision_note:string|null;content:Record<string,string>}>} canManage={can(context,"cms.manage")} canPublish={can(context,"cms.publish")}/></main>}
+

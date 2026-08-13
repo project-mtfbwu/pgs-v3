@@ -4,7 +4,10 @@ const proofMigration = await readFile(new URL("../supabase/migrations/2026081200
 const publicMigration = await readFile(new URL("../supabase/migrations/202608130001_public_site.sql", import.meta.url), "utf8");
 const studentMigration = await readFile(new URL("../supabase/migrations/202608130002_auth_student.sql", import.meta.url), "utf8");
 const premiumMigration = await readFile(new URL("../supabase/migrations/202608130003_premium_workspace.sql", import.meta.url), "utf8");
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}`;
+const adminMigration = await readFile(new URL("../supabase/migrations/202608130004_admin_cms.sql", import.meta.url), "utf8");
+const adminContentMigration = await readFile(new URL("../supabase/migrations/202608130005_admin_content_completion.sql", import.meta.url), "utf8");
+const staffProfileMigration = await readFile(new URL("../supabase/migrations/202608130006_staff_self_profile.sql", import.meta.url), "utf8");
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -40,7 +43,23 @@ const required = [
   "activate_premium_purchase",
   "set_premium_entitlement",
   "set_mentor_assignment",
-  "premium_audit_logs"
+  "premium_audit_logs",
+  "alter table public.staff_roles enable row level security",
+  "alter table public.staff_role_assignments enable row level security",
+  "private.has_staff_permission",
+  "roles.manage",
+  "catalog.manage",
+  "cms.publish",
+  "leads.manage",
+  "admin_audit_logs",
+  "manage_staff_access",
+  "staff read cms pages",
+  "staff manage %1$s",
+  "staff triage %1$s",
+  "staff read lead notes",
+  "marketing-public",
+  "cms-previews",
+  "update_staff_display_name"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));

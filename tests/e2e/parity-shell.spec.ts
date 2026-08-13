@@ -51,9 +51,8 @@ test("USA destination keeps its complex tabbed content", async ({ page }) => {
   await expect(page.locator(".grid-item.tab_usa_study_101").first()).toBeHidden();
 });
 
-test("CMS has only typed proof-page fields when Supabase is not configured", async ({ page }) => {
+test("legacy CMS entry merges into the protected typed operations editor", async ({ page }) => {
   await goto(page, "/cms");
-  await expect(page.getByRole("heading", { name: "Minimum page-content editor" })).toBeVisible();
-  await expect(page.getByText("cannot alter markup, classes, assets, or section order")).toBeVisible();
-  await expect(page.getByRole("status")).toContainText("Supabase environment variables are not configured");
+  await expect(page).toHaveURL(/\/login\?redirect=%2Fcms/);
+  await expect(page.locator(".ops-app")).toHaveCount(0);
 });

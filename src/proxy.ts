@@ -27,7 +27,7 @@ const exactLegacyRoutes: Record<string, string> = {
   "/Saved/index": "/saved", "/Notifications/clear_all": "/notifications"
 };
 
-const protectedPaths = ["/student", "/saved", "/notifications", "/singup", "/change_password", "/dashboard", "/feed_track_progress", "/upload_your_doc", "/mentor"];
+const protectedPaths = ["/student", "/saved", "/notifications", "/singup", "/change_password", "/dashboard", "/feed_track_progress", "/upload_your_doc", "/mentor", "/admin", "/cms"];
 
 function legacyDestination(request: NextRequest): URL | null {
   if (/^\/Notifications\/(?:open|delete)(?:\/|$)/.test(request.nextUrl.pathname)) {

@@ -41,3 +41,12 @@
 - Student and staff Kanban views share one relational task dataset. Students cannot write task rows directly; assigned staff mutations are audited.
 - Counselor notes default to staff-only and require explicit student visibility. Final retention, malware-scanning, and note-visibility policy still require owner/deployment approval before production document migration.
 - The linked preview migration is applied and schema lint is clean. Static RLS checks pass; 34 pgTAP assertions are supplied, but local execution remains blocked by unavailable Docker.
+
+## Batch 4 additions
+
+- Staff authority now derives from normalized active role assignments and permission joins, not client metadata or the compatibility `staff_profiles.role` summary.
+- Viewer has explicit read-only policies; Mentor is assignment-scoped and has no catalog/CMS authority; Admin lacks staff role governance; Super Admin role actions prohibit self-change and are audited.
+- Catalog/content/CMS/leads/settings APIs accept only allow-listed fields and repeat server permission checks before RLS-protected operations. Ordinary clients cannot insert audit rows.
+- Marketing-public and private CMS-preview media use separate 10 MB allow-listed buckets and server-side signature validation; neither can expose `student-documents`.
+- CMS preview requires an authenticated `cms.read` session and a five-minute HttpOnly revision cookie. Publication/rollback is a separate audited permission.
+- Preview fixtures require an explicit environment acknowledgement, exact remote project-ref match, separately supplied password, and server key; no fixture credentials or real data are stored in the repository.

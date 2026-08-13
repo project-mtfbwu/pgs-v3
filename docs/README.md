@@ -6,6 +6,8 @@ Batch 2 outcome: [`batch-2-auth-student-report.md`](batch-2-auth-student-report.
 
 Batch 3 outcome: [`batch-3-premium-workspace-report.md`](batch-3-premium-workspace-report.md). Purple Premium/mentor endpoint disposition: [`batch-3-route-status.md`](batch-3-route-status.md).
 
+Batch 4 outcome: [`batch-4-admin-cms-report.md`](batch-4-admin-cms-report.md). Complete 228-endpoint admin disposition: [`batch-4-admin-route-status.md`](batch-4-admin-route-status.md).
+
 Audit source: `project-mtfbwu/purpleguide` at tree `fcca51b0db31bf5c59a4b4f00f0bd12b77fb0470` (read only).
 
 Audit date: 2026-08-12.
@@ -60,6 +62,8 @@ Counting methodology is explicit in the related maps so these numbers can be rep
 - `parity-proof.md`
 - `batch-3-premium-workspace-report.md`
 - `batch-3-route-status.md`
+- `batch-4-admin-cms-report.md`
+- `batch-4-admin-route-status.md`
 
 ## Completed evidence update
 

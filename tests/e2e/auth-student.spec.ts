@@ -49,7 +49,7 @@ test.describe("Batch 2 authentication boundary", () => {
   });
 
   test("Premium student and mentor routes enforce the server Auth boundary", async ({ page }) => {
-    for (const route of ["/dashboard", "/feed_track_progress", "/upload_your_doc", "/mentor", "/mentor/access", "/mentor/students/10000000-0000-4000-8000-000000000001"]) {
+    for (const route of ["/dashboard", "/feed_track_progress", "/upload_your_doc", "/mentor", "/mentor/access", "/mentor/students/10000000-0000-4000-8000-000000000001", "/admin", "/admin/catalog", "/admin/content/pages", "/admin/staff", "/admin/audit"]) {
       await goto(page, route);
       await expect(page).toHaveURL(/\/login\?redirect=/);
     }

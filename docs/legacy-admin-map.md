@@ -58,3 +58,7 @@ The present admin shell uses `header.php`/`footer.php`, a collapsible `#sidebar-
 ## Admin testing baseline
 
 Test login/session timeout, sidebar/mobile toggle, every present CRUD create/edit/block/delete path, search/filter, preview, file replacement, notification emission, mentor isolation, Premium decisions, document access, dashboard tabs, Kanban ordering, and super-admin-only admin management.
+
+## Batch 4 implementation checkpoint
+
+The modern internal `/admin` application now covers the active relational catalog, typed/revisioned CMS, structured content, media, student/Premium workspaces, mentor assignments, lead triage, staff lifecycle, settings, and audit. Authorization uses normalized staff role assignments and permissions with RLS/server enforcement. The exact 228-endpoint reconciliation is recorded in `batch-4-admin-route-status.md`; unresolved generic category/news, product/cart, enquiry-category, and ratings systems remain explicit dormant/deprecation candidates rather than fabricated screens.
