@@ -89,8 +89,8 @@ export async function proxy(request: NextRequest) {
         Object.entries(headers).forEach(([name, value]) => response.headers.set(name, value));
       }
     } });
-    const { data } = await supabase.auth.getUser();
-    authenticated = Boolean(data.user);
+    const { data } = await supabase.auth.getClaims();
+    authenticated = Boolean(data?.claims?.sub);
   }
   if (!authenticated && protectedPaths.some((path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`))) {
     const login = request.nextUrl.clone(); login.pathname = "/login";
