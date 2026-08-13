@@ -22,11 +22,11 @@ Migrate home, About/Contact, all ten destinations, discovery/services, finance/s
 
 ## Phase 4 — identity and student product
 
-Implement Supabase Auth, activation/reset, Google provider, profile, student dashboard, saved items, notifications and student resources. Add RLS matrix tests before protected data is seeded.
+Implement Supabase Auth, activation/reset, deployment-gated Google provider, profile, student dashboard, saved items, notifications and student resources. Add RLS matrix tests before protected data is seeded. The Auth/data/security work is the foundation; student presentation must remain traceable to the legacy PurpleGuide views rather than becoming a new dashboard design language.
 
 ## Phase 5 — Purple Premium
 
-Apply the owner override in `owner-business-rules.md`: Premium is an audited entitlement on a normal student identity. Implement idempotent automatic activation after confirmed purchase plus Admin/Super Admin grant, revoke, and reactivate. Do not port the incorrect request/application/accept/reject workflow. Port counselor assignments, dashboard metrics, university selections, tasks/Kanban, comments, review queue, notes, alerts, documents, video/meetup and notifications. Use one relational board dataset per student, shared data/types, and separate `StudentKanbanBoard`/`StaffKanbanBoard` renderers. Preserve locked/unlocked layouts and deny unassigned counselor access through RLS plus server authorization.
+Apply the owner override in `owner-business-rules.md`: Premium is an audited entitlement on a normal student identity. Implement idempotent automatic activation after confirmed purchase plus Admin/Super Admin grant, revoke, and reactivate. Do not port the incorrect request/application/accept/reject workflow. Port counselor assignments, dashboard metrics, university selections, tasks/Kanban, comments, review queue, notes, alerts, documents, video/meetup and notifications. For every student-facing surface, port the traced legacy PurpleGuide view/CSS/assets and deployed responsive evidence; do not create a generic shadcn/SaaS student dashboard. Use one relational board dataset per student, shared data/types, and visually separate `StudentKanbanBoard`/`StaffKanbanBoard` renderers. Preserve locked/unlocked layouts and deny unassigned counselor access through RLS plus server authorization.
 
 ## Phase 6 — admin and CMS
 

@@ -4,6 +4,8 @@
 
 The non-Premium authenticated student product is implemented on `agent/full-site-migration`. Supabase Auth is the sole identity source; `profiles` attaches application data to the same Auth UUID that will later receive roles and Premium entitlements. No user-facing Premium application/request workflow was added.
 
+Subsequent owner correction: this Batch 2 implementation remains the functional Auth/data/RLS foundation, but its newly composed student dashboard presentation is not the visual source for Batch 3. Batch 3 must reconcile student dashboard/feed/Premium/progress/document/Kanban surfaces against the legacy PurpleGuide views, CSS, assets, responsive behavior, and deployed evidence. This correction does not restart Batch 2.
+
 The endpoint audit is complete in [`batch-2-route-status.md`](batch-2-route-status.md): 29 Auth/normal-student endpoints are reconciled, with 28 implemented/securely replaced/merged and one genuine missing-view blocker. Seven Premium dashboard/progress/document endpoints remain explicitly deferred to Batch 3.
 
 ## Routes and flows
@@ -16,7 +18,7 @@ New application routes:
 - `/api/auth/login`, `/api/auth/register`, `/api/auth/logout`, `/api/auth/forgot-password`, `/api/auth/reset-password`, `/api/auth/change-password`
 - `/api/student/profile`, `/api/student/avatar`, `/api/student/saved/:kind/:id`, `/api/student/notifications`, `/api/student/notifications/:id`
 
-The retained `/login`, `/forgot_password`, `/reset_password`, and `/change_password` screens now submit to those secure boundaries. Registration uses Supabase email verification; recovery uses Supabase PKCE and an enumeration-safe result; Google OAuth is wired without credentials and requires deployment provider configuration. Internal redirect targets are allow-listed as relative paths.
+The retained `/login`, `/forgot_password`, `/reset_password`, and `/change_password` screens now submit to those secure boundaries. Registration uses Supabase email verification; recovery uses Supabase PKCE and an enumeration-safe result. Google OAuth is wired without credentials and remains behind the server-only `SUPABASE_GOOGLE_AUTH_ENABLED` gate until deployment provider configuration is complete; its disabled state returns a branded login message instead of provider JSON. Internal redirect targets are allow-listed as relative paths.
 
 ## Student product
 
@@ -24,7 +26,7 @@ The retained `/login`, `/forgot_password`, `/reset_password`, and `/change_passw
 - Profile: active legacy personal/study fields, own-row update, one Auth identity, private signed avatar reads, 5 MB JPG/PNG/WebP type and magic-byte validation.
 - Saved items: relational `saved_programs` and `saved_courses` join the existing Batch 1 `programs`/`courses` rows. Mutations derive `student_id` only from the verified session.
 - Notifications: extensible event/section/reference/metadata fields, safe relative destinations, unread timestamps, own open/delete/clear operations, and no authenticated student insert policy.
-- Navigation: public legacy pages switch from Login to the authenticated student account and unread count when a valid session exists. Protected routes preserve the intended return URL.
+- Navigation: public legacy pages switch from Login to the authenticated student account and unread count when a valid session exists. Logout completes cookie invalidation and then performs a fresh document navigation, immediately restoring Login and the public navigation shell without a manual refresh. Protected routes preserve the intended return URL.
 
 ## Supabase migration and authorization
 

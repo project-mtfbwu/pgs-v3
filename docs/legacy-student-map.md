@@ -62,3 +62,5 @@ Signup/login/logout, redirect preservation, OAuth callback, profile completion/e
 ## Batch 2 implementation checkpoint
 
 Auth, profile, the normal dashboard, saved programs/courses, notifications, private avatar architecture, logged-in navigation, and protected-route handling are implemented and reconciled in `batch-2-auth-student-report.md` and `batch-2-route-status.md`. Premium entitlement, assigned mentor, documents, comments, progress, and the shared board remain Batch 3 scope.
+
+Owner correction for Batch 3: the Batch 2 student dashboard is a functional/security foundation, but its newly composed presentation is not canonical. Batch 3 must trace and preserve the legacy `user_dashboard`, `dashboard`, `feed_track_progress`, locked progress, document, and Kanban views plus their CSS/assets/deployed states. Do not propagate the Batch 2 shell into a generic student SaaS design. Staff renderers remain visually independent from the student renderer.

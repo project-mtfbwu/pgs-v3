@@ -4,18 +4,23 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { signOutAndNavigate } from "@/lib/logout-navigation";
 
 type Props = { name: string; email: string; avatarUrl: string; unreadCount?: number; children: ReactNode };
 
 export function StudentShell({ name, email, avatarUrl, unreadCount = 0, children }: Props) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const router = useRouter();
+  const [logoutError, setLogoutError] = useState("");
   async function logout() {
     setBusy(true);
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/"); router.refresh();
+    setLogoutError("");
+    try {
+      await signOutAndNavigate();
+    } catch {
+      setBusy(false);
+      setLogoutError("Unable to log out. Please try again.");
+    }
   }
   return <>
     <header className="pgs-student-header">
@@ -35,6 +40,7 @@ export function StudentShell({ name, email, avatarUrl, unreadCount = 0, children
         <Link href="/student/profile">Edit profile</Link>
         <Link href="/change_password">Change password</Link>
         <button type="button" onClick={logout} disabled={busy}>{busy ? "Logging out…" : "Logout"}</button>
+        {logoutError && <span role="status">{logoutError}</span>}
       </div>}
     </header>
     <main className="pgs-student-main">{children}</main>
