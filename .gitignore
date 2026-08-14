@@ -10,6 +10,7 @@ dist/
 coverage/
 playwright-report/
 test-results/
+.auth/
 .env
 .env.*
 !.env.example

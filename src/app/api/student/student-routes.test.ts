@@ -44,6 +44,7 @@ describe("auth and normal student route contracts", () => {
     signUp.mockResolvedValue({ data: { session: null }, error: null });
     const response = await register(jsonRequest("http://localhost/api/auth/register", { email: "new@example.test", password: "strongpass", confirm_password: "strongpass" }));
     expect(response.status).toBe(200);
+    expect(signUp.mock.calls[0][0].options.data).toEqual({ pgs_context: "student" });
     expect(signUp.mock.calls[0][0].options.emailRedirectTo).toContain("/auth/callback?next=%2Fsingup");
   });
 

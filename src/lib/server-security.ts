@@ -5,7 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 export type RateLimitScope =
   | "auth.login" | "auth.register" | "auth.recovery" | "auth.password"
   | "public.enquiry" | "public.lead" | "public.study-journey" | "public.deadline-subscription"
-  | "public.search" | "upload.avatar" | "upload.document" | "upload.media" | "provider.purchase";
+  | "public.search" | "upload.avatar" | "upload.document" | "upload.media";
 
 function clientAddress(request: Request): string {
   return request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()

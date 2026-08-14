@@ -21,7 +21,10 @@ export async function POST(request: Request) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}` }
+      options: {
+        data: { pgs_context: "student" },
+        emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`
+      }
     });
     if (error) return jsonError(authErrorMessage(error.message), 400);
     return NextResponse.json({

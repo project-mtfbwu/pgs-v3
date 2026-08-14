@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { validUuid } from "@/lib/http";
 import { logServerError } from "@/lib/server-security";
+import { CLEAN_DOCUMENT_SCAN_STATUS, isCleanDocumentScanStatus } from "@/lib/document-access";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -14,8 +15,13 @@ export async function GET(_request: Request, { params }: Context) {
     const { id } = await params;
     if(!validUuid(id))return jsonError("Document not found.",404);
     const supabase = await createSupabaseServerClient();
-    const { data } = await supabase.from("student_documents").select("storage_path,original_filename").eq("id", id).eq("student_id", actor.studentId).maybeSingle();
-    if (!data) return jsonError("Document not found.", 404);
+    const { data } = await supabase.from("student_documents")
+      .select("storage_path,original_filename,scan_status")
+      .eq("id", id)
+      .eq("student_id", actor.studentId)
+      .eq("scan_status", CLEAN_DOCUMENT_SCAN_STATUS)
+      .maybeSingle();
+    if (!data || !isCleanDocumentScanStatus(data.scan_status)) return jsonError("Document not found.", 404);
     const { data: signed, error } = await supabase.storage.from("student-documents").createSignedUrl(data.storage_path, 300, { download: data.original_filename });
     if (error || !signed?.signedUrl) return jsonError("Unable to open the document.", 400);
     return NextResponse.json({ ok: true, url: signed.signedUrl, expires_in: 300 }, { headers: { "Cache-Control": "private, no-store" } });

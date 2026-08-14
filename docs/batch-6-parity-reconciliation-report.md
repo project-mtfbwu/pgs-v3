@@ -29,6 +29,8 @@ Batch 6 remained an audit/fix batch. Public and student PurpleGuide presentation
 6. **Relational catalog not reaching public UI:** published programs and courses now replace the traced empty retained containers; detail pages load the selected published record; saved controls support save/unsave for the session student.
 7. **Published event Admin changes not reaching public UI:** published events now hydrate the retained desktop/mobile Upcoming Sessions areas and selected event detail/booking CTA.
 8. **Staff workspace UI exposed only part of the secure API:** Mentor/Admin can now create, update and delete comments, alerts, review items, counselor notes, document requirements and university selections, plus edit task content/due date/stage/order, without calling APIs manually.
+9. **Authenticated retained header deletion regression:** the previous logout replacement could span from a hidden Login-popup anchor to the sidebar logout anchor, consuming the intervening header/navigation DOM. Account transforms are now anchor-local, idempotent and page-safe. Only the two retained account slots, sidebar Profile/Saved/Login state, Premium entitlement CTA, notification text and badge values change; `#purplePremium`, `#exploreCountries`, `#USMLERotation`, wrappers, drawer and popup remain structurally intact.
+10. **Retained public sidebar opener regression:** `#toggleBtn` is now explicitly owned by one root-scoped React delegated capture handler together with `#close_Btn`. It prevents the retained target listeners from double-toggling, preserves `active` and arrow classes, keeps the opener available, and exposes deterministic `aria-expanded`/`aria-hidden` state on desktop and mobile.
 
 All catalog/event HTML substitutions escape database-authored text. All private mutations still derive identity/role from the server session and retain RLS/server authorization.
 
@@ -52,14 +54,14 @@ The full Playwright run executed 16 representative first-fold comparisons at des
 
 | Baseline | Desktop changed pixels | Mobile changed pixels |
 |---|---:|---:|
-| Homepage | 0.35% | 0.15% |
-| USA | 0.08% | 0.02% |
-| About | 0.07% | 0.02% |
+| Homepage | 0.34% | 0.15% |
+| USA | 0.27% | 0.02% |
+| About | 0.26% | 0.02% |
 | Canada | 0.07% | 0.02% |
-| CV-ready programs | 0.07% | 0.02% |
-| Purple Events | 0.07% | 0.11% |
-| Scholarship | 0.08% | 0.02% |
-| USMLE rotation | 0.07% | 0.13% |
+| CV-ready programs | 0.08% | 0.02% |
+| Purple Events | 0.27% | 0.11% |
+| Scholarship | 0.27% | 0.02% |
+| USMLE rotation | 0.27% | 0.13% |
 
 The exact visual presentation of missing `UserDashboardDefault.php` remains blocked. `services.php` remains a missing-screen blocker. No replacement screen was invented.
 
@@ -95,10 +97,11 @@ The 42 Batch 4 candidates remain **DORMANT / DEPRECATION CANDIDATE**. Controller
 | `pnpm assets:verify` | PASS — 217 authoritative legacy assets verified |
 | `pnpm lint` | PASS — zero warnings |
 | `pnpm typecheck` | PASS — strict TypeScript |
-| `pnpm test` | PASS — 17 files / 55 tests |
+| `pnpm test` | PASS — 17 files / 58 tests, including real retained-source three-state DOM preservation/idempotence |
 | `pnpm test:rls` | PASS — static RLS/migration guards including immutable 001–009 |
 | `pnpm test:security` | PASS — high-confidence repository secret scan (additional hardening regression) |
 | `pnpm build` | PASS — optimized Next.js build; 67 static-generation entries validated and session-aware routes remain dynamic |
+| `pnpm test:e2e tests/e2e/parity-shell.spec.ts` | PASS — 12/12 focused anonymous header/sidebar/drawer/security tests across desktop and mobile |
 | `pnpm test:e2e` | PASS for executed tests — 84 discovered, 62 passed, 22 skipped, 0 failed |
 | `git diff --check` | PASS |
 

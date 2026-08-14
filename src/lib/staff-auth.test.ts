@@ -1,10 +1,36 @@
-import { beforeAll,describe,expect,it,vi } from "vitest";
+import { describe,expect,it,vi } from "vitest";
+import type { User } from "@supabase/supabase-js";
 vi.mock("server-only",()=>({}));
 vi.mock("@/lib/supabase/server",()=>({createSupabaseServerClient:vi.fn()}));
-let rolePermissions:typeof import("@/lib/staff-auth").rolePermissions;
-beforeAll(async()=>{rolePermissions=(await import("@/lib/staff-auth")).rolePermissions;});
-describe("normalized staff role intent",()=>{
-  it("keeps Viewer read-only",()=>{expect(rolePermissions.viewer).toContain("catalog.read");expect(rolePermissions.viewer).not.toContain("catalog.manage");expect(rolePermissions.viewer).not.toContain("premium.manage");expect(rolePermissions.viewer).not.toContain("roles.manage");});
-  it("keeps Mentor assignment-scoped and out of CMS/catalog",()=>{expect(rolePermissions.mentor).toContain("student_workspace.read");expect(rolePermissions.mentor).not.toContain("student_workspace.read_all");expect(rolePermissions.mentor).not.toContain("catalog.manage");expect(rolePermissions.mentor).not.toContain("cms.manage");});
-  it("prevents Admin role governance while Super Admin has it",()=>{expect(rolePermissions.admin).not.toContain("roles.manage");expect(rolePermissions.super_admin).toContain("roles.manage");expect(rolePermissions.super_admin).toContain("audit.read");});
+import { buildStaffContext,normalizeStaffRoleKey } from "@/lib/staff-auth";
+
+const user={id:"10000000-0000-4000-8000-000000000001",email:"staff@example.test"} as User;
+function assignment(role:string,permissions:string[]){return {staff_roles:{key:role,staff_role_permissions:permissions.map((key)=>({staff_permissions:{key}}))}};}
+
+describe("database-backed staff authorization",()=>{
+  it("uses only permission rows returned by the database",()=>{
+    const context=buildStaffContext(user,{display_name:"Read-only",status:"active"},[
+      assignment("read_only_staff",["overview.read","catalog.read","cms.read"])
+    ]);
+    expect([...context!.permissions]).toEqual(["overview.read","catalog.read","cms.read"]);
+    expect(context!.permissions.has("catalog.manage")).toBe(false);
+    expect(context!.permissions.has("premium.manage")).toBe(false);
+    expect(context!.permissions.has("roles.manage")).toBe(false);
+  });
+
+  it("changes effective access when DB grant rows change without a TS role matrix",()=>{
+    const before=buildStaffContext(user,{display_name:null,status:"active"},[assignment("admin",["catalog.read"])]);
+    const after=buildStaffContext(user,{display_name:null,status:"active"},[assignment("admin",["catalog.read","catalog.manage"])]);
+    expect(before!.permissions.has("catalog.manage")).toBe(false);
+    expect(after!.permissions.has("catalog.manage")).toBe(true);
+  });
+
+  it("normalizes the temporary viewer alias but exposes only the canonical role",()=>{
+    expect(normalizeStaffRoleKey("viewer")).toBe("read_only_staff");
+    expect(buildStaffContext(user,{display_name:null,status:"active"},[assignment("viewer",["catalog.read"])])!.roles).toEqual(["read_only_staff"]);
+  });
+
+  it("denies inactive staff even when assignment rows exist",()=>{
+    expect(buildStaffContext(user,{display_name:null,status:"suspended"},[assignment("super_admin",["roles.manage"])])).toBeNull();
+  });
 });

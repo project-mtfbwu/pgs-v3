@@ -28,7 +28,9 @@ const exactLegacyRoutes: Record<string, string> = {
   "/purplepremiumhome/purplepremiumhome": "/purplepremiumhome", "/purplepremium_offer/data": "/purplepremiumhome"
 };
 
-const protectedPaths = ["/student", "/saved", "/notifications", "/singup", "/change_password", "/dashboard", "/feed_track_progress", "/upload_your_doc", "/mentor", "/admin", "/cms"];
+// Progress and document routes intentionally expose anonymous locked frames;
+// the underlying resources remain independently protected by server Auth/RLS.
+const protectedPaths = ["/student", "/saved", "/notifications", "/singup", "/change_password", "/dashboard", "/mentor", "/admin", "/cms"];
 
 function legacyDestination(request: NextRequest): URL | null {
   if (/^\/Notifications\/(?:open|delete)(?:\/|$)/i.test(request.nextUrl.pathname)) {
@@ -63,7 +65,7 @@ export async function proxy(request: NextRequest) {
   if (destination) return NextResponse.redirect(destination, 308);
 
   if (request.nextUrl.pathname.startsWith("/api/") && !["GET","HEAD","OPTIONS"].includes(request.method)
-    && request.nextUrl.pathname !== "/api/premium/purchase") {
+    ) {
     const origin = request.headers.get("origin");
     const fetchSite = request.headers.get("sec-fetch-site");
     const forwardedHost=request.headers.get("x-forwarded-host")??request.headers.get("host");

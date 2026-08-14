@@ -8,8 +8,14 @@ describe("Premium owner business rule", () => {
     expect(result).toBe("<header>PGS</header><main>Approved layout</main>");
   });
 
-  it("relabels request copy as an entitlement purchase journey", () => {
-    expect(applyPremiumBusinessRule("Apply for Purple Premium")).toBe("Purchase Purple Premium");
+  it("removes student application and purchase language without inventing a CTA", () => {
+    expect(applyPremiumBusinessRule("Apply for Purple Premium · Purchase Purple Premium")).toBe("Purple Premium · Purple Premium");
+  });
+
+  it("makes the legacy locked identity status non-interactive",()=>{
+    const result=applyPremiumBusinessRule('<a href="/Login?redirect=purplepremiumhome%3FopenPremium%3D1">Yet to <br> Unlock Full <br> Access</a>');
+    expect(result).toContain('<span class="premium-entitlement-locked">');
+    expect(result).not.toContain("href=");
   });
 
   it("covers every audited Premium application surface", () => {

@@ -17,16 +17,10 @@ export type StudentProfile = {
   profile_completed_at: string | null;
 };
 
-export async function getOwnProfile(user: User): Promise<StudentProfile> {
+export async function getOwnProfile(user: User): Promise<StudentProfile | null> {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.from("profiles").select("id,full_name,dial_code,phone,whatsapp,citizenship_country,preferred_study_country,study_level,field_interest,work_experience,referral_code,avatar_path,profile_completed_at").eq("id", user.id).maybeSingle();
-  return (data as StudentProfile | null) ?? {
-    id: user.id,
-    full_name: typeof user.user_metadata.full_name === "string" ? user.user_metadata.full_name : "",
-    dial_code: null, phone: null, whatsapp: null, citizenship_country: null,
-    preferred_study_country: null, study_level: null, field_interest: null,
-    work_experience: null, referral_code: null, avatar_path: null, profile_completed_at: null
-  };
+  return data as StudentProfile | null;
 }
 
 export async function getOwnAvatarUrl(path: string | null): Promise<string> {

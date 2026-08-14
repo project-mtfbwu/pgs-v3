@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
 
 export default async function CountriesUsaPage() {
   const [content, state] = await Promise.all([getPageContent("countriesusa"), resolveStudentExperience()]);
+  const studentState=state?.kind??"anonymous";
   let html = applyPremiumBusinessRule(applyUsaContent(countriesUsaHtml, content));
-  if (state.kind !== "anonymous") html = applyAuthenticatedShell(html, { name: state.name, unreadCount: state.unreadCount, premium: state.kind === "authenticated_premium" });
-  return <LegacyPage page="countriesusa" html={html} studentState={state.kind} />;
+  if (state&&state.kind !== "anonymous") html = applyAuthenticatedShell(html, { name: state.name, unreadCount: state.unreadCount, premium: state.kind === "authenticated_premium" });
+  return <LegacyPage page="countriesusa" html={html} studentState={studentState} />;
 }

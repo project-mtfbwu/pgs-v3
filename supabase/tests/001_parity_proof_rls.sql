@@ -4,8 +4,8 @@ select plan(7);
 
 select has_table('public', 'page_content', 'page_content exists');
 select has_table('public', 'cms_editors', 'cms_editors exists');
-select row_security_active('public.page_content'::regclass), 'RLS active on page_content';
-select row_security_active('public.cms_editors'::regclass), 'RLS active on cms_editors';
+select is((select relrowsecurity from pg_class where oid='public.page_content'::regclass),true,'RLS active on page_content');
+select is((select relrowsecurity from pg_class where oid='public.cms_editors'::regclass),true,'RLS active on cms_editors');
 select policies_are('public', 'page_content', array[
   'editors can insert proof content',
   'editors can read draft proof content',

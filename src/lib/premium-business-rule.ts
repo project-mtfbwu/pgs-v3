@@ -22,8 +22,12 @@ export function applyPremiumBusinessRule(html: string): string {
   let result = html;
   for (const id of removedApplicationSurfaces) result = removeDivById(result, id);
   return result
-    .replaceAll("Apply for Purple Premium", "Purchase Purple Premium")
-    .replaceAll("Apply Purple Premium", "Purchase Purple Premium");
+    .replace(/<a\b([^>]*)href=["'][^"']*openPremium[^"']*["']([^>]*)>\s*Yet to\s*(?:<br\s*\/?\s*>\s*)?Unlock Full\s*(?:<br\s*\/?\s*>\s*)?Access\s*<\/a>/gi,
+      '<span class="premium-entitlement-locked">Yet to <br> Unlock Full <br> Access</span>')
+    .replaceAll("Apply for Purple Premium", "Purple Premium")
+    .replaceAll("Apply Purple Premium", "Purple Premium")
+    .replaceAll("Purchase Purple Premium", "Purple Premium")
+    .replaceAll("Purchase to Unlock Full Access", "Yet to Unlock Full Access");
 }
 
 export const premiumApplicationSurfaceIds = removedApplicationSurfaces;

@@ -17,15 +17,27 @@ src/app/countriesusa/page.tsx — central three-state resolver and authenticated
 src/app/globals.css — retained relational catalog/event presentation and snapshot replacement selectors
 src/app/programsfull/program/[id]/page.tsx — typed program/course published-detail selection
 src/app/purpleevents/session/[id]/page.tsx — selected published event-detail hydration
-src/components/legacy-page.tsx — safe client navigation, save/unsave, journey steps, and shared modal interactions
+src/components/legacy-page.tsx — safe client navigation, save/unsave, journey/modal interactions, and React-owned retained sidebar toggle/close state
 src/components/public-legacy-page.tsx — centralized state plus relational catalog/event orchestration
 src/components/staff-kanban-board.tsx — task title/details/due date/stage/order staff editing
 src/components/staff-workspace-controls.tsx — complete staff workspace create/update/delete UI
-src/lib/account-shell.test.ts — authenticated standard/Premium retained-shell CTA regression
-src/lib/account-shell.ts — authenticated profile and Premium entitlement CTA transforms
+src/lib/account-shell.test.ts — authenticated standard/Premium CTA plus real retained header/sidebar DOM preservation and idempotence regressions
+src/lib/account-shell.ts — anchor-local authenticated profile/account/logout/Premium CTA and notification badge transforms without wrapper deletion
 src/proxy.ts — case-insensitive legacy controller/method alias reconciliation and loop guard
 tests/e2e/public-pages.spec.ts — legacy alias, footer modal, and study-journey interaction regressions
-tests/e2e/student-state-parity.spec.ts — strengthened standard/Premium navigation and landing-state coverage
+tests/e2e/parity-shell.spec.ts — anonymous desktop/mobile retained header and explicit sidebar opener/closer regression
+tests/e2e/student-state-parity.spec.ts — standard/Premium retained-header, sidebar, navigation, logout and landing-state coverage (role-fixture gated where applicable)
 
 TOTAL
-20 changed files: 6 new, 14 modified, 0 deleted.
+21 cumulative distinct Batch 6 files: 6 new, 15 modified, 0 deleted.
+
+BATCH 6 REGRESSION HOTFIX — CURRENT UNCOMMITTED DIFF
+docs/batch-6-file-manifest.txt
+docs/batch-6-parity-reconciliation-report.md
+src/components/legacy-page.tsx
+src/lib/account-shell.test.ts
+src/lib/account-shell.ts
+tests/e2e/parity-shell.spec.ts
+tests/e2e/student-state-parity.spec.ts
+
+Current hotfix total: 7 modified files, 0 new, 0 deleted.

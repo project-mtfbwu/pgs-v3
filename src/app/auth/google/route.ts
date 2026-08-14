@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${applicationOrigin(request.url)}/auth/callback?next=${encodeURIComponent(next)}` }
+      options: { redirectTo: `${applicationOrigin(request.url)}/auth/callback?next=${encodeURIComponent(next)}&context=student` }
     });
     if (!error && data.url) return NextResponse.redirect(data.url);
   } catch { /* The login page owns the branded provider-unavailable state. */ }

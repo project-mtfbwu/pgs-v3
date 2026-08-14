@@ -10,6 +10,8 @@
     "assets:fetch": "node scripts/fetch-legacy-assets.mjs",
     "assets:verify": "node scripts/verify-legacy-assets.mjs",
     "fixtures:preview": "node scripts/create-preview-role-fixtures.mjs",
+    "fixtures:auth-states": "node scripts/create-playwright-auth-states.mjs",
+    "parity:regions": "node scripts/capture-parity-regions.mjs",
     "predev": "pnpm assets:verify",
     "dev": "next dev",
     "prebuild": "node scripts/ensure-legacy-assets.mjs",

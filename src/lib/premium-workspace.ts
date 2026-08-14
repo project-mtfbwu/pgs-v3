@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getStaffContext } from "@/lib/staff-auth";
+import { resolvePremiumValidity, type PremiumEntitlementRecord } from "@/lib/premium-entitlement";
 
 export type PremiumStatus = "active" | "revoked" | "expired" | "none";
 export type WorkspaceActor = { user: User; kind: "student" | "mentor" | "admin" | "super_admin"; studentId: string };
@@ -31,10 +32,8 @@ export type PremiumWorkspace = {
 
 export async function getPremiumStatus(studentId: string): Promise<PremiumStatus> {
   const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.from("premium_entitlements").select("status,expires_at").eq("student_id", studentId).maybeSingle();
-  if (!data) return "none";
-  if (data.status === "active" && (!data.expires_at || new Date(data.expires_at).getTime() > Date.now())) return "active";
-  return data.status as Exclude<PremiumStatus, "none">;
+  const { data } = await supabase.from("premium_entitlements").select("id,status,source,plan_code,duration_months,approved_at,starts_at,ends_at,revoked_at").eq("student_id", studentId).order("ends_at",{ascending:false}).limit(20);
+  return resolvePremiumValidity((data??[]) as PremiumEntitlementRecord[]).status;
 }
 
 export async function requirePremiumActor(studentId?: string, access: "read"|"manage"="read"): Promise<WorkspaceActor> {
@@ -45,7 +44,11 @@ export async function requirePremiumActor(studentId?: string, access: "read"|"ma
   const target = studentId ?? user.id;
   const status = await getPremiumStatus(target);
   if (status !== "active") throw new WorkspaceAccessError(403, "An active Purple Premium entitlement is required.");
-  if (target === user.id) return { user, kind: "student", studentId: target };
+  if (target === user.id) {
+    const { data: studentProfile } = await supabase.from("profiles").select("id").eq("id", user.id).maybeSingle();
+    if (!studentProfile) throw new WorkspaceAccessError(403, "A student context is required.");
+    return { user, kind: "student", studentId: target };
+  }
 
   const staff=await getStaffContext();
   if(!staff)throw new WorkspaceAccessError(403,"This student workspace is not assigned to you.");

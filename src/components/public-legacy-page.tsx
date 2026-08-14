@@ -14,18 +14,20 @@ type Props<TSlug extends PublicContentSlug> = {
 
 export async function PublicLegacyPage<TSlug extends PublicContentSlug>({ slug, html, catalogDetail, eventId }: Props<TSlug>) {
   const content = await getPublicContent(slug);
-  let rendered = applyPremiumBusinessRule(applyPublicContent(slug, html, content));
+  let rendered = applyPublicContent(slug, html, content);
   const state = await resolveStudentExperience();
+  const studentState=state?.kind??"anonymous";
   if(slug==="cvreadyprogram"||slug==="purpleboard"){
     const kind=slug==="cvreadyprogram"?"programs":"courses";
-    const cards=await getPublicCatalogCards(kind,state.kind==="anonymous"?undefined:state.user.id);
+    const cards=await getPublicCatalogCards(kind,state&&state.kind!=="anonymous"?state.user.id:undefined);
     rendered=applyPublishedCatalogCards(rendered,kind,cards);
   }
-  if(catalogDetail){const detail=await getPublicCatalogDetail(catalogDetail.kind,catalogDetail.id,state.kind==="anonymous"?undefined:state.user.id);if(detail)rendered=applyPublishedCatalogDetail(rendered,detail);}
+  if(catalogDetail){const detail=await getPublicCatalogDetail(catalogDetail.kind,catalogDetail.id,state&&state.kind!=="anonymous"?state.user.id:undefined);if(detail)rendered=applyPublishedCatalogDetail(rendered,detail);}
   if(slug==="purpleevents"){rendered=applyPublishedEvents(rendered,await getPublicEvents());}
   if(slug==="purpleevents-session"&&eventId){const event=await getPublicEvent(eventId);if(event)rendered=applyPublishedEventDetail(rendered,event);}
-  if (state.kind!=="anonymous") {
+  if (state&&state.kind!=="anonymous") {
     rendered = applyAuthenticatedShell(rendered, { name:state.name, unreadCount:state.unreadCount, premium:state.kind==="authenticated_premium" });
   }
-  return <LegacyPage page={slug} html={rendered} studentState={state.kind} />;
+  rendered = applyPremiumBusinessRule(rendered);
+  return <LegacyPage page={slug} html={rendered} studentState={studentState} />;
 }

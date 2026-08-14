@@ -1,41 +1,16 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 
-export type SavedProgram = { program_id: number; programs: { id: number; title: string; slug: string; short_description: string } | null };
-export type SavedCourse = { course_id: number; courses: { id: number; title: string; slug: string; short_description: string } | null };
+type CatalogItem={id:number;title:string;slug:string;short_description:string};
+export type SavedProgram={program_id:number;programs:CatalogItem|null};
+export type SavedCourse={course_id:number;courses:CatalogItem|null};
 
-export function SavedList({ programs: initialPrograms, courses: initialCourses }: { programs: SavedProgram[]; courses: SavedCourse[] }) {
-  const [programs, setPrograms] = useState(initialPrograms);
-  const [courses, setCourses] = useState(initialCourses);
-  const [status, setStatus] = useState("");
-  async function remove(kind: "programs" | "courses", id: number) {
-    const response = await fetch(`/api/student/saved/${kind}/${id}`, { method: "DELETE" });
-    if (!response.ok) { setStatus("Unable to remove that saved item."); return; }
-    if (kind === "programs") setPrograms((items) => items.filter((item) => item.program_id !== id));
-    else setCourses((items) => items.filter((item) => item.course_id !== id));
-    setStatus("Removed from saved.");
-  }
-  return <div className="saved-list-pgs">
-    {status && <p role="status">{status}</p>}
-    <SavedSection id="courses" title="Saved Courses" empty="No saved courses yet.">
-      {courses.map((item) => item.courses && <article className="pgs-saved-card" key={item.course_id}>
-        <span>#purpleboard</span><h3>{item.courses.title}</h3><p>{item.courses.short_description}</p>
-        <div><Link href="/purpleboard">View course</Link><button onClick={() => remove("courses", item.course_id)} aria-label={`Remove ${item.courses?.title}`}>♥</button></div>
-      </article>)}
-    </SavedSection>
-    <SavedSection id="programs" title="Saved Programs" empty="No saved programs yet.">
-      {programs.map((item) => item.programs && <article className="pgs-saved-card" key={item.program_id}>
-        <span>CV-READY PROGRAM</span><h3>{item.programs.title}</h3><p>{item.programs.short_description}</p>
-        <div><Link href={`/programsfull/program/${item.programs.id}`}>Learn more</Link><button onClick={() => remove("programs", item.program_id)} aria-label={`Remove ${item.programs?.title}`}>♥</button></div>
-      </article>)}
-    </SavedSection>
-    {!courses.length && !programs.length && <div className="pgs-empty-state"><h2>Your saved list is ready</h2><p>Save published courses and programs to find them here.</p><Link href="/cvreadyprogram">Discover programs</Link></div>}
-  </div>;
-}
-
-function SavedSection({ id, title, empty, children }: { id: string; title: string; empty: string; children: ReactNode }) {
-  const count = Array.isArray(children) ? children.filter(Boolean).length : children ? 1 : 0;
-  return <section id={id} className="pgs-saved-section"><h2>{title}</h2>{count ? <div className="pgs-saved-grid">{children}</div> : <p>{empty}</p>}</section>;
+export function SavedList({programs:initialPrograms,courses:initialCourses}:{programs:SavedProgram[];courses:SavedCourse[]}){
+  const [programs,setPrograms]=useState(initialPrograms);const [courses,setCourses]=useState(initialCourses);const [status,setStatus]=useState("");
+  async function remove(kind:"programs"|"courses",id:number){const response=await fetch(`/api/student/saved/${kind}/${id}`,{method:"DELETE"});if(!response.ok){setStatus("Unable to remove that saved item.");return;}if(kind==="programs")setPrograms((items)=>items.filter((item)=>item.program_id!==id));else setCourses((items)=>items.filter((item)=>item.course_id!==id));setStatus("Removed from saved.");}
+  const empty=!programs.length&&!courses.length;
+  return <div className="saved-list-pgs canonical-saved-picks">{status&&<p role="status">{status}</p>}{programs.length>0&&<section className="canonical-saved-programs" aria-label="Saved programs">{programs.map((item)=>item.programs&&<article className="sop-card-unique is-program" key={item.program_id}><div className="sop-top-label"><Image src="/assets/img/heart.gif" alt="" width={38} height={38} unoptimized/><span>CV-READY PROGRAM</span></div><div className="sop-image-wrapper"><Image src="/assets/img/saved_4.jpg" alt="" width={420} height={220} unoptimized/><button className="sop-heart-icon" onClick={()=>remove("programs",item.program_id)} aria-label={`Remove ${item.programs?.title}`}>♥</button></div><div className="sop-content"><h2 className="sop-title fnt-family">{item.programs.title}</h2><p className="sop-subtext">{item.programs.short_description}</p><div className="sop-tags"><span className="sop-tag">#CVReady</span><span className="sop-tag">#PGS</span></div><div className="canonical-saved-actions"><Link className="sop-learn-btn" href={`/programsfull/program/${item.programs.id}`}>Learn More</Link><Image src="/assets/img/qr-2.png" alt="Program QR" width={62} height={62} unoptimized/></div></div></article>)}</section>}{courses.length>0&&<section className="canonical-saved-courses" aria-label="Saved courses">{courses.map((item)=>item.courses&&<article className="sop-card-unique" key={item.course_id}><div className="sop-image-wrapper"><Image src="/assets/img/saved_2.jpg" alt="" width={360} height={180} unoptimized/><button className="sop-heart-icon" onClick={()=>remove("courses",item.course_id)} aria-label={`Remove ${item.courses?.title}`}>♥</button></div><div className="sop-content"><h2 className="sop-title fnt-family">{item.courses.title}</h2><p className="sop-subtext">{item.courses.short_description}</p><div className="sop-tags"><span className="sop-tag">#purpleboard</span><span className="sop-tag">#PGS</span></div><Link className="sop-learn-btn" href={`/programsfull/program/${item.courses.id}?type=course`}>Learn More</Link></div></article>)}</section>}{empty&&<div className="pgs-empty-state"><h2>Your saved list is ready</h2><p>Save published courses and programs to find them here.</p><Link href="/cvreadyprogram">Discover programs</Link></div>}</div>;
 }

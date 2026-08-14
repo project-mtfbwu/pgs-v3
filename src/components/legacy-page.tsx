@@ -17,13 +17,24 @@ function setOpen(element: HTMLElement | null, open: boolean) {
   }
 }
 
-function toggleSidebar() {
-  const sidebar = document.querySelector("#sidebar");
-  const toggle = document.querySelector("#toggleBtn");
+function uniqueElement(root:HTMLElement,selector:string):HTMLElement|null{
+  const matches=root.querySelectorAll<HTMLElement>(selector);
+  return matches.length===1?matches[0]:null;
+}
+
+function toggleSidebar(root:HTMLElement) {
+  const sidebar = uniqueElement(root,"#sidebar");
+  const toggle = uniqueElement(root,"#toggleBtn");
+  if(!sidebar||!toggle)return;
   const icon = toggle?.querySelector("i");
-  sidebar?.classList.toggle("active");
-  const open = sidebar?.classList.contains("active") ?? false;
-  toggle?.classList.toggle("hidenone", open);
+  sidebar.classList.toggle("active");
+  const open = sidebar.classList.contains("active");
+  toggle.classList.remove("hidenone");
+  toggle.setAttribute("role","button");
+  toggle.setAttribute("tabindex","0");
+  toggle.setAttribute("aria-controls","sidebar");
+  toggle.setAttribute("aria-expanded",String(open));
+  sidebar.setAttribute("aria-hidden",String(!open));
   icon?.classList.toggle("bi-arrow-right-square-fill", !open);
   icon?.classList.toggle("bi-arrow-left-square-fill", open);
 }
@@ -195,15 +206,16 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
     const options = { signal: abort.signal };
     root.dataset.interactionsReady = "true";
 
-    root.addEventListener("click", (event) => {
-      const target = event.target as HTMLElement;
-      const sidebarClose = target.closest("#sidebar #close_Btn");
-      if (sidebarClose) {
-        event.preventDefault();
-        event.stopPropagation();
-        toggleSidebar();
-      }
-    }, { ...options, capture: true });
+    const sidebar=uniqueElement(root,"#sidebar");
+    const sidebarToggle=uniqueElement(root,"#toggleBtn");
+    if(sidebar&&sidebarToggle){sidebar.setAttribute("aria-hidden",String(!sidebar.classList.contains("active")));sidebarToggle.setAttribute("role","button");sidebarToggle.setAttribute("tabindex","0");sidebarToggle.setAttribute("aria-controls","sidebar");sidebarToggle.setAttribute("aria-expanded",String(sidebar.classList.contains("active")));}
+    root.addEventListener("click",(event)=>{
+      const target=event.target as HTMLElement;
+      if(!target.closest("#toggleBtn, #sidebar #close_Btn"))return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      toggleSidebar(root);
+    },{...options,capture:true});
 
     root.querySelectorAll<HTMLFormElement>("form").forEach((form) => {
       form.dataset.v3SubmitReady = "true";
@@ -352,7 +364,6 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
 
       if (target.closest(".premium-unlock-link, [data-premium-purchase]")) {
         event.preventDefault();
-        router.push(root.querySelector(".pgs-auth-account") ? "/purplepremiumhome#purchase" : "/login?redirect=%2Fpurplepremiumhome%23purchase");
         return;
       }
 

@@ -1,0 +1,3 @@
+create index premium_entitlements_plan_idx on public.premium_entitlements(plan_code);
+create index premium_entitlement_events_entitlement_idx on public.premium_entitlement_events(entitlement_id);
+create index premium_entitlement_events_plan_idx on public.premium_entitlement_events(plan_code);

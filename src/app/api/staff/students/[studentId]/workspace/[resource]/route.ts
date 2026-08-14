@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { jsonError, readJsonObject } from "@/lib/http";
 import { cleanWorkspaceText, requirePremiumActor, WorkspaceAccessError } from "@/lib/premium-workspace";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { CLEAN_DOCUMENT_SCAN_STATUS } from "@/lib/document-access";
 
 type Context = { params: Promise<{ studentId: string; resource: string }> };
 const tables: Record<string, string> = {
@@ -106,7 +107,9 @@ export async function PATCH(request: Request, route: Context) {
     }
     if (!Object.keys(values).length) return jsonError("No supported changes supplied.", 400);
     const supabase = await createSupabaseServerClient();
-    const {data,error}=await supabase.from(table).update(values).eq("id",recordId).eq("student_id",actor.studentId).select("id").maybeSingle();
+    let updateQuery=supabase.from(table).update(values).eq("id",recordId).eq("student_id",actor.studentId);
+    if(resource==="documents")updateQuery=updateQuery.eq("scan_status",CLEAN_DOCUMENT_SCAN_STATUS);
+    const {data,error}=await updateQuery.select("id").maybeSingle();
     if(error)return jsonError("Unable to update the workspace item.",400);
     if(!data)return jsonError("Workspace item not found.",404);
     return NextResponse.json({ ok: true });

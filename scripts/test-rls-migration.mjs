@@ -10,7 +10,17 @@ const staffProfileMigration = await readFile(new URL("../supabase/migrations/202
 const hardeningMigration = await readFile(new URL("../supabase/migrations/202608130007_production_hardening.sql", import.meta.url), "utf8");
 const rateLimitFixMigration = await readFile(new URL("../supabase/migrations/202608130008_rate_limit_timestamp_fix.sql", import.meta.url), "utf8");
 const mentorLifecycleMigration = await readFile(new URL("../supabase/migrations/202608130009_mentor_role_lifecycle.sql", import.meta.url), "utf8");
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}`;
+const premiumValidityMigration = await readFile(new URL("../supabase/migrations/20260813182535_phase36_premium_validity_and_trigger_fixes.sql", import.meta.url), "utf8");
+const accountDeletionMigration = await readFile(new URL("../supabase/migrations/20260813185203_phase36_account_deletion_audit_history.sql", import.meta.url), "utf8");
+const triggerSecurityMigration = await readFile(new URL("../supabase/migrations/20260813185416_phase36_trigger_security_and_audit_deidentification.sql", import.meta.url), "utf8");
+const accountCascadeMigration = await readFile(new URL("../supabase/migrations/20260813185523_phase36_account_cascade_trigger_guard.sql", import.meta.url), "utf8");
+const premiumIndexesMigration = await readFile(new URL("../supabase/migrations/20260814010019_phase36_premium_foreign_key_indexes.sql", import.meta.url), "utf8");
+const immediateGrantMigration = await readFile(new URL("../supabase/migrations/20260814012639_phase36b_immediate_premium_grant.sql", import.meta.url), "utf8");
+const grantTimestampMigration = await readFile(new URL("../supabase/migrations/20260814013152_phase36b_authoritative_grant_timestamp.sql", import.meta.url), "utf8");
+const mentorTriggerFixMigration = await readFile(new URL("../supabase/migrations/20260814014008_phase36b_mentor_lifecycle_trigger_record_fix.sql", import.meta.url), "utf8");
+const cleanDocumentGateMigration = await readFile(new URL("../supabase/migrations/20260814133451_phase4_0_clean_document_access_gate.sql", import.meta.url), "utf8");
+const actorContextMigration = await readFile(new URL("../supabase/migrations/20260814140833_phase4a_actor_context_rbac.sql", import.meta.url), "utf8");
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -43,7 +53,6 @@ const required = [
   "authorized users read shared student tasks",
   "staff manage shared student tasks",
   "student-documents",
-  "activate_premium_purchase",
   "set_premium_entitlement",
   "set_mentor_assignment",
   "premium_audit_logs",
@@ -72,7 +81,20 @@ const required = [
   "prevent_audit_history_mutation",
   "students upload own avatars\" on storage.objects",
   "grant update(read_at) on public.notifications",
-  "end_ineligible_mentor_assignments"
+  "end_ineligible_mentor_assignments",
+  "grant_time timestamptz:=now()",
+  "grant_time+make_interval(months=>selected_plan.duration_months)",
+  "row_data jsonb:=to_jsonb(new)",
+  "set_premium_entitlement(uuid,text,text,text)",
+  "authorized users read clean private student documents",
+  "d.scan_status = 'clean'",
+  "staff review clean assigned documents",
+  "grant update(qc_status, reviewed_by, review_note, reviewed_at)"
+  ,"claim_own_student_context"
+  ,"pgs_context', '') = 'student'"
+  ,"read_only_staff"
+  ,"staff read own effective role permissions"
+  ,"canonical_role text"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
