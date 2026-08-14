@@ -24,6 +24,7 @@ const accounts = [
   { name: "read-only-staff", email: "pgs-v3-fixture+viewer@example.test", password: process.env.PGS_PREVIEW_READ_ONLY_STAFF_PASSWORD ?? process.env.PGS_PREVIEW_VIEWER_PASSWORD ?? sharedPassword },
   { name: "admin", email: "pgs-v3-fixture+admin@example.test", password: process.env.PGS_PREVIEW_ADMIN_PASSWORD ?? sharedPassword },
   { name: "super-admin", email: "pgs-v3-fixture+super-admin@example.test", password: process.env.PGS_PREVIEW_SUPER_ADMIN_PASSWORD ?? sharedPassword },
+  { name: "dual-admin", email: "pgs-v3-fixture+dual-admin@example.test", password: process.env.PGS_PREVIEW_DUAL_ADMIN_PASSWORD ?? sharedPassword },
 ].filter(({ name }) => requestedRoles.size === 0 || requestedRoles.has(name));
 
 if (!accounts.length || accounts.some(({ password }) => !password || password.length < 16)) {

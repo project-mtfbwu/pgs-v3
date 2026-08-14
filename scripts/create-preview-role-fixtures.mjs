@@ -1,21 +1,245 @@
 import { createClient } from "@supabase/supabase-js";
 
-const url=process.env.NEXT_PUBLIC_SUPABASE_URL;const key=process.env.SUPABASE_SERVICE_ROLE_KEY;const publicKey=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY??process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;const password=process.env.PGS_PREVIEW_FIXTURE_PASSWORD;
-if(process.env.PGS_PREVIEW_FIXTURES!=="I_UNDERSTAND_PREVIEW_ONLY")throw new Error("Set PGS_PREVIEW_FIXTURES=I_UNDERSTAND_PREVIEW_ONLY.");
-if(!url||!key||!publicKey||!password||password.length<16)throw new Error("Preview Supabase URL, publishable key, server key, and a 16+ character fixture password are required.");
-const host=new URL(url).hostname;const local=/^(127\.0\.0\.1|localhost)$/.test(host);const projectRef=host.split(".")[0];
-if(!local&&process.env.PGS_PREVIEW_PROJECT_REF!==projectRef)throw new Error("Refusing non-local fixture creation without an exact PGS_PREVIEW_PROJECT_REF match.");
-const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});const definitions=[
-  ["student-a","student"],["student-b","student"],["state-student","student"],["logout-student","student"],["mentor-a","mentor"],["mentor-b","mentor"],["viewer","read_only_staff"],["admin","admin"],["super-admin","super_admin"]
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+  ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const password = process.env.PGS_PREVIEW_FIXTURE_PASSWORD;
+
+if (process.env.PGS_PREVIEW_FIXTURES !== "I_UNDERSTAND_PREVIEW_ONLY") {
+  throw new Error("Set PGS_PREVIEW_FIXTURES=I_UNDERSTAND_PREVIEW_ONLY.");
+}
+if (!url || !serviceKey || !publicKey || !password || password.length < 16) {
+  throw new Error("Preview Supabase URL, publishable key, server key, and a 16+ character fixture password are required.");
+}
+
+const host = new URL(url).hostname;
+const local = /^(127\.0\.0\.1|localhost)$/.test(host);
+const projectRef = host.split(".")[0];
+if (!local && process.env.PGS_PREVIEW_PROJECT_REF !== projectRef) {
+  throw new Error("Refusing non-local fixture creation without an exact PGS_PREVIEW_PROJECT_REF match.");
+}
+
+const admin = createClient(url, serviceKey, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+const publicClient = () => createClient(url, publicKey, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+const emailFor = (name) => `pgs-v3-fixture+${name}@example.test`;
+const definitions = [
+  { name: "super-admin", context: "staff", role: "super_admin" },
+  { name: "admin", context: "staff", role: "admin" },
+  { name: "mentor-a", context: "staff", role: "mentor" },
+  { name: "viewer", context: "staff", role: "read_only_staff" },
+  { name: "student-a", context: "student" },
+  { name: "student-b", context: "student" },
+  { name: "state-student", context: "student" },
+  { name: "logout-student", context: "student" },
+  { name: "dual-admin", context: "student", role: "admin" },
 ];
-const listed=await admin.auth.admin.listUsers({page:1,perPage:1000});if(listed.error)throw listed.error;const users=new Map(listed.data.users.map((user)=>[user.email,user]));
-for(const [name,role] of definitions){const email=`pgs-v3-fixture+${name}@example.test`;const context=role==="student"?"student":"staff";let user=users.get(email);if(!user){const created=await admin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name:`Fixture ${name}`,pgs_context:context}});if(created.error)throw created.error;user=created.data.user;}else{const updated=await admin.auth.admin.updateUserById(user.id,{password,user_metadata:{full_name:`Fixture ${name}`,pgs_context:context}});if(updated.error)throw updated.error;user=updated.data.user;}if(role==="student"){const profile=await admin.from("profiles").upsert({id:user.id,full_name:`Fixture ${name}`},{onConflict:"id"});if(profile.error)throw profile.error;}else{const profile=await admin.from("staff_profiles").upsert({user_id:user.id,role,display_name:`Fixture ${name}`,status:"active"});if(profile.error)throw profile.error;const roleRow=await admin.from("staff_roles").select("id").eq("key",role).single();if(roleRow.error)throw roleRow.error;const existingRole=await admin.from("staff_role_assignments").select("id").eq("staff_user_id",user.id).eq("role_id",roleRow.data.id).is("revoked_at",null).maybeSingle();if(existingRole.error)throw existingRole.error;if(!existingRole.data){const assignment=await admin.from("staff_role_assignments").insert({staff_user_id:user.id,role_id:roleRow.data.id,assigned_by:user.id,reason:"Preview-only fixture"});if(assignment.error)throw assignment.error;}}users.set(email,user);}
-const studentA=users.get("pgs-v3-fixture+student-a@example.test");const studentB=users.get("pgs-v3-fixture+student-b@example.test");const stateStudent=users.get("pgs-v3-fixture+state-student@example.test");const logoutStudent=users.get("pgs-v3-fixture+logout-student@example.test");const mentorA=users.get("pgs-v3-fixture+mentor-a@example.test");const superAdmin=users.get("pgs-v3-fixture+super-admin@example.test");if(!studentA||!studentB||!stateStudent||!logoutStudent||!mentorA||!superAdmin)throw new Error("Fixture identity creation failed.");
-const staffClient=createClient(url,publicKey,{auth:{persistSession:false,autoRefreshToken:false}});const signIn=await staffClient.auth.signInWithPassword({email:"pgs-v3-fixture+super-admin@example.test",password});if(signIn.error)throw signIn.error;
-for(const standardStudent of [studentB,stateStudent,logoutStudent]){const standardEntitlement=await admin.from("premium_entitlements").select("id").eq("student_id",standardStudent.id).eq("status","active").lte("starts_at",new Date().toISOString()).gt("ends_at",new Date().toISOString()).maybeSingle();if(standardEntitlement.error)throw standardEntitlement.error;if(standardEntitlement.data){const reset=await staffClient.rpc("set_premium_entitlement",{target_student:standardStudent.id,target_action:"revoke",target_plan_code:null,event_reason:"Preview-only standard fixture reset"});if(reset.error)throw reset.error;}}
-const premium=await staffClient.rpc("set_premium_entitlement",{target_student:studentA.id,target_action:"grant",target_plan_code:"12_month",event_reason:"Preview-only fixture"});if(premium.error&&!/already has an active Premium period/i.test(premium.error.message))throw premium.error;
-const existing=await admin.from("mentor_assignments").select("id").eq("student_id",studentA.id).eq("status","active").maybeSingle();if(!existing.data){const assignment=await admin.from("mentor_assignments").insert({mentor_id:mentorA.id,student_id:studentA.id,assigned_by:superAdmin.id,reason:"Preview-only fixture"});if(assignment.error)throw assignment.error;}
-const program=await staffClient.from("programs").upsert({title:"PGS Preview CV-Ready Program",slug:"pgs-preview-cv-ready-program",short_description:"A preview-only saved program used to certify the retained PGS card structure.",description:"Preview-only parity fixture.",published:true,featured:false},{onConflict:"slug"}).select("id").single();if(program.error)throw program.error;
-const course=await staffClient.from("courses").upsert({title:"PGS Preview Admissions Course",slug:"pgs-preview-admissions-course",short_description:"A preview-only saved course used to certify populated student saved states.",description:"Preview-only parity fixture.",published:true,featured:false},{onConflict:"slug"}).select("id").single();if(course.error)throw course.error;
-for(const name of ["student-a","student-b"]){const fixtureUser=users.get(`pgs-v3-fixture+${name}@example.test`);if(!fixtureUser)throw new Error(`Missing ${name}.`);const studentClient=createClient(url,publicKey,{auth:{persistSession:false,autoRefreshToken:false}});const login=await studentClient.auth.signInWithPassword({email:`pgs-v3-fixture+${name}@example.test`,password});if(login.error)throw login.error;const existingProgram=await studentClient.from("saved_programs").select("program_id").eq("program_id",program.data.id).maybeSingle();if(existingProgram.error)throw existingProgram.error;if(!existingProgram.data){const saved=await studentClient.from("saved_programs").insert({student_id:fixtureUser.id,program_id:program.data.id});if(saved.error)throw saved.error;}const existingCourse=await studentClient.from("saved_courses").select("course_id").eq("course_id",course.data.id).maybeSingle();if(existingCourse.error)throw existingCourse.error;if(!existingCourse.data){const saved=await studentClient.from("saved_courses").insert({student_id:fixtureUser.id,course_id:course.data.id});if(saved.error)throw saved.error;}await studentClient.auth.signOut();}
-console.log("Preview-only Phase 3.6 role, Premium, and populated saved fixtures are ready. No credentials were written to disk.");
+
+const listed = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+if (listed.error) throw listed.error;
+const users = new Map(listed.data.users.map((user) => [user.email, user]));
+
+for (const definition of definitions) {
+  const email = emailFor(definition.name);
+  const metadata = {
+    full_name: `Fixture ${definition.name}`,
+    pgs_context: definition.context,
+  };
+  let user = users.get(email);
+  if (!user) {
+    const created = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: metadata,
+    });
+    if (created.error) throw created.error;
+    user = created.data.user;
+  } else {
+    const updated = await admin.auth.admin.updateUserById(user.id, {
+      password,
+      user_metadata: metadata,
+    });
+    if (updated.error) throw updated.error;
+    user = updated.data.user;
+  }
+  users.set(email, user);
+}
+
+const requireUser = (name) => {
+  const user = users.get(emailFor(name));
+  if (!user) throw new Error(`Missing ${name}.`);
+  return user;
+};
+const superAdmin = requireUser("super-admin");
+const mentor = requireUser("mentor-a");
+const premiumStudent = requireUser("student-a");
+const standardStudent = requireUser("student-b");
+const transitionStudent = requireUser("state-student");
+const logoutStudent = requireUser("logout-student");
+const dualAdmin = requireUser("dual-admin");
+
+// Bootstrap only the first Super Admin through the service role. It is not
+// attributed as self-assigned. Every other staff fixture goes through the
+// application governance RPC while authenticated as this Super Admin.
+const superRole = await admin.from("staff_roles").select("id").eq("key", "super_admin").single();
+if (superRole.error) throw superRole.error;
+const superProfile = await admin.from("staff_profiles").upsert({
+  user_id: superAdmin.id,
+  role: "super_admin",
+  display_name: "Fixture super-admin",
+  status: "active",
+}, { onConflict: "user_id" });
+if (superProfile.error) throw superProfile.error;
+const superAssignment = await admin.from("staff_role_assignments")
+  .select("id")
+  .eq("staff_user_id", superAdmin.id)
+  .eq("role_id", superRole.data.id)
+  .is("revoked_at", null)
+  .maybeSingle();
+if (superAssignment.error) throw superAssignment.error;
+if (!superAssignment.data) {
+  const inserted = await admin.from("staff_role_assignments").insert({
+    staff_user_id: superAdmin.id,
+    role_id: superRole.data.id,
+    assigned_by: null,
+    reason: "Preview-only Super Admin bootstrap",
+  });
+  if (inserted.error) throw inserted.error;
+}
+
+const staffClient = publicClient();
+const signIn = await staffClient.auth.signInWithPassword({
+  email: emailFor("super-admin"),
+  password,
+});
+if (signIn.error) throw signIn.error;
+
+for (const definition of definitions.filter(({ role, name }) => role && name !== "super-admin")) {
+  const target = requireUser(definition.name);
+  const managed = await staffClient.rpc("manage_staff_access", {
+    target_user: target.id,
+    target_role: definition.role,
+    target_active: true,
+    target_status: "active",
+    target_display_name: `Fixture ${definition.name}`,
+    event_reason: "Preview-only Phase 4A fixture",
+  });
+  if (managed.error) throw managed.error;
+}
+
+// Student profiles are provisioned by the Auth trigger from explicit student
+// intent. Staff-only fixtures must never gain a profile.
+for (const definition of definitions) {
+  const user = requireUser(definition.name);
+  const profile = await admin.from("profiles").select("id").eq("id", user.id).maybeSingle();
+  if (profile.error) throw profile.error;
+  const expectsStudent = definition.context === "student";
+  if (Boolean(profile.data) !== expectsStudent) {
+    throw new Error(`Unexpected student context for ${definition.name}.`);
+  }
+}
+
+for (const standard of [standardStudent, transitionStudent, logoutStudent, dualAdmin]) {
+  const active = await admin.from("premium_entitlements")
+    .select("id")
+    .eq("student_id", standard.id)
+    .eq("status", "active")
+    .lte("starts_at", new Date().toISOString())
+    .gt("ends_at", new Date().toISOString())
+    .maybeSingle();
+  if (active.error) throw active.error;
+  if (active.data) {
+    const reset = await staffClient.rpc("set_premium_entitlement", {
+      target_student: standard.id,
+      target_action: "revoke",
+      target_plan_code: null,
+      event_reason: "Preview-only standard fixture reset",
+    });
+    if (reset.error) throw reset.error;
+  }
+}
+
+const premium = await staffClient.rpc("set_premium_entitlement", {
+  target_student: premiumStudent.id,
+  target_action: "grant",
+  target_plan_code: "12_month",
+  event_reason: "Preview-only Phase 4A fixture",
+});
+if (premium.error && !/already has an active Premium period/i.test(premium.error.message)) {
+  throw premium.error;
+}
+
+const existingMentor = await admin.from("mentor_assignments")
+  .select("id")
+  .eq("mentor_id", mentor.id)
+  .eq("student_id", premiumStudent.id)
+  .eq("status", "active")
+  .maybeSingle();
+if (existingMentor.error) throw existingMentor.error;
+if (!existingMentor.data) {
+  const assignment = await admin.from("mentor_assignments").insert({
+    mentor_id: mentor.id,
+    student_id: premiumStudent.id,
+    assigned_by: superAdmin.id,
+    reason: "Preview-only Phase 4A fixture",
+  });
+  if (assignment.error) throw assignment.error;
+}
+
+const program = await staffClient.from("programs").upsert({
+  title: "PGS Preview CV-Ready Program",
+  slug: "pgs-preview-cv-ready-program",
+  short_description: "A preview-only saved program used to certify the retained PGS card structure.",
+  description: "Preview-only parity fixture.",
+  published: true,
+  featured: false,
+}, { onConflict: "slug" }).select("id").single();
+if (program.error) throw program.error;
+const course = await staffClient.from("courses").upsert({
+  title: "PGS Preview Admissions Course",
+  slug: "pgs-preview-admissions-course",
+  short_description: "A preview-only saved course used to certify populated student saved states.",
+  description: "Preview-only parity fixture.",
+  published: true,
+  featured: false,
+}, { onConflict: "slug" }).select("id").single();
+if (course.error) throw course.error;
+
+for (const name of ["student-a", "student-b"]) {
+  const fixtureUser = requireUser(name);
+  const studentClient = publicClient();
+  const login = await studentClient.auth.signInWithPassword({
+    email: emailFor(name),
+    password,
+  });
+  if (login.error) throw login.error;
+  const existingProgram = await studentClient.from("saved_programs")
+    .select("program_id").eq("program_id", program.data.id).maybeSingle();
+  if (existingProgram.error) throw existingProgram.error;
+  if (!existingProgram.data) {
+    const saved = await studentClient.from("saved_programs").insert({
+      student_id: fixtureUser.id,
+      program_id: program.data.id,
+    });
+    if (saved.error) throw saved.error;
+  }
+  const existingCourse = await studentClient.from("saved_courses")
+    .select("course_id").eq("course_id", course.data.id).maybeSingle();
+  if (existingCourse.error) throw existingCourse.error;
+  if (!existingCourse.data) {
+    const saved = await studentClient.from("saved_courses").insert({
+      student_id: fixtureUser.id,
+      course_id: course.data.id,
+    });
+    if (saved.error) throw saved.error;
+  }
+  await studentClient.auth.signOut();
+}
+
+await staffClient.auth.signOut();
+console.log("Preview-only Phase 4A actor, Premium, mentor, and saved fixtures are ready. No credentials were written to disk.");
