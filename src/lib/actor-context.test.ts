@@ -2,7 +2,7 @@ import { describe,expect,it,vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 vi.mock("server-only",()=>({}));
 vi.mock("@/lib/supabase/server",()=>({createSupabaseServerClient:vi.fn()}));
-import { composeActorContext } from "@/lib/actor-context";
+import { composeActorContext, decideAutomaticStudentContextClaim } from "@/lib/actor-context";
 import type { StaffContext } from "@/lib/staff-auth";
 import type { StudentProfile } from "@/lib/student-data";
 
@@ -24,5 +24,13 @@ describe("actor context boundary",()=>{
     const actor=composeActorContext(user,null,staff);
     expect(actor.authenticated&&actor.student).toBeNull();
     expect(actor.authenticated&&actor.staff?.permissions.has("catalog.manage")).toBe(true);
+    expect(decideAutomaticStudentContextClaim(actor)).toBe("staff_only_denied");
+  });
+
+  it("allows only a context-free actor to claim automatically",()=>{
+    expect(decideAutomaticStudentContextClaim(composeActorContext(user,null,null))).toBe("claim_allowed");
+    expect(decideAutomaticStudentContextClaim(composeActorContext(user,profile,null))).toBe("existing_student");
+    expect(decideAutomaticStudentContextClaim(composeActorContext(user,profile,staff))).toBe("existing_student");
+    expect(decideAutomaticStudentContextClaim(composeActorContext(null,null,null))).toBe("staff_only_denied");
   });
 });

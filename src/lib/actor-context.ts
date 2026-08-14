@@ -13,6 +13,7 @@ export type AuthenticatedActorContext = {
   staff: StaffContext | null;
 };
 export type ActorContext = AnonymousActorContext | AuthenticatedActorContext;
+export type StudentContextClaimDecision = "existing_student" | "claim_allowed" | "staff_only_denied";
 
 export function composeActorContext(
   user: User | null,
@@ -21,6 +22,12 @@ export function composeActorContext(
 ): ActorContext {
   if (!user) return { authenticated:false,user:null,student:null,staff:null };
   return { authenticated:true,user,student:profile ? { profile } : null,staff };
+}
+
+export function decideAutomaticStudentContextClaim(actor: ActorContext): StudentContextClaimDecision {
+  if (actor.authenticated && actor.student) return "existing_student";
+  if (!actor.authenticated || actor.staff) return "staff_only_denied";
+  return "claim_allowed";
 }
 
 /** Fresh server-side context resolution; no JWT metadata or client role claims. */

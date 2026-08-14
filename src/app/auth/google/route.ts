@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { applicationOrigin, safeNext } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  createStudentOAuthIntent,
+  studentOAuthIntentCookieName,
+  studentOAuthIntentCookieOptions
+} from "@/lib/student-oauth-intent";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -17,12 +22,19 @@ export async function GET(request: Request) {
   }
 
   try {
+    const intent = createStudentOAuthIntent();
+    if (!intent) return NextResponse.redirect(unavailableUrl);
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${applicationOrigin(request.url)}/auth/callback?next=${encodeURIComponent(next)}&context=student` }
+      options: { redirectTo: `${applicationOrigin(request.url)}/auth/callback?next=${encodeURIComponent(next)}` }
     });
-    if (!error && data.url) return NextResponse.redirect(data.url);
+    if (!error && data.url) {
+      const response = NextResponse.redirect(data.url);
+      response.cookies.set(studentOAuthIntentCookieName, intent, studentOAuthIntentCookieOptions);
+      response.headers.set("Cache-Control", "private, no-store");
+      return response;
+    }
   } catch { /* The login page owns the branded provider-unavailable state. */ }
   return NextResponse.redirect(unavailableUrl);
 }

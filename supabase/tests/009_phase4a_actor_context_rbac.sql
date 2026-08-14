@@ -1,5 +1,5 @@
 begin;
-select plan(28);
+select plan(30);
 
 select has_function('public','claim_own_student_context',array[]::text[]);
 select is(has_function_privilege('anon','public.claim_own_student_context()','EXECUTE'),false,'anonymous cannot claim a student context');
@@ -37,6 +37,13 @@ insert into public.staff_role_assignments(staff_user_id,role_id,assigned_by)
 select sp.user_id,r.id,'93000000-0000-4000-8000-000000000003'
 from public.staff_profiles sp join public.staff_roles r on r.key=sp.role
 where sp.user_id in ('92000000-0000-4000-8000-000000000002','93000000-0000-4000-8000-000000000003','94000000-0000-4000-8000-000000000004');
+
+set local role authenticated;
+set local request.jwt.claims='{"sub":"92000000-0000-4000-8000-000000000002","role":"authenticated"}';
+select throws_ok($$select public.claim_own_student_context()$$,'42501','student context unavailable','staff-only actor cannot bypass OAuth and directly claim student context');
+set local request.jwt.claims='{"sub":"94000000-0000-4000-8000-000000000004","role":"authenticated"}';
+select lives_ok($$select public.claim_own_student_context()$$,'existing deliberate dual-context actor remains idempotently valid');
+reset role;
 
 grant usage on schema private to authenticated;
 set local role authenticated;
