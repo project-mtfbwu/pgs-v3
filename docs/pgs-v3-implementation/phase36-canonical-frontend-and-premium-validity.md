@@ -34,16 +34,16 @@ Implemented, fixture-certified, and applied to Supabase project `prmepeqfatkcyej
 
 ## Forward migrations
 
-| Local file | Applied migration | Purpose |
+| Migration file | Applied version | Purpose |
 |---|---|---|
-| `20260813182535_phase36_premium_validity_and_trigger_fixes.sql` | `20260813184849` | plans, validity ledger, grant/revoke/reactivate engine, publication and notification fixes |
-| `20260813185203_phase36_account_deletion_audit_history.sql` | `20260813185313` | de-identify entitlement references while preserving append-only events |
-| `20260813185416_phase36_trigger_security_and_audit_deidentification.sql` | `20260813185455` | private trigger authorization and narrowly scoped audit FK cleanup |
-| `20260813185523_phase36_account_cascade_trigger_guard.sql` | `20260813185552` | skip impossible workspace audit inserts during profile cascade |
-| `20260814010019_phase36_premium_foreign_key_indexes.sql` | `20260814010055` | cover the three new Premium ledger foreign keys |
-| `20260814012639_phase36b_immediate_premium_grant.sql` | `20260814012956` | remove the scheduled-start RPC/API contract and make new grants immediate |
-| `20260814013152_phase36b_authoritative_grant_timestamp.sql` | `20260814013251` | capture one server transaction timestamp for both approval and start |
-| `20260814014008_phase36b_mentor_lifecycle_trigger_record_fix.sql` | `20260814014045` | make the shared lifecycle trigger safely resolve either supported trigger record shape |
+| `20260813184849_phase36_premium_validity_and_trigger_fixes.sql` | `20260813184849` | plans, validity ledger, grant/revoke/reactivate engine, publication and notification fixes |
+| `20260813185313_phase36_account_deletion_audit_history.sql` | `20260813185313` | de-identify entitlement references while preserving append-only events |
+| `20260813185455_phase36_trigger_security_and_audit_deidentification.sql` | `20260813185455` | private trigger authorization and narrowly scoped audit FK cleanup |
+| `20260813185552_phase36_account_cascade_trigger_guard.sql` | `20260813185552` | skip impossible workspace audit inserts during profile cascade |
+| `20260814010055_phase36_premium_foreign_key_indexes.sql` | `20260814010055` | cover the three new Premium ledger foreign keys |
+| `20260814012956_phase36b_immediate_premium_grant.sql` | `20260814012956` | remove the scheduled-start RPC/API contract and make new grants immediate |
+| `20260814013251_phase36b_authoritative_grant_timestamp.sql` | `20260814013251` | capture one server transaction timestamp for both approval and start |
+| `20260814014045_phase36b_mentor_lifecycle_trigger_record_fix.sql` | `20260814014045` | make the shared lifecycle trigger safely resolve either supported trigger record shape |
 
 Migrations 001–009 were not edited.
 
