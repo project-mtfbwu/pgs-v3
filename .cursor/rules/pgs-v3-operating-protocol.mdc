@@ -1,0 +1,41 @@
+---
+description: PGS V3 operating protocol — roles, sources, approval gate, product invariants
+alwaysApply: true
+---
+
+# PGS V3 operating protocol
+
+## Roles
+- Owner = final decisions. ChatGPT = architect/QC mentor. Cursor = implementation engineer.
+- Propose → wait for `GO AHEAD` → implement. If the plan changes, re-propose and wait again.
+
+## Source priority
+1. Owner decisions + PGS Flow / approved Figma = product/flow truth
+2. Current PGS V3 = implementation truth
+3. Only if missing/conflicting: `public_html`, Hostinger DB/SQL, PurpleGuide GitHub (read-only recovery)
+- Do not broadly re-scout or modify legacy references. Prefer reuse of business logic; modernize security — do not copy insecure legacy architecture.
+
+## Frontend
+- Default: KEEP existing approved frontend. Build backend/DB/security/RBAC/CMS/Operations/documents/Premium under it.
+- Change UI only when owner asks, approved reference requires restoration, or the task needs a small behavior change. Never redesign because the backend changed. Do not invent pages when an approved/conversion reference exists.
+- PGS Flow = navigation/product map (from → screen/state → data/action → backend). Figma V6 / V6 Pop-up = frontend reference, not redesign permission.
+
+## Scope (no universe scouting)
+- Default: current task → affected modules → direct deps → direct DB/RLS/API → proposal.
+- Expand only for conflict, missing info, stale evidence, security-critical verification, or failed implementation needing reference evidence.
+
+## Pre-implementation gate
+Before meaningful work, show briefly: WHAT EXISTS → WRONG/MISSING → WHY → PROPOSED → AFTER (PGS terms) → files/DB/modules touched → what will NOT be touched. ELI5 + compact BEFORE→AFTER. Then STOP.
+- No code, migrations, Supabase changes, deletes, installs, commits, pushes, or deploys until `GO AHEAD`.
+- Explicit fresh approval required for: data/Auth deletes, migrations on connected DB, RLS/Storage changes, prod env vars, destructive Git, production deploy/promotion.
+
+## Product invariants (unless owner changes them)
+- Student UI states only: `anonymous` | `authenticated_standard` | `authenticated_premium`
+- Premium = entitlement (not a role, JWT role, student flag, or staff permission)
+- Student Viewer = relationship-scoped (not global `read_only_staff`)
+- Documents: normal access requires explicit `clean`; non-clean/unknown fails closed
+- Frontend visibility ≠ security; authorize server/DB-side
+
+## Proof & reports
+- Do not weaken product/security to force a test green. Skipped/not-run ≠ passed.
+- After work: GOAL → BEFORE → CHANGED → AFTER → REUSED → PROVED → REMAINS → PASS/FIX/BLOCKED. Compact; no dump of greps/SQL/logs/textbook repeats.
