@@ -28,8 +28,11 @@ const documentRlsHelperMigration = await readFile(new URL("../supabase/migration
 const documentDeleteGuardMigration = await readFile(new URL("../supabase/migrations/20260815065211_phase4d_document_delete_completion_guards.sql", import.meta.url), "utf8");
 const privilegedDeleteFixMigration = await readFile(new URL("../supabase/migrations/20260815065707_phase4d_privileged_delete_tombstone_fix.sql", import.meta.url), "utf8");
 const privilegedDeleteAuditMigration = await readFile(new URL("../supabase/migrations/20260815070040_phase4d_privileged_delete_audit_label.sql", import.meta.url), "utf8");
+const phase4eMigration = await readFile(new URL("../supabase/migrations/20260815072718_phase4e_explicit_document_sharing.sql", import.meta.url), "utf8");
+const phase4eGateMigration = await readFile(new URL("../supabase/migrations/20260815074452_phase4e_common_deliverability_gate.sql", import.meta.url), "utf8");
+const phase4eIndexMigration = await readFile(new URL("../supabase/migrations/20260815074749_phase4e_share_actor_indexes.sql", import.meta.url), "utf8");
 const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}\n${privilegedDeleteAuditMigration}`;
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}`;
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -122,6 +125,13 @@ const required = [
   ,"can_read_student_document_bytes"
   ,"authorized users read deliverable private student documents"
   ,"52428800"
+  ,"document_shares.manage"
+  ,"create table public.document_shares"
+  ,"alter table public.document_shares enable row level security"
+  ,"create_document_share"
+  ,"revoke_document_share"
+  ,"resolve_document_share_access"
+  ,"target.deletion_requested_at is null"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -143,4 +153,11 @@ if (/grant execute on function public\.set_document_scan_result/i.test(phase4dMi
 if (/create table public\.document_share/i.test(phase4dMigration)) throw new Error("Phase 4D must not create Phase 4E sharing tables");
 if (!phase4dMigration.includes("complete_abandoned_upload_session_cleanup")) throw new Error("Abandoned upload cleanup must be two-phase and retryable");
 if (!phase4dMigration.includes("storage object still exists")) throw new Error("Document purge completion must verify Storage absence");
+if (/create policy[\s\S]*document_shares/i.test(phase4eMigration)) throw new Error("Document shares must not expose direct authenticated table access");
+if (/grant (?:select|insert|update|delete|all).*public\.document_shares.*authenticated/i.test(phase4eMigration)) throw new Error("Authenticated clients must not receive direct document-share CRUD");
+if (/create policy[\s\S]*storage\.objects/i.test(phase4eMigration)) throw new Error("Phase 4E must not broaden document Storage RLS");
+if (!/where r\.key in \('admin','super_admin'\)/i.test(phase4eMigration)) throw new Error("Share management permission must be granted only to Admin and Super Admin");
+if (!phase4eMigration.includes("statement_timestamp()<s.expires_at")) throw new Error("Share expiry must be evaluated live without a worker");
+if (phase4eGateMigration.includes("private.is_deliverable_student_document")) throw new Error("Share identity resolution must leave document security to the common signing-route gate");
+if (!phase4eIndexMigration.includes("document_shares_granted_by_idx") || !phase4eIndexMigration.includes("document_shares_revoked_by_idx")) throw new Error("Share actor foreign keys must remain indexed");
 console.log("RLS migration static checks passed");

@@ -6,6 +6,10 @@ import {
   STUDENT_DOCUMENT_BUCKET,
   STUDENT_DOCUMENT_SIGNED_URL_SECONDS
 } from "@/lib/document-access";
+import {
+  authorizeDocumentByteAccess,
+  DocumentByteAuthorizationError
+} from "@/lib/document-sharing";
 import { requirePremiumActor, WorkspaceAccessError } from "@/lib/premium-workspace";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -13,43 +17,33 @@ import { logServerError } from "@/lib/server-security";
 
 type Context = { params: Promise<{ id: string }> };
 
-const deliverableSelect =
-  "id,student_id,storage_path,original_filename,scan_status,superseded_at,archived_at,purged_at,storage_purged_at";
-
 export async function GET(request: Request, { params }: Context) {
   const { id } = await params;
   try {
     if (!validUuid(id)) return jsonError("Document not found.", 404);
-    const url = new URL(request.url);
-    const studentIdParam = url.searchParams.get("student_id");
-    const actor = await requirePremiumActor(
-      studentIdParam && validUuid(studentIdParam) ? studentIdParam : undefined,
-      studentIdParam ? "manage" : "read"
-    );
-
-    const supabase = await createSupabaseServerClient();
-    const { data } = await supabase
-      .from("student_documents")
-      .select(deliverableSelect)
-      .eq("id", id)
-      .eq("student_id", actor.studentId)
-      .maybeSingle();
-    if (!data || !isDeliverableDocumentRow(data)) {
+    const authorization = await authorizeDocumentByteAccess(id);
+    const data = authorization.document;
+    if (!isDeliverableDocumentRow(data)) {
       await recordDeniedAuditEvent(request, {
-        eventType: "document.access.denied",
+        eventType: authorization.mode === "share"
+          ? "document.share_access_denied"
+          : "document.access.denied",
         sourceSubsystem: "documents",
         targetType: "student_document",
         targetId: id,
         metadata: {
           reason_code: "document_not_deliverable",
           route: "/api/premium/documents/[id]",
-          ...(actor.kind === "student" ? {} : { permission_required: "student_workspace.manage" })
+          ...(authorization.shareId ? { share_id: authorization.shareId } : {})
         }
       });
       return jsonError("Document not found.", 404);
     }
 
-    const { data: signed, error } = await supabase.storage
+    const signingClient = authorization.mode === "share"
+      ? createSupabaseAdminClient()
+      : await createSupabaseServerClient();
+    const { data: signed, error } = await signingClient.storage
       .from(STUDENT_DOCUMENT_BUCKET)
       .createSignedUrl(data.storage_path, STUDENT_DOCUMENT_SIGNED_URL_SECONDS, {
         download: data.original_filename
@@ -66,17 +60,36 @@ export async function GET(request: Request, { params }: Context) {
     }
 
     await recordPrivilegedReadAuditEvent(request, {
-      eventType: "document.accessed",
+      eventType: authorization.mode === "share" ? "document.share_accessed" : "document.accessed",
       sourceSubsystem: "documents",
       targetType: "student_document",
       targetId: id,
-      metadata: { route: "/api/premium/documents/[id]" }
+      metadata: {
+        route: "/api/premium/documents/[id]",
+        ...(authorization.shareId ? { share_id: authorization.shareId } : {})
+      }
     });
     return NextResponse.json(
       { ok: true, url: signed.signedUrl, expires_in: STUDENT_DOCUMENT_SIGNED_URL_SECONDS },
       { headers: { "Cache-Control": "private, no-store" } }
     );
   } catch (error) {
+    if (error instanceof DocumentByteAuthorizationError) {
+      if (error.shareId) {
+        await recordDeniedAuditEvent(request, {
+          eventType: "document.share_access_denied",
+          sourceSubsystem: "documents",
+          targetType: "student_document",
+          targetId: validUuid(id) ? id : undefined,
+          metadata: {
+            reason_code: error.reasonCode,
+            route: "/api/premium/documents/[id]",
+            share_id: error.shareId
+          }
+        });
+      }
+      return jsonError(error.message, error.status);
+    }
     if (error instanceof WorkspaceAccessError) {
       await recordDeniedAuditEvent(request, {
         eventType: "document.access.denied",

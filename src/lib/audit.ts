@@ -5,7 +5,7 @@ import { logServerError, requestCorrelationId } from "@/lib/server-security";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type AuditActorKind = "anonymous" | "student" | "staff" | "system";
-export type AuditTargetType = "staff_user" | "student" | "student_document" | "cms_page";
+export type AuditTargetType = "staff_user" | "student" | "student_document" | "document_share" | "cms_page";
 export type AuditSourceSubsystem = "staff" | "students" | "assignments" | "premium" | "documents" | "cms" | "auth";
 
 type SafeMetadataValue = string | number | boolean | null;
@@ -22,7 +22,10 @@ export type AuditMetadata = Partial<Record<
   | "mentor_id"
   | "previous_mentor_id"
   | "entitlement_id"
-  | "qc_decision",
+  | "qc_decision"
+  | "share_id"
+  | "recipient_user_id"
+  | "expires_at",
   SafeMetadataValue
 >>;
 
@@ -32,6 +35,8 @@ type DeniedEventType =
   | "assignment.change.denied"
   | "premium.entitlement.denied"
   | "document.access.denied"
+  | "document.share_access_denied"
+  | "document.share_change_denied"
   | "document.review.denied"
   | "cms.change.denied"
   | "auth.context.denied";
@@ -44,12 +49,12 @@ type FailedEventType =
   | "document.review.failed"
   | "cms.change.failed";
 
-type ReadEventType = "document.accessed";
+type ReadEventType = "document.accessed" | "document.share_accessed";
 
 const allowedMetadataKeys = new Set([
   "permission_required","reason_code","route","role","previous_role","new_role",
   "previous_status","new_status","assignment_id","mentor_id","previous_mentor_id",
-  "entitlement_id","qc_decision"
+  "entitlement_id","qc_decision","share_id","recipient_user_id","expires_at"
 ]);
 
 type TrustedAuditInput<T extends string> = {

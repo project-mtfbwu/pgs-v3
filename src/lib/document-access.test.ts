@@ -18,6 +18,7 @@ describe("document security release state", () => {
   it("requires clean, current, non-archived documents for delivery", () => {
     expect(isDeliverableDocumentRow({ scan_status: "clean" })).toBe(true);
     expect(isDeliverableDocumentRow({ scan_status: "clean", superseded_at: "2026-01-01" })).toBe(false);
+    expect(isDeliverableDocumentRow({ scan_status: "clean", deletion_requested_at: "2026-01-01" })).toBe(false);
     expect(isDeliverableDocumentRow({ scan_status: "clean", archived_at: "2026-01-01" })).toBe(false);
     expect(isDeliverableDocumentRow({ scan_status: "pending" })).toBe(false);
   });

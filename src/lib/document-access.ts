@@ -47,12 +47,14 @@ export function documentFilenameMatchesMime(filename: string, mime: AcceptedDocu
 export function isDeliverableDocumentRow(row: {
   scan_status?: string | null;
   superseded_at?: string | null;
+  deletion_requested_at?: string | null;
   archived_at?: string | null;
   purged_at?: string | null;
   storage_purged_at?: string | null;
 }): boolean {
   return isCleanDocumentScanStatus(row.scan_status)
     && !row.superseded_at
+    && !row.deletion_requested_at
     && !row.archived_at
     && !row.purged_at
     && !row.storage_purged_at;

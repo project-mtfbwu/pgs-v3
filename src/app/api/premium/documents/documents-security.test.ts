@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { createAdminClient, createServerClient, requirePremiumActor } = vi.hoisted(() => ({
+const { authorizeDocumentByteAccess, createAdminClient, createServerClient, requirePremiumActor } = vi.hoisted(() => ({
+  authorizeDocumentByteAccess: vi.fn(),
   createAdminClient: vi.fn(),
   createServerClient: vi.fn(),
   requirePremiumActor: vi.fn()
@@ -12,6 +13,10 @@ vi.mock("@/lib/premium-workspace", async () => {
 });
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: createServerClient }));
 vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: createAdminClient }));
+vi.mock("@/lib/document-sharing", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/document-sharing")>("@/lib/document-sharing");
+  return { ...actual, authorizeDocumentByteAccess };
+});
 vi.mock("@/lib/server-security", () => ({ logServerError: vi.fn() }));
 vi.mock("@/lib/audit",()=>({
   recordDeniedAuditEvent:vi.fn().mockResolvedValue(true),
@@ -22,6 +27,7 @@ vi.mock("@/lib/audit",()=>({
 import { GET as downloadDocument } from "@/app/api/premium/documents/[id]/route";
 import { PATCH as reviewDocument } from "@/app/api/staff/students/[studentId]/workspace/[resource]/route";
 import { WorkspaceAccessError } from "@/lib/premium-workspace";
+import { DocumentByteAuthorizationError } from "@/lib/document-sharing";
 
 const studentA = "11000000-0000-4000-8000-000000000001";
 const studentB = "22000000-0000-4000-8000-000000000002";
@@ -63,6 +69,30 @@ function documentReadClient(
   };
 }
 
+function authorizeDocument(
+  scanStatus: string,
+  owner = studentA,
+  lifecycle: { superseded_at?: string | null; archived_at?: string | null } = {},
+  mode: "student" | "manager" | "share" = "student"
+) {
+  authorizeDocumentByteAccess.mockResolvedValue({
+    mode,
+    ...(mode === "share" ? { shareId: "66000000-0000-4000-8000-000000000006" } : {}),
+    document: {
+      id: documentId,
+      student_id: owner,
+      storage_path: `${owner}/requirement/file.pdf`,
+      original_filename: "file.pdf",
+      scan_status: scanStatus,
+      superseded_at: lifecycle.superseded_at ?? null,
+      deletion_requested_at: null,
+      archived_at: lifecycle.archived_at ?? null,
+      purged_at: null,
+      storage_purged_at: null
+    }
+  });
+}
+
 function documentReviewClient(scanStatus: string, owner = studentA) {
   const filters = new Map<string, unknown>();
   const query = {
@@ -85,9 +115,11 @@ describe("Phase 4-0 clean document access gate", () => {
     requirePremiumActor.mockResolvedValue({
       user: { id: studentA }, kind: "student", studentId: studentA
     });
+    authorizeDocument("clean");
   });
 
   it("denies a signed URL for an authorized but non-clean document", async () => {
+    authorizeDocument("pending");
     const { client, createSignedUrl } = documentReadClient("pending");
     createServerClient.mockResolvedValue(client);
 
@@ -98,6 +130,7 @@ describe("Phase 4-0 clean document access gate", () => {
   });
 
   it("allows a signed URL only for an authorized clean document", async () => {
+    authorizeDocument("clean");
     const { client, createSignedUrl } = documentReadClient("clean");
     createServerClient.mockResolvedValue(client);
 
@@ -109,6 +142,9 @@ describe("Phase 4-0 clean document access gate", () => {
   });
 
   it("denies a guessed cross-student document before any Storage operation", async () => {
+    authorizeDocumentByteAccess.mockRejectedValue(
+      new DocumentByteAuthorizationError(404, "document_access_denied")
+    );
     const { client, createSignedUrl } = documentReadClient("clean", studentB);
     createServerClient.mockResolvedValue(client);
 
@@ -122,6 +158,7 @@ describe("Phase 4-0 clean document access gate", () => {
     ["superseded", { superseded_at: "2026-08-15T00:00:00Z" }],
     ["archived", { archived_at: "2026-08-15T00:00:00Z" }]
   ])("denies a newly signed URL for a %s document", async (_label, lifecycle) => {
+    authorizeDocument("clean", studentA, lifecycle);
     const { client, createSignedUrl } = documentReadClient("clean", studentA, lifecycle);
     createServerClient.mockResolvedValue(client);
 
@@ -140,6 +177,7 @@ describe("Phase 4-0 clean document access gate", () => {
       kind: "mentor",
       studentId: studentA
     });
+    authorizeDocument("clean", studentA, {}, "manager");
     const { client, createSignedUrl } = documentReadClient("clean");
     createServerClient.mockResolvedValue(client);
 
@@ -149,8 +187,43 @@ describe("Phase 4-0 clean document access gate", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(requirePremiumActor).toHaveBeenCalledWith(studentA, "manage");
+    expect(authorizeDocumentByteAccess).toHaveBeenCalledWith(documentId);
     expect(createSignedUrl).toHaveBeenCalledOnce();
+  });
+
+  it("uses server-admin signing only after exact-share authorization succeeds", async () => {
+    authorizeDocument("clean", studentA, {}, "share");
+    const { client, createSignedUrl } = documentReadClient("clean");
+    createAdminClient.mockReturnValue(client);
+    createServerClient.mockResolvedValue({ storage: { from: vi.fn() } });
+
+    const response = await downloadDocument(
+      new Request("http://localhost"),
+      { params: Promise.resolve({ id: documentId }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(createSignedUrl).toHaveBeenCalledOnce();
+  });
+
+  it("does not issue a new signed URL after a share is revoked", async () => {
+    authorizeDocumentByteAccess.mockRejectedValue(
+      new DocumentByteAuthorizationError(
+        403,
+        "share_revoked",
+        "66000000-0000-4000-8000-000000000006"
+      )
+    );
+    const createSignedUrl = vi.fn();
+    createAdminClient.mockReturnValue({ storage: { from: vi.fn(() => ({ createSignedUrl })) } });
+
+    const response = await downloadDocument(
+      new Request("http://localhost"),
+      { params: Promise.resolve({ id: documentId }) }
+    );
+
+    expect(response.status).toBe(403);
+    expect(createSignedUrl).not.toHaveBeenCalled();
   });
 
   it("denies normal staff review for a non-clean document", async () => {
