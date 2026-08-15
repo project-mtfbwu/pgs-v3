@@ -2,18 +2,152 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import {
+  Activity,
+  Bell,
+  ExternalLink,
+  Gauge,
+  GraduationCap,
+  LogOut,
+  ShieldCheck,
+  UsersRound
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { canViewOperationsScoreboard } from "@/lib/operations-authorization";
+import { cn } from "@/lib/utils";
 import type { StaffPermission, StaffRoleKey } from "@/lib/staff-auth";
 
-type Item={href:string;label:string;permission:StaffPermission};
-const groups:Array<{label:string;items:Item[]}>= [
-  {label:"Workspace",items:[{href:"/admin",label:"Overview",permission:"overview.read"},{href:"/admin/students",label:"Students",permission:"overview.read"},{href:"/admin/access",label:"Premium & assignments",permission:"premium.manage"},{href:"/admin/profile",label:"My profile",permission:"overview.read"}]},
-  {label:"Catalog",items:[{href:"/admin/catalog",label:"Catalog overview",permission:"catalog.read"},{href:"/admin/catalog/universities",label:"Universities",permission:"catalog.read"},{href:"/admin/catalog/programs",label:"Programs",permission:"catalog.read"},{href:"/admin/catalog/courses",label:"Courses",permission:"catalog.read"},{href:"/admin/catalog/events",label:"Events / Webinars",permission:"catalog.read"},{href:"/admin/catalog/tags",label:"Tags",permission:"catalog.read"},{href:"/admin/catalog/facets",label:"Filters / Metadata",permission:"catalog.read"}]},
-  {label:"Content",items:[{href:"/admin/content",label:"CMS & content",permission:"content.read"},{href:"/admin/content/pages",label:"CMS pages",permission:"cms.read"},{href:"/admin/media",label:"Media",permission:"media.read"}]},
-  {label:"Operations",items:[{href:"/admin/leads",label:"Leads / Enquiries",permission:"leads.read"},{href:"/admin/staff",label:"Staff",permission:"staff.read"},{href:"/admin/audit",label:"Audit",permission:"audit.read"},{href:"/admin/settings",label:"Settings",permission:"settings.read"}]}
+type Item = {
+  href: string;
+  label: string;
+  permission: StaffPermission;
+  icon: typeof Gauge;
+  scoreboard?: boolean;
+};
+
+const items: Item[] = [
+  { href: "/admin", label: "Scoreboard", permission: "overview.read", icon: Gauge, scoreboard: true },
+  { href: "/admin/students", label: "Students", permission: "overview.read", icon: GraduationCap },
+  { href: "/admin/staff", label: "Team", permission: "staff.read", icon: UsersRound },
+  { href: "/admin/notifications", label: "Notifications", permission: "overview.read", icon: Bell },
+  { href: "/admin/audit", label: "Activity", permission: "audit.read", icon: Activity }
 ];
 
-export function AdminShell({children,displayName,roles,permissions}:{children:React.ReactNode;displayName:string;roles:StaffRoleKey[];permissions:StaffPermission[]}){
-  const [open,setOpen]=useState(false);const pathname=usePathname();const allowed=new Set(permissions);
-  return <div className="ops-app"><button type="button" className="ops-menu-button" aria-expanded={open} aria-controls="ops-sidebar" onClick={()=>setOpen(!open)}>☰<span>Menu</span></button>{open&&<button className="ops-backdrop" aria-label="Close navigation" onClick={()=>setOpen(false)}/>}<aside id="ops-sidebar" className={open?"is-open":""}><div className="ops-brand"><Link href="/admin">#PGS</Link><span>Operations</span></div><nav aria-label="Staff navigation">{groups.map((group)=>{const items=group.items.filter((item)=>allowed.has(item.permission));if(!items.length)return null;return <section key={group.label}><h2>{group.label}</h2>{items.map((item)=><Link key={item.href} href={item.href} aria-current={pathname===item.href?"page":undefined} onClick={()=>setOpen(false)}>{item.label}</Link>)}</section>})}</nav><footer><strong>{displayName}</strong><span>{roles.map((role)=>role.replaceAll("_"," ")).join(" · ")}</span><Link href="/logout">Sign out</Link></footer></aside><div className="ops-main"><header className="ops-topbar"><div><span>Internal control center</span><strong>{displayName}</strong></div><Link href="/">Open public site ↗</Link></header>{children}</div></div>;
+const sectionTitles: Record<string, string> = {
+  "/admin": "Operations Scoreboard",
+  "/admin/students": "Students",
+  "/admin/staff": "Team",
+  "/admin/notifications": "Notifications",
+  "/admin/audit": "Activity"
+};
+
+function roleLabel(roles: StaffRoleKey[]) {
+  if (roles.includes("super_admin")) return "Super Admin";
+  if (roles.includes("admin")) return "Admin";
+  if (roles.includes("mentor")) return "Mentor";
+  return "Read-only Staff";
+}
+
+export function AdminShell({
+  children,
+  displayName,
+  roles,
+  permissions
+}: {
+  children: React.ReactNode;
+  displayName: string;
+  roles: StaffRoleKey[];
+  permissions: StaffPermission[];
+}) {
+  const pathname = usePathname();
+  const allowed = new Set(permissions);
+  const canViewScoreboard = canViewOperationsScoreboard({ roles, permissions: allowed });
+  const visibleItems = items.filter((item) => allowed.has(item.permission) && (!item.scoreboard || canViewScoreboard));
+  const title = sectionTitles[pathname] ?? "Operations";
+
+  const navigation = (
+    <nav aria-label="Operations navigation" className="ops:flex ops:gap-1 ops:lg:flex-col">
+      {visibleItems.map((item) => {
+        const Icon = item.icon;
+        const active = pathname === item.href;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "ops:flex ops:min-w-fit ops:items-center ops:gap-3 ops:rounded-lg ops:px-3 ops:py-2.5 ops:text-sm ops:font-medium ops:text-muted-foreground ops:transition-colors ops:hover:bg-secondary ops:hover:text-foreground",
+              active && "ops:bg-accent ops:text-accent-foreground"
+            )}
+          >
+            <Icon aria-hidden="true" className="ops:size-4" />
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+
+  return (
+    <div data-operations-shell className="operations-root ops:min-h-screen ops:bg-background ops:text-foreground">
+      <aside className="ops:fixed ops:inset-y-0 ops:left-0 ops:z-30 ops:hidden ops:w-64 ops:flex-col ops:border-r ops:border-border ops:bg-card ops:px-4 ops:py-5 ops:lg:flex">
+        <Link href="/admin" className="ops:flex ops:items-center ops:gap-3 ops:px-2 ops:no-underline">
+          <span className="ops:flex ops:size-9 ops:items-center ops:justify-center ops:rounded-lg ops:bg-primary ops:text-sm ops:font-bold ops:text-primary-foreground">P</span>
+          <span className="ops:flex ops:flex-col">
+            <strong className="ops:text-sm ops:tracking-tight">Purple Guide</strong>
+            <span className="ops:text-xs ops:text-muted-foreground">Operations</span>
+          </span>
+        </Link>
+        <div className="ops:mt-8 ops:flex-1">{navigation}</div>
+        <div className="ops:border-t ops:border-border ops:pt-4">
+          <div className="ops:flex ops:items-center ops:gap-3 ops:px-2">
+            <span className="ops:flex ops:size-9 ops:items-center ops:justify-center ops:rounded-full ops:bg-accent ops:text-xs ops:font-bold ops:text-accent-foreground">
+              {displayName.slice(0, 2).toUpperCase()}
+            </span>
+            <span className="ops:min-w-0 ops:flex-1">
+              <strong className="ops:block ops:truncate ops:text-sm">{displayName}</strong>
+              <span className="ops:block ops:truncate ops:text-xs ops:text-muted-foreground">{roleLabel(roles)}</span>
+            </span>
+            <Link href="/logout" aria-label="Sign out" className="ops:text-muted-foreground ops:hover:text-foreground">
+              <LogOut aria-hidden="true" className="ops:size-4" />
+            </Link>
+          </div>
+        </div>
+      </aside>
+
+      <div className="ops:min-w-0 ops:lg:pl-64">
+        <header className="ops:sticky ops:top-0 ops:z-20 ops:flex ops:h-16 ops:items-center ops:justify-between ops:border-b ops:border-border ops:bg-card/95 ops:px-4 ops:backdrop-blur ops:sm:px-6">
+          <div>
+            <p className="ops:m-0 ops:flex ops:items-center ops:gap-1.5 ops:text-[11px] ops:font-semibold ops:uppercase ops:tracking-[0.14em] ops:text-muted-foreground">
+              <ShieldCheck aria-hidden="true" className="ops:size-3.5" />
+              Internal operations
+            </p>
+            <h1 className="ops:m-0 ops:mt-0.5 ops:text-base ops:font-semibold ops:tracking-tight">{title}</h1>
+          </div>
+          <div className="ops:flex ops:items-center ops:gap-2">
+            <Badge className="ops:hidden ops:sm:inline-flex">{roleLabel(roles)}</Badge>
+            {allowed.has("overview.read") && (
+              <Link href="/admin/notifications" aria-label="Open notifications" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
+                <Bell aria-hidden="true" className="ops:size-4" />
+              </Link>
+            )}
+            <Link href="/logout" aria-label="Sign out" className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ops:lg:hidden")}>
+              <LogOut aria-hidden="true" className="ops:size-4" />
+            </Link>
+            <Link href="/" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "ops:hidden ops:sm:inline-flex")}>
+              Public site
+              <ExternalLink aria-hidden="true" className="ops:size-3.5" />
+            </Link>
+          </div>
+        </header>
+
+        <div className="ops:overflow-x-auto ops:border-b ops:border-border ops:bg-card ops:px-3 ops:py-2 ops:lg:hidden">
+          {navigation}
+        </div>
+
+        <main className="ops:mx-auto ops:w-full ops:max-w-[1440px] ops:p-4 ops:sm:p-6 ops:lg:p-8">{children}</main>
+      </div>
+    </div>
+  );
 }
