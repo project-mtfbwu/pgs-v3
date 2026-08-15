@@ -19,13 +19,15 @@ test.describe("preview read-only staff workflow",()=>{
     const response=await request.post("/api/admin/catalog/courses",{data:{title:"Viewer attack",slug:"viewer-attack"}});
     expect(response.status()).toBe(403);
   });
-  test("Read-only staff sees the minimal directory but no private workspace",async({page})=>{
+  test("Read-only staff sees the minimal directory but no private workspace",async({page,request})=>{
     await page.goto("/admin/students");
     await expect(page.getByRole("heading",{name:"Student operations"})).toBeVisible();
     await expect(page.getByRole("link",{name:/open workspace/i})).toHaveCount(0);
     await expect(page.locator("tbody tr").first()).toContainText("directory");
     const studentId=process.env.PGS_ASSIGNED_STUDENT_ID;
     test.skip(!studentId,"Supply a Premium student fixture UUID.");
+    const directApi=await request.patch(`/api/staff/students/${studentId}/workspace/tasks`,{data:{id:"00000000-0000-4000-8000-000000000000",title:"forged"}});
+    expect(directApi.status()).toBe(403);
     const denied=await page.goto(`/admin/students/${studentId}`);
     expect(denied?.status()).toBe(404);
   });
