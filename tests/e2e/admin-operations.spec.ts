@@ -21,9 +21,15 @@ test.describe("preview read-only staff workflow",()=>{
   });
   test("Read-only staff sees the minimal directory but no private workspace",async({page,request})=>{
     await page.goto("/admin");
-    await expect(page).toHaveURL(/\/admin\/students$/);
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page.locator('[data-scoreboard-scope="restricted"]')).toBeVisible();
+    await expect(page.getByRole("heading",{name:"Your Operations pulse."})).toBeVisible();
+    await expect(page.getByRole("link",{name:"Scoreboard"}).first()).toBeVisible();
+    await expect(page.getByText("Visible students",{exact:true})).toHaveCount(0);
+    await expect(page.getByText("Active team members",{exact:true})).toHaveCount(0);
+    await expect(page.getByRole("button",{name:/save|assign|create/i})).toHaveCount(0);
+    await page.goto("/admin/students");
     await expect(page.getByRole("heading",{name:"Student Registry"})).toBeVisible();
-    await expect(page.getByRole("link",{name:"Scoreboard"})).toHaveCount(0);
     await expect(page.getByRole("link",{name:/open workspace/i})).toHaveCount(0);
     await expect(page.locator("tbody tr").first()).toContainText("directory");
     const studentId=process.env.PGS_ASSIGNED_STUDENT_ID;
@@ -40,9 +46,16 @@ test.describe("preview Mentor workflow",()=>{
   test.skip(!process.env.PLAYWRIGHT_MENTOR_STORAGE_STATE,"Supply an isolated preview Mentor storage state.");
   test("Mentor enters assigned-student operations without catalog access",async({page,request})=>{
     await page.goto("/admin");
-    await expect(page).toHaveURL(/\/admin\/students$/);
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page.locator('[data-scoreboard-scope="assigned_students"]')).toBeVisible();
+    await expect(page.getByRole("heading",{name:"Your Operations pulse."})).toBeVisible();
+    await expect(page.getByText("Assigned students",{exact:true})).toBeVisible();
+    await expect(page.getByText("Visible students",{exact:true})).toHaveCount(0);
+    await expect(page.getByText("Premium students",{exact:true})).toHaveCount(0);
+    await expect(page.getByText("Active team members",{exact:true})).toHaveCount(0);
+    await expect(page.getByRole("link",{name:"Scoreboard"}).first()).toBeVisible();
+    await page.goto("/admin/students");
     await expect(page.getByRole("heading",{name:"My Students"})).toBeVisible();
-    await expect(page.getByRole("link",{name:"Scoreboard"})).toHaveCount(0);
     await expect(page.getByRole("link",{name:"Catalog"})).toHaveCount(0);
     const response=await request.post("/api/admin/catalog/courses",{data:{title:"Mentor attack",slug:"mentor-attack"}});
     expect(response.status()).toBe(403);
@@ -70,7 +83,9 @@ test.describe("preview Admin workflow",()=>{
   test("Admin receives the operations shell but not role governance",async({page,request})=>{
     await page.goto("/admin");
     await expect(page.getByRole("navigation",{name:"Operations navigation"}).first()).toBeVisible();
+    await expect(page.locator('[data-scoreboard-scope="organization"]')).toBeVisible();
     await expect(page.getByRole("heading",{name:"Your Operations pulse."})).toBeVisible();
+    await expect(page.getByText("Visible students",{exact:true})).toBeVisible();
     await expect(page.getByRole("link",{name:"Scoreboard"}).first()).toBeVisible();
     await expect(page.getByRole("link",{name:"Sign out"})).toBeVisible();
     await page.setViewportSize({width:390,height:844});
@@ -110,6 +125,7 @@ test.describe("preview Super Admin workflow",()=>{
     for(const [route,heading] of routes){
       await page.goto(route);
       await expect(page.getByRole("heading",{name:heading})).toBeVisible();
+      if(route==="/admin")await expect(page.locator('[data-scoreboard-scope="organization"]')).toBeVisible();
     }
   });
 });

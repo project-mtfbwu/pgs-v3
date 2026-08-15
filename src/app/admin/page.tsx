@@ -1,77 +1,116 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { ArrowUpRight, CircleGauge, GraduationCap, Sparkles, UsersRound } from "lucide-react";
+import { ArrowUpRight, CircleGauge, GraduationCap, LockKeyhole, Sparkles, UsersRound } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { canViewOperationsScoreboard } from "@/lib/operations-authorization";
+import { resolveOperationsScoreboardScope } from "@/lib/operations-authorization";
 import { can, requireStaffPermission } from "@/lib/staff-auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function AdminOverview() {
   const context = await requireStaffPermission("overview.read");
-  const canViewOrganizationScoreboard = canViewOperationsScoreboard(context);
-  if (!canViewOrganizationScoreboard) redirect("/admin/students");
+  const scope = resolveOperationsScoreboardScope(context);
+  const metrics: Array<{label:string;value:number|null;href:string;icon:typeof GraduationCap}> = [];
 
-  const supabase = await createSupabaseServerClient();
-  const queries = await Promise.all([
-    supabase.from("profiles").select("id", { count: "exact", head: true }),
-    supabase.from("premium_entitlements").select("student_id", { count: "exact", head: true }).eq("status", "active"),
-    supabase.from("staff_profiles").select("user_id", { count: "exact", head: true }).eq("status", "active")
-  ]);
-  const totalStudents = queries[0].error ? null : queries[0].count;
-  const premiumStudents = queries[1].error ? null : queries[1].count;
-  const standardStudents =
-    totalStudents === null || premiumStudents === null
-      ? null
-      : Math.max(totalStudents - premiumStudents, 0);
-  const metrics = [
-    { label: "Visible students", value: totalStudents, href: "/admin/students", icon: GraduationCap },
-    { label: "Premium students", value: premiumStudents, href: "/admin/students?premium=active", icon: Sparkles },
-    { label: "Standard students", value: standardStudents, href: "/admin/students", icon: CircleGauge },
-    { label: "Active team members", value: queries[2].error ? null : queries[2].count, href: "/admin/staff", icon: UsersRound }
-  ];
+  if (scope === "organization") {
+    const supabase = await createSupabaseServerClient();
+    const queries = await Promise.all([
+      supabase.from("profiles").select("id", { count: "exact", head: true }),
+      supabase.from("premium_entitlements").select("student_id", { count: "exact", head: true }).eq("status", "active"),
+      supabase.from("staff_profiles").select("user_id", { count: "exact", head: true }).eq("status", "active")
+    ]);
+    const totalStudents = queries[0].error ? null : queries[0].count;
+    const premiumStudents = queries[1].error ? null : queries[1].count;
+    const standardStudents =
+      totalStudents === null || premiumStudents === null
+        ? null
+        : Math.max(totalStudents - premiumStudents, 0);
+    metrics.push(
+      { label: "Visible students", value: totalStudents, href: "/admin/students", icon: GraduationCap },
+      { label: "Premium students", value: premiumStudents, href: "/admin/students?premium=active", icon: Sparkles },
+      { label: "Standard students", value: standardStudents, href: "/admin/students", icon: CircleGauge },
+      { label: "Active team members", value: queries[2].error ? null : queries[2].count, href: "/admin/staff", icon: UsersRound }
+    );
+  } else if (scope === "assigned_students") {
+    const supabase = await createSupabaseServerClient();
+    const assigned = await supabase
+      .from("mentor_assignments")
+      .select("id", { count: "exact", head: true })
+      .eq("mentor_id", context.user.id)
+      .eq("status", "active");
+    metrics.push({
+      label: "Assigned students",
+      value: assigned.error ? null : assigned.count,
+      href: "/admin/students",
+      icon: GraduationCap
+    });
+  }
+
+  const description = scope === "organization"
+    ? "Live organization-level counts allowed by your current permissions. No sample data is shown."
+    : scope === "assigned_students"
+      ? "A scoped Operations foundation using only your active student assignments. Company-wide counts are never queried for this view."
+      : "A read-only Operations foundation. No Scoreboard data is queried beyond your current authorized scope.";
+  const authorizationDescription = scope === "organization"
+    ? "Your current role and permissions authorize organization-level Scoreboard data."
+    : scope === "assigned_students"
+      ? "This Scoreboard is relationship-scoped to active mentor assignments. Other students and organization totals remain unavailable."
+      : "The Scoreboard shell is available, but no broader data authority is implied. Existing read-only permissions remain unchanged.";
 
   return (
-    <div className="ops:flex ops:flex-col ops:gap-6">
+    <div data-scoreboard-scope={scope} className="ops:flex ops:flex-col ops:gap-6">
       <header>
         <p className="ops:m-0 ops:text-xs ops:font-semibold ops:uppercase ops:tracking-[0.14em] ops:text-accent-foreground">Scoreboard</p>
         <h2 className="ops:m-0 ops:mt-2 ops:text-2xl ops:font-semibold ops:tracking-tight ops:sm:text-3xl">Your Operations pulse.</h2>
         <p className="ops:m-0 ops:mt-2 ops:max-w-2xl ops:text-sm ops:leading-6 ops:text-muted-foreground">
-          Live organization-level counts from the current PGS data model. No sample data is shown.
+          {description}
         </p>
       </header>
 
-      <section aria-label="Operations metrics" className="ops:grid ops:gap-4 ops:sm:grid-cols-2 ops:xl:grid-cols-4">
-        {metrics.map((metric) => {
-          const Icon = metric.icon;
-          return (
-            <Link href={metric.href} key={metric.label} className="ops:no-underline">
-              <Card className="ops:h-full ops:transition-colors ops:hover:border-ring">
-                <CardContent className="ops:flex ops:h-full ops:flex-col ops:gap-5 ops:p-5">
-                  <span className="ops:flex ops:size-9 ops:items-center ops:justify-center ops:rounded-lg ops:bg-accent ops:text-accent-foreground">
-                    <Icon aria-hidden="true" className="ops:size-4" />
-                  </span>
-                  <div>
-                    <p className="ops:m-0 ops:text-sm ops:text-muted-foreground">{metric.label}</p>
-                    <strong className="ops:mt-1 ops:block ops:text-3xl ops:font-semibold ops:tracking-tight">
-                      {metric.value ?? "—"}
-                    </strong>
-                  </div>
-                  <span className="ops:mt-auto ops:flex ops:items-center ops:gap-1 ops:text-xs ops:font-semibold ops:text-accent-foreground">
-                    Open view <ArrowUpRight aria-hidden="true" className="ops:size-3.5" />
-                  </span>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-      </section>
+      {metrics.length > 0 ? (
+        <section aria-label="Operations metrics" className="ops:grid ops:gap-4 ops:sm:grid-cols-2 ops:xl:grid-cols-4">
+          {metrics.map((metric) => {
+            const Icon = metric.icon;
+            return (
+              <Link href={metric.href} key={metric.label} className="ops:no-underline">
+                <Card className="ops:h-full ops:transition-colors ops:hover:border-ring">
+                  <CardContent className="ops:flex ops:h-full ops:flex-col ops:gap-5 ops:p-5">
+                    <span className="ops:flex ops:size-9 ops:items-center ops:justify-center ops:rounded-lg ops:bg-accent ops:text-accent-foreground">
+                      <Icon aria-hidden="true" className="ops:size-4" />
+                    </span>
+                    <div>
+                      <p className="ops:m-0 ops:text-sm ops:text-muted-foreground">{metric.label}</p>
+                      <strong className="ops:mt-1 ops:block ops:text-3xl ops:font-semibold ops:tracking-tight">
+                        {metric.value ?? "—"}
+                      </strong>
+                    </div>
+                    <span className="ops:mt-auto ops:flex ops:items-center ops:gap-1 ops:text-xs ops:font-semibold ops:text-accent-foreground">
+                      Open view <ArrowUpRight aria-hidden="true" className="ops:size-3.5" />
+                    </span>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </section>
+      ) : (
+        <Card>
+          <CardHeader>
+            <span className="ops:mb-3 ops:flex ops:size-10 ops:items-center ops:justify-center ops:rounded-lg ops:bg-accent ops:text-accent-foreground">
+              <LockKeyhole aria-hidden="true" className="ops:size-5" />
+            </span>
+            <CardTitle>Restricted Scoreboard foundation</CardTitle>
+            <CardDescription>
+              No organization-wide metrics are available within this actor&apos;s current permissions. This truthful empty state does not broaden access.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
 
       <section className="ops:grid ops:gap-4 ops:lg:grid-cols-[1.4fr_1fr]">
         <Card>
           <CardHeader>
             <CardTitle>Operational workspace</CardTitle>
             <CardDescription>
-              OPS-01 establishes the visual hierarchy. Targets, workload queues, and advanced analytics will only appear when their real business logic is approved and connected.
+              What happened, what is pending, why, and the next action remain honest foundation states until their approved operational domains exist.
             </CardDescription>
           </CardHeader>
           <CardContent className="ops:flex ops:flex-wrap ops:gap-2">
@@ -83,9 +122,7 @@ export default async function AdminOverview() {
         <Card>
           <CardHeader>
             <CardTitle>Authorization boundary</CardTitle>
-            <CardDescription>
-              Organization-wide Scoreboard access is limited to authorized Admin and Super Admin actors. Mentors and Read-only Staff land on their permitted student view.
-            </CardDescription>
+            <CardDescription>{authorizationDescription}</CardDescription>
           </CardHeader>
         </Card>
       </section>
