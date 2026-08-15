@@ -27,14 +27,28 @@ const studentA = "11000000-0000-4000-8000-000000000001";
 const studentB = "22000000-0000-4000-8000-000000000002";
 const documentId = "55000000-0000-4000-8000-000000000005";
 
-function documentReadClient(scanStatus: string, owner = studentA) {
+function documentReadClient(
+  scanStatus: string,
+  owner = studentA,
+  lifecycle: { superseded_at?: string | null; archived_at?: string | null } = {}
+) {
   const filters = new Map<string, unknown>();
   const createSignedUrl = vi.fn().mockResolvedValue({ data: { signedUrl: "https://storage.test/signed" }, error: null });
   const query = {
     eq: vi.fn((column: string, value: unknown) => { filters.set(column, value); return query; }),
     maybeSingle: vi.fn(async () => ({
       data: filters.get("id") === documentId && filters.get("student_id") === owner
-        ? { storage_path: `${owner}/requirement/file.pdf`, original_filename: "file.pdf", scan_status: scanStatus }
+        ? {
+          id: documentId,
+          student_id: owner,
+          storage_path: `${owner}/requirement/file.pdf`,
+          original_filename: "file.pdf",
+          scan_status: scanStatus,
+          superseded_at: lifecycle.superseded_at ?? null,
+          archived_at: lifecycle.archived_at ?? null,
+          purged_at: null,
+          storage_purged_at: null
+        }
         : null,
       error: null
     }))
@@ -53,6 +67,7 @@ function documentReviewClient(scanStatus: string, owner = studentA) {
   const filters = new Map<string, unknown>();
   const query = {
     eq: vi.fn((column: string, value: unknown) => { filters.set(column, value); return query; }),
+    is: vi.fn((column: string, value: unknown) => { filters.set(column, value); return query; }),
     select: vi.fn(() => query),
     maybeSingle: vi.fn(async () => {
       const matches = filters.get("id") === documentId && filters.get("student_id") === owner;
@@ -103,6 +118,41 @@ describe("Phase 4-0 clean document access gate", () => {
     expect(createSignedUrl).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["superseded", { superseded_at: "2026-08-15T00:00:00Z" }],
+    ["archived", { archived_at: "2026-08-15T00:00:00Z" }]
+  ])("denies a newly signed URL for a %s document", async (_label, lifecycle) => {
+    const { client, createSignedUrl } = documentReadClient("clean", studentA, lifecycle);
+    createServerClient.mockResolvedValue(client);
+
+    const response = await downloadDocument(
+      new Request("http://localhost"),
+      { params: Promise.resolve({ id: documentId }) }
+    );
+
+    expect(response.status).toBe(404);
+    expect(createSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it("requires manage authority for reviewer byte access", async () => {
+    requirePremiumActor.mockResolvedValue({
+      user: { id: "33000000-0000-4000-8000-000000000003" },
+      kind: "mentor",
+      studentId: studentA
+    });
+    const { client, createSignedUrl } = documentReadClient("clean");
+    createServerClient.mockResolvedValue(client);
+
+    const response = await downloadDocument(
+      new Request(`http://localhost?student_id=${studentA}`),
+      { params: Promise.resolve({ id: documentId }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(requirePremiumActor).toHaveBeenCalledWith(studentA, "manage");
+    expect(createSignedUrl).toHaveBeenCalledOnce();
+  });
+
   it("denies normal staff review for a non-clean document", async () => {
     requirePremiumActor.mockResolvedValue({ user: { id: "33000000-0000-4000-8000-000000000003" }, kind: "mentor", studentId: studentA });
     const { client, filters } = documentReviewClient("pending");
@@ -127,6 +177,9 @@ describe("Phase 4-0 clean document access gate", () => {
 
     expect(response.status).toBe(200);
     expect(filters.get("scan_status")).toBe("clean");
+    expect(filters.get("superseded_at")).toBeNull();
+    expect(filters.get("archived_at")).toBeNull();
+    expect(filters.get("purged_at")).toBeNull();
   });
 
   it("denies an unassigned mentor before document data access", async () => {

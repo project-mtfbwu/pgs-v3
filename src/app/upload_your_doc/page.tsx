@@ -31,7 +31,7 @@ export default async function DocumentsPage(){
             </div>
           </div>
         </div>
-        <div className="row justify-content-md-center mt-3"><div className="col-lg-6"><p className="mb-0 text-black fs-19 lh-25"><span className="fs-22 d-block mb-1 fw-500">Make sure your file is under 5MB.</span>We accept PDF, JPG, PNG, and MS Word formats. Hit upload when you&apos;re ready.</p></div></div>
+        <div className="row justify-content-md-center mt-3"><div className="col-lg-6"><p className="mb-0 text-black fs-19 lh-25"><span className="fs-22 d-block mb-1 fw-500">Make sure your file is under 50MB.</span>We accept PDF, JPG, PNG, and MS Word formats. Hit upload when you&apos;re ready.</p></div></div>
         <DocumentWorkspace requirements={workspace.requirements}/>
         <div className="developer-team-goal"><Image src="/assets/img/team-goal.png" alt="" width={980} height={420} unoptimized/></div>
       </div>

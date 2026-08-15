@@ -128,8 +128,8 @@ select lives_ok(
   'privileged document review mutation succeeds'
 );
 select results_eq(
-  $$select count(*)::bigint from public.audit_events where event_type='document.reviewed' and target_id='a4900000-0000-4000-8000-000000000009'$$,
-  array[1::bigint],'document review emits exactly one canonical event'
+  $$select count(*)::bigint from public.audit_events where event_type='document.approved' and target_id='a4900000-0000-4000-8000-000000000009'$$,
+  array[1::bigint],'document approval emits exactly one canonical event'
 );
 select results_eq(
   $$select count(*)::bigint from public.audit_events where metadata::text ~* '(password|authorization|oauth|cookie|document.body|proof\\.pdf)'$$,

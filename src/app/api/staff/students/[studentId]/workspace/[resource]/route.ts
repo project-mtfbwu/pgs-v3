@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { recordDeniedAuditEvent, recordFailedAuditEvent } from "@/lib/audit";
+import { STUDENT_DOCUMENT_BUCKET } from "@/lib/document-access";
 import { jsonError, readJsonObject, validUuid } from "@/lib/http";
 import { cleanWorkspaceText, requirePremiumActor, WorkspaceAccessError } from "@/lib/premium-workspace";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CLEAN_DOCUMENT_SCAN_STATUS } from "@/lib/document-access";
+import { logServerError } from "@/lib/server-security";
 
 type Context = { params: Promise<{ studentId: string; resource: string }> };
 const tables: Record<string, string> = {
@@ -110,7 +113,13 @@ export async function PATCH(request: Request, route: Context) {
     if (!Object.keys(values).length) return jsonError("No supported changes supplied.", 400);
     const supabase = await createSupabaseServerClient();
     let updateQuery=supabase.from(table).update(values).eq("id",recordId).eq("student_id",actor.studentId);
-    if(resource==="documents")updateQuery=updateQuery.eq("scan_status",CLEAN_DOCUMENT_SCAN_STATUS);
+    if(resource==="documents") {
+      updateQuery=updateQuery
+        .eq("scan_status",CLEAN_DOCUMENT_SCAN_STATUS)
+        .is("superseded_at",null)
+        .is("archived_at",null)
+        .is("purged_at",null);
+    }
     const {data,error}=await updateQuery.select("id").maybeSingle();
     if(error){
       if(resource==="documents")await recordFailedAuditEvent(request,{
@@ -140,6 +149,23 @@ export async function DELETE(request: Request, route: Context) {
     const { actor, resource, table } = await context(route.params);
     if (resource === "profile") return jsonError("Dashboard details cannot be deleted.", 405);
     const input = await readJsonObject(request);
+    if (resource === "documents") {
+      const documentId = id(input.id);
+      const supabase = await createSupabaseServerClient();
+      const { data: path, error } = await supabase.rpc("privileged_delete_student_document", { target_document: documentId });
+      if (error || typeof path !== "string") return jsonError("Unable to delete the document.", 403);
+      const removed = await createSupabaseAdminClient().storage.from(STUDENT_DOCUMENT_BUCKET).remove([path]);
+      if (removed.error) {
+        logServerError("privileged_document_storage_delete_failed", removed.error, { document_id: documentId });
+        return jsonError("Unable to delete the document storage object.", 500);
+      }
+      const { error: completeError } = await supabase.rpc("complete_privileged_document_delete", {
+        target_document: documentId,
+        storage_removed: true
+      });
+      if (completeError) return jsonError("Storage removed but document cleanup failed; retry is required.", 500);
+      return NextResponse.json({ ok: true });
+    }
     const supabase = await createSupabaseServerClient();
     const {data,error}=await supabase.from(table).delete().eq("id",id(input.id)).eq("student_id",actor.studentId).select("id").maybeSingle();
     if(error)return jsonError("Unable to delete the workspace item.",400);

@@ -18,7 +18,7 @@ select has_table('public', 'premium_audit_logs','premium_audit_logs exists');
 select is((select relrowsecurity from pg_class where oid='public.premium_entitlements'::regclass),true,'premium_entitlements uses RLS');
 select is((select relrowsecurity from pg_class where oid='public.student_documents'::regclass),true,'student_documents uses RLS');
 select is((select relrowsecurity from pg_class where oid='public.student_tasks'::regclass),true,'student_tasks uses RLS');
-select results_eq($$select count(*)::bigint from storage.buckets where id = 'student-documents' and public = false and file_size_limit = 5242880$$, array[1::bigint], 'student document bucket is private and bounded');
+select results_eq($$select count(*)::bigint from storage.buckets where id = 'student-documents' and public = false and file_size_limit = 52428800$$, array[1::bigint], 'student document bucket is private and bounded to 50 MB');
 
 insert into auth.users(instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('00000000-0000-0000-0000-000000000000','11000000-0000-4000-8000-000000000001','authenticated','authenticated','premium-a@example.test','',now(),'{}','{"pgs_context":"student"}',now(),now()),

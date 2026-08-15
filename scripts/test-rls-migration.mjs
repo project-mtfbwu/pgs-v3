@@ -22,7 +22,13 @@ const cleanDocumentGateMigration = await readFile(new URL("../supabase/migration
 const actorContextMigration = await readFile(new URL("../supabase/migrations/20260814140833_phase4a_actor_context_rbac.sql", import.meta.url), "utf8");
 const auditFoundationMigration = await readFile(new URL("../supabase/migrations/20260815033903_phase4b_audit_foundation.sql", import.meta.url), "utf8");
 const studentViewerMigration = await readFile(new URL("../supabase/migrations/20260815050550_phase4c_student_viewer_relationships.sql", import.meta.url), "utf8");
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}`;
+const documentLifecycleMigration = await readFile(new URL("../supabase/migrations/20260815060735_phase4d_document_security_lifecycle.sql", import.meta.url), "utf8");
+const documentHardeningMigration = await readFile(new URL("../supabase/migrations/20260815063737_phase4d_document_security_hardening.sql", import.meta.url), "utf8");
+const documentRlsHelperMigration = await readFile(new URL("../supabase/migrations/20260815064501_phase4d_document_rls_helper_hardening.sql", import.meta.url), "utf8");
+const documentDeleteGuardMigration = await readFile(new URL("../supabase/migrations/20260815065211_phase4d_document_delete_completion_guards.sql", import.meta.url), "utf8");
+const privilegedDeleteFixMigration = await readFile(new URL("../supabase/migrations/20260815065707_phase4d_privileged_delete_tombstone_fix.sql", import.meta.url), "utf8");
+const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}`;
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -106,6 +112,15 @@ const required = [
   ,"student_viewer.ended"
   ,"active Premium required"
   ,"end_student_viewer_after_premium_loss"
+  ,"document_upload_sessions"
+  ,"create_document_upload_session"
+  ,"finalize_student_document"
+  ,"request_own_document_deletion"
+  ,"privileged_delete_student_document"
+  ,"set_document_scan_result"
+  ,"can_read_student_document_bytes"
+  ,"authorized users read deliverable private student documents"
+  ,"52428800"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -121,4 +136,10 @@ const directoryFunction = studentViewerMigration.match(/create function public\.
 if (!directoryFunction.includes("students.read") || directoryFunction.includes("student_workspace.")) throw new Error("Directory and private workspace permissions must remain distinct");
 if (!/returns table\(id uuid,full_name text,study_level text\)/i.test(studentViewerMigration)) throw new Error("Directory RPC must expose only approved minimal fields");
 if (/grant (?:insert|update|delete|all).*public\.mentor_assignments.*authenticated/i.test(studentViewerMigration)) throw new Error("Authenticated clients must not mutate viewer relationships directly");
+if (!phase4dMigration.includes("drop function if exists public.delete_own_student_document")) throw new Error("Phase 4D must remove student hard-delete RPC");
+if (!phase4dMigration.includes("drop function if exists public.register_student_document")) throw new Error("Phase 4D finalization must require an issued upload session");
+if (/grant execute on function public\.set_document_scan_result/i.test(phase4dMigration) && !/grant execute on function public\.set_document_scan_result\(uuid,text,text\) to service_role/i.test(phase4dMigration)) throw new Error("Scan verdict RPC must remain service_role only");
+if (/create table public\.document_share/i.test(phase4dMigration)) throw new Error("Phase 4D must not create Phase 4E sharing tables");
+if (!phase4dMigration.includes("complete_abandoned_upload_session_cleanup")) throw new Error("Abandoned upload cleanup must be two-phase and retryable");
+if (!phase4dMigration.includes("storage object still exists")) throw new Error("Document purge completion must verify Storage absence");
 console.log("RLS migration static checks passed");

@@ -13,7 +13,20 @@ export { StudentAccessError as WorkspaceAccessError };
 export type BoardColumn = { id: string; key: string; title: string; sort_order: number };
 export type StudentTask = { id: string; column_id: string; title: string; details: string; sort_order: number; due_at: string | null };
 export type DocumentRequirement = { id: string; document_type: string; requirement_kind: string; status: string; instructions: string; sort_order: number; student_documents?: StudentDocument[] };
-export type StudentDocument = { id: string; requirement_id: string; original_filename: string; mime_type: string; byte_size: number; version: number; qc_status: string; scan_status: string; uploaded_at: string };
+export type StudentDocument = {
+  id: string;
+  requirement_id: string;
+  original_filename: string;
+  mime_type: string;
+  byte_size: number;
+  version: number;
+  qc_status: string;
+  scan_status: string;
+  uploaded_at: string;
+  superseded_at?: string | null;
+  archived_at?: string | null;
+  purged_at?: string | null;
+};
 
 export type PremiumWorkspace = {
   studentId: string;
@@ -50,7 +63,7 @@ export async function loadPremiumWorkspace(studentId: string): Promise<PremiumWo
     supabase.from("workspace_comments").select("id,parent_id,author_id,body,created_at").eq("student_id", studentId).order("created_at"),
     supabase.from("review_queue_items").select("id,title,details,status,sort_order").eq("student_id", studentId).order("sort_order"),
     supabase.from("counselor_notes").select("id,body,visibility,created_at").eq("student_id", studentId).order("created_at", { ascending: false }),
-    supabase.from("student_document_requirements").select("id,document_type,requirement_kind,status,instructions,sort_order,student_documents(id,requirement_id,original_filename,mime_type,byte_size,version,qc_status,scan_status,uploaded_at)").eq("student_id", studentId).order("sort_order"),
+    supabase.from("student_document_requirements").select("id,document_type,requirement_kind,status,instructions,sort_order,student_documents(id,requirement_id,original_filename,mime_type,byte_size,version,qc_status,scan_status,uploaded_at,superseded_at,archived_at,purged_at)").eq("student_id", studentId).order("sort_order"),
     supabase.from("student_university_selections").select("id,stage,sort_order,universities(id,name,slug)").eq("student_id", studentId).order("sort_order")
   ]);
   const mentorRelation = assignment.data?.staff_profiles as unknown as { user_id: string; display_name: string } | Array<{ user_id: string; display_name: string }> | null;
@@ -76,22 +89,4 @@ export function cleanWorkspaceText(value: unknown, max: number): string {
   return result;
 }
 
-const acceptedDocumentTypes = new Set([
-  "application/pdf", "image/jpeg", "image/png", "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-]);
-
-export function validDocumentSignature(bytes: Uint8Array, mime: string): boolean {
-  if (!acceptedDocumentTypes.has(mime) || bytes.length < 4) return false;
-  if (mime === "application/pdf") return new TextDecoder().decode(bytes.slice(0, 5)) === "%PDF-";
-  if (mime === "image/jpeg") return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-  if (mime === "image/png") return [0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a].every((value, index) => bytes[index] === value);
-  const names=new TextDecoder("latin1").decode(bytes);
-  if (mime === "application/msword") return [0xd0,0xcf,0x11,0xe0].every((value, index) => bytes[index] === value)&&names.includes("WordDocument");
-  return bytes[0]===0x50&&bytes[1]===0x4b&&bytes[2]===0x03&&bytes[3]===0x04&&names.includes("[Content_Types].xml")&&names.includes("word/");
-}
-
-export function safeDisplayFilename(value:string):string{
-  const cleaned=value.normalize("NFKC").replace(/[\u0000-\u001f\u007f/\\]/g,"_").replace(/\s+/g," ").trim();
-  return (cleaned||"document").slice(0,255);
-}
+export { safeDisplayFilename, validDocumentSignature } from "@/lib/document-access";

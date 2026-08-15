@@ -1,10 +1,11 @@
 begin;
-select plan(28);
+select plan(29);
 
 select has_table('private','request_rate_limits','private request_rate_limits exists');
 select has_function('public','consume_request_rate_limit',array['text','text']);
 select has_function('public','staff_student_directory',array['text','integer']);
-select has_function('public','delete_own_student_document',array['uuid']);
+select hasnt_function('public','delete_own_student_document');
+select has_function('public','request_own_document_deletion',array['uuid']);
 select has_function('private','end_ineligible_mentor_assignments',array[]::text[]);
 select has_index('public','staff_role_assignments','staff_role_assignments_one_active_role_idx','active staff roles are unique');
 select has_index('public','student_documents','student_documents_requirement_version_unique','document requirement versions are unique');

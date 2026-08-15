@@ -237,13 +237,10 @@ select is(
   'anonymous actors cannot read private student workspace data'
 );
 select matches(
-  (
-    select pg_get_expr(polqual,polrelid)
-    from pg_policy
-    where polrelid='storage.objects'::regclass
-      and polname='authorized users read clean private student documents'
+  pg_get_functiondef(
+    'private.is_deliverable_student_document(public.student_documents)'::regprocedure
   ),
-  'scan_status.*clean',
+  'scan_status = ''clean''',
   'document file eligibility remains clean-only and is not widened'
 );
 select results_eq(
