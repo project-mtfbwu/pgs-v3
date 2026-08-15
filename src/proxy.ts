@@ -1,6 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isOperationsPreviewSurface } from "@/lib/development-surface";
 
 const legacyControllers: Record<string, string> = {
   about: "/about", change_password: "/change_password", contact: "/contact",
@@ -31,8 +30,23 @@ const exactLegacyRoutes: Record<string, string> = {
 
 // Feed, progress, and document routes intentionally expose anonymous locked frames;
 // the underlying resources remain independently protected by server Auth/RLS.
-const protectedPaths = ["/student", "/saved", "/notifications", "/singup", "/change_password", "/dashboard", "/mentor", "/admin", "/cms"];
+const protectedPaths = ["/student", "/saved", "/notifications", "/singup", "/change_password", "/dashboard", "/mentor", "/admin", "/ops", "/cms"];
 const anonymousPreviewPaths = new Set(["/student/dashboard"]);
+
+function isOperationsPath(pathname: string): boolean {
+  return pathname === "/ops" || pathname.startsWith("/ops/");
+}
+
+function canonicalOperationsPath(pathname: string): string | null {
+  if (pathname === "/admin") return "/ops";
+  if (pathname === "/admin/students" || pathname.startsWith("/admin/students/")) {
+    return pathname.replace(/^\/admin\/students/, "/ops/students");
+  }
+  if (pathname === "/admin/staff") return "/ops/team";
+  if (pathname === "/admin/notifications") return "/ops/notifications";
+  if (pathname === "/admin/audit") return "/ops/activity";
+  return null;
+}
 
 function legacyDestination(request: NextRequest): URL | null {
   if (request.nextUrl.pathname.toLowerCase() === "/home/purplepremium_overview") return null;
@@ -64,10 +78,11 @@ function legacyDestination(request: NextRequest): URL | null {
 }
 
 export async function proxy(request: NextRequest) {
-  if (request.nextUrl.pathname === "/" && isOperationsPreviewSurface()) {
+  const operationsPath = canonicalOperationsPath(request.nextUrl.pathname);
+  if (operationsPath) {
     const operations = request.nextUrl.clone();
-    operations.pathname = "/admin";
-    return NextResponse.redirect(operations);
+    operations.pathname = operationsPath;
+    return NextResponse.redirect(operations, 308);
   }
 
   const destination = legacyDestination(request);
@@ -110,7 +125,11 @@ export async function proxy(request: NextRequest) {
     const redirectPath = request.nextUrl.pathname + request.nextUrl.search;
     login.search = "";
     login.searchParams.set("redirect", redirectPath);
-    if (request.nextUrl.pathname === "/admin" || request.nextUrl.pathname.startsWith("/admin/")) {
+    if (
+      isOperationsPath(request.nextUrl.pathname)
+      || request.nextUrl.pathname === "/admin"
+      || request.nextUrl.pathname.startsWith("/admin/")
+    ) {
       login.searchParams.set("surface", "operations");
     }
     return NextResponse.redirect(login);

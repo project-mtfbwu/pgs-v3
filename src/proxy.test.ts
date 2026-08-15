@@ -1,60 +1,74 @@
 import { NextRequest } from "next/server";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const mocks = vi.hoisted(() => ({ getClaims: vi.fn() }));
 vi.mock("@supabase/ssr", () => ({
-  createServerClient: () => ({ auth: { getClaims: async () => ({ data: null }) } })
+  createServerClient: () => ({ auth: { getClaims: mocks.getClaims } })
 }));
 
+import nextConfig from "../next.config";
 import { proxy } from "@/proxy";
-
-const previewEnvironment = {
-  VERCEL_ENV: "preview",
-  VERCEL_GIT_COMMIT_REF: "cursor/phase5-operations"
-};
-
-function useEnvironment(values: Record<string, string | undefined>) {
-  for (const [key, value] of Object.entries(values)) vi.stubEnv(key, value ?? "");
-}
 
 function request(path: string) {
   return new NextRequest(new URL(path, "https://preview.example.test"));
 }
 
-afterEach(() => {
-  vi.unstubAllEnvs();
+beforeEach(() => {
+  mocks.getClaims.mockResolvedValue({ data: null });
 });
 
-describe("Operations development surface routing", () => {
-  it("sends the dedicated Operations Preview root into Operations", async () => {
-    useEnvironment(previewEnvironment);
-    const response = await proxy(request("/"));
-    expect(response.status).toBe(307);
-    expect(new URL(response.headers.get("location")!).pathname).toBe("/admin");
-  });
-
-  it.each([
-    { VERCEL_ENV: "production", VERCEL_GIT_COMMIT_REF: "cursor/phase5-operations" },
-    { VERCEL_ENV: "preview", VERCEL_GIT_COMMIT_REF: "cursor/phase4a-handoff" },
-    { VERCEL_ENV: undefined, VERCEL_GIT_COMMIT_REF: undefined }
-  ])("keeps the public/student root for %j", async (environment) => {
-    useEnvironment(environment);
+describe("canonical Operations product routing", () => {
+  it("always keeps the public/student root public", async () => {
     const response = await proxy(request("/"));
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("routes unauthenticated Operations requests to the staff sign-in surface", async () => {
-    useEnvironment(previewEnvironment);
-    const location = new URL((await proxy(request("/admin"))).headers.get("location")!);
+  it("routes unauthenticated Operations requests to staff login with the exact return URL", async () => {
+    const response = await proxy(request("/ops/students?premium=active&mentor=actor-1"));
+    const location = new URL(response.headers.get("location")!);
     expect(location.pathname).toBe("/login");
-    expect(location.searchParams.get("redirect")).toBe("/admin");
+    expect(location.searchParams.get("redirect")).toBe("/ops/students?premium=active&mentor=actor-1");
     expect(location.searchParams.get("surface")).toBe("operations");
   });
 
+  it.each([
+    ["/admin", "/ops"],
+    ["/admin/students?premium=active", "/ops/students?premium=active"],
+    ["/admin/students/student-1", "/ops/students/student-1"],
+    ["/admin/staff", "/ops/team"],
+    ["/admin/notifications", "/ops/notifications"],
+    ["/admin/audit", "/ops/activity"]
+  ])("redirects mapped compatibility route %s to %s", async (legacy, canonical) => {
+    const response = await proxy(request(legacy));
+    expect(response.status).toBe(308);
+    const location = new URL(response.headers.get("location")!);
+    expect(`${location.pathname}${location.search}`).toBe(canonical);
+  });
+
+  it("does not redirect unrelated legacy admin routes into Operations", async () => {
+    const response = await proxy(request("/admin/catalog"));
+    const location = new URL(response.headers.get("location")!);
+    expect(location.pathname).toBe("/login");
+    expect(location.searchParams.get("redirect")).toBe("/admin/catalog");
+  });
+
   it("keeps student routes on the existing public sign-in surface", async () => {
-    useEnvironment(previewEnvironment);
-    const location = new URL((await proxy(request("/saved?tab=courses"))).headers.get("location")!);
+    const response = await proxy(request("/saved?tab=courses"));
+    const location = new URL(response.headers.get("location")!);
     expect(location.pathname).toBe("/login");
     expect(location.searchParams.get("redirect")).toBe("/saved?tab=courses");
     expect(location.searchParams.get("surface")).toBeNull();
+  });
+
+  it("maps canonical Operations URLs to the existing admin implementation", async () => {
+    expect(typeof nextConfig.rewrites).toBe("function");
+    const rewrites = await nextConfig.rewrites!();
+    expect(rewrites).toEqual([
+      { source: "/ops", destination: "/admin" },
+      { source: "/ops/students/:path*", destination: "/admin/students/:path*" },
+      { source: "/ops/team", destination: "/admin/staff" },
+      { source: "/ops/notifications", destination: "/admin/notifications" },
+      { source: "/ops/activity", destination: "/admin/audit" }
+    ]);
   });
 });

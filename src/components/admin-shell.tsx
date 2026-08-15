@@ -27,19 +27,19 @@ type Item = {
 };
 
 const items: Item[] = [
-  { href: "/admin", label: "Scoreboard", permission: "overview.read", icon: Gauge, scoreboard: true },
-  { href: "/admin/students", label: "Students", permission: "overview.read", icon: GraduationCap },
-  { href: "/admin/staff", label: "Team", permission: "staff.read", icon: UsersRound },
-  { href: "/admin/notifications", label: "Notifications", permission: "overview.read", icon: Bell },
-  { href: "/admin/audit", label: "Activity", permission: "audit.read", icon: Activity }
+  { href: "/ops", label: "Scoreboard", permission: "overview.read", icon: Gauge, scoreboard: true },
+  { href: "/ops/students", label: "Students", permission: "overview.read", icon: GraduationCap },
+  { href: "/ops/team", label: "Team", permission: "staff.read", icon: UsersRound },
+  { href: "/ops/notifications", label: "Notifications", permission: "overview.read", icon: Bell },
+  { href: "/ops/activity", label: "Activity", permission: "audit.read", icon: Activity }
 ];
 
 const sectionTitles: Record<string, string> = {
-  "/admin": "Operations Scoreboard",
-  "/admin/students": "Students",
-  "/admin/staff": "Team",
-  "/admin/notifications": "Notifications",
-  "/admin/audit": "Activity"
+  "/ops": "Operations Scoreboard",
+  "/ops/students": "Students",
+  "/ops/team": "Team",
+  "/ops/notifications": "Notifications",
+  "/ops/activity": "Activity"
 };
 
 function roleLabel(roles: StaffRoleKey[]) {
@@ -92,7 +92,7 @@ export function AdminShell({
   return (
     <div data-operations-shell className="operations-root ops:min-h-screen ops:bg-background ops:text-foreground">
       <aside className="ops:fixed ops:inset-y-0 ops:left-0 ops:z-30 ops:hidden ops:w-64 ops:flex-col ops:border-r ops:border-border ops:bg-card ops:px-4 ops:py-5 ops:lg:flex">
-        <Link href="/admin" className="ops:flex ops:items-center ops:gap-3 ops:px-2 ops:no-underline">
+        <Link href="/ops" className="ops:flex ops:items-center ops:gap-3 ops:px-2 ops:no-underline">
           <span className="ops:flex ops:size-9 ops:items-center ops:justify-center ops:rounded-lg ops:bg-primary ops:text-sm ops:font-bold ops:text-primary-foreground">P</span>
           <span className="ops:flex ops:flex-col">
             <strong className="ops:text-sm ops:tracking-tight">Purple Guide</strong>
@@ -128,7 +128,7 @@ export function AdminShell({
           <div className="ops:flex ops:items-center ops:gap-2">
             <Badge className="ops:hidden ops:sm:inline-flex">{roleLabel(roles)}</Badge>
             {allowed.has("overview.read") && (
-              <Link href="/admin/notifications" aria-label="Open notifications" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
+              <Link href="/ops/notifications" aria-label="Open notifications" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
                 <Bell aria-hidden="true" className="ops:size-4" />
               </Link>
             )}

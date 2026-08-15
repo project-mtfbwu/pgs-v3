@@ -3,6 +3,15 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  async rewrites() {
+    return [
+      { source: "/ops", destination: "/admin" },
+      { source: "/ops/students/:path*", destination: "/admin/students/:path*" },
+      { source: "/ops/team", destination: "/admin/staff" },
+      { source: "/ops/notifications", destination: "/admin/notifications" },
+      { source: "/ops/activity", destination: "/admin/audit" }
+    ];
+  },
   async headers() {
     let supabaseOrigin="";try{supabaseOrigin=process.env.NEXT_PUBLIC_SUPABASE_URL?new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin:"";}catch{supabaseOrigin="";}
     const contentSecurityPolicy = [
@@ -34,7 +43,7 @@ const nextConfig: NextConfig = {
     return [{
       source: "/:path*",
       headers: securityHeaders
-    }, ...["/api/auth/:path*", "/api/student/:path*", "/api/premium/:path*", "/api/staff/:path*", "/api/admin/:path*", "/auth/:path*", "/student/:path*", "/mentor/:path*", "/admin/:path*", "/cms", "/dashboard", "/feed_track_progress", "/upload_your_doc", "/saved", "/notifications", "/singup", "/change_password"].map((source) => ({ source, headers: privateHeaders }))];
+    }, ...["/api/auth/:path*", "/api/student/:path*", "/api/premium/:path*", "/api/staff/:path*", "/api/admin/:path*", "/auth/:path*", "/student/:path*", "/mentor/:path*", "/admin/:path*", "/ops", "/ops/:path*", "/cms", "/dashboard", "/feed_track_progress", "/upload_your_doc", "/saved", "/notifications", "/singup", "/change_password"].map((source) => ({ source, headers: privateHeaders }))];
   }
 };
 

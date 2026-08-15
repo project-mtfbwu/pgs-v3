@@ -24,10 +24,10 @@ export default async function AdminOverview() {
         ? null
         : Math.max(totalStudents - premiumStudents, 0);
     metrics.push(
-      { label: "Visible students", value: totalStudents, href: "/admin/students", icon: GraduationCap },
-      { label: "Premium students", value: premiumStudents, href: "/admin/students?premium=active", icon: Sparkles },
-      { label: "Standard students", value: standardStudents, href: "/admin/students", icon: CircleGauge },
-      { label: "Active team members", value: queries[2].error ? null : queries[2].count, href: "/admin/staff", icon: UsersRound }
+      { label: "Visible students", value: totalStudents, href: "/ops/students", icon: GraduationCap },
+      { label: "Premium students", value: premiumStudents, href: "/ops/students?premium=active", icon: Sparkles },
+      { label: "Standard students", value: standardStudents, href: "/ops/students", icon: CircleGauge },
+      { label: "Active team members", value: queries[2].error ? null : queries[2].count, href: "/ops/team", icon: UsersRound }
     );
   } else if (scope === "assigned_students") {
     const supabase = await createSupabaseServerClient();
@@ -39,7 +39,7 @@ export default async function AdminOverview() {
     metrics.push({
       label: "Assigned students",
       value: assigned.error ? null : assigned.count,
-      href: "/admin/students",
+      href: "/ops/students",
       icon: GraduationCap
     });
   }
@@ -114,9 +114,9 @@ export default async function AdminOverview() {
             </CardDescription>
           </CardHeader>
           <CardContent className="ops:flex ops:flex-wrap ops:gap-2">
-            <Link href="/admin/students" className="ops:rounded-md ops:border ops:border-border ops:px-3 ops:py-2 ops:text-sm ops:font-medium ops:no-underline ops:hover:bg-secondary">Open students</Link>
-            {can(context, "staff.read") && <Link href="/admin/staff" className="ops:rounded-md ops:border ops:border-border ops:px-3 ops:py-2 ops:text-sm ops:font-medium ops:no-underline ops:hover:bg-secondary">Open team</Link>}
-            {can(context, "audit.read") && <Link href="/admin/audit" className="ops:rounded-md ops:border ops:border-border ops:px-3 ops:py-2 ops:text-sm ops:font-medium ops:no-underline ops:hover:bg-secondary">Open activity</Link>}
+            <Link href="/ops/students" className="ops:rounded-md ops:border ops:border-border ops:px-3 ops:py-2 ops:text-sm ops:font-medium ops:no-underline ops:hover:bg-secondary">Open students</Link>
+            {can(context, "staff.read") && <Link href="/ops/team" className="ops:rounded-md ops:border ops:border-border ops:px-3 ops:py-2 ops:text-sm ops:font-medium ops:no-underline ops:hover:bg-secondary">Open team</Link>}
+            {can(context, "audit.read") && <Link href="/ops/activity" className="ops:rounded-md ops:border ops:border-border ops:px-3 ops:py-2 ops:text-sm ops:font-medium ops:no-underline ops:hover:bg-secondary">Open activity</Link>}
           </CardContent>
         </Card>
         <Card>
