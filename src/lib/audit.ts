@@ -6,7 +6,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type AuditActorKind = "anonymous" | "student" | "staff" | "system";
 export type AuditTargetType = "staff_user" | "student" | "student_document" | "cms_page";
-export type AuditSourceSubsystem = "staff" | "assignments" | "premium" | "documents" | "cms" | "auth";
+export type AuditSourceSubsystem = "staff" | "students" | "assignments" | "premium" | "documents" | "cms" | "auth";
 
 type SafeMetadataValue = string | number | boolean | null;
 export type AuditMetadata = Partial<Record<
@@ -28,6 +28,7 @@ export type AuditMetadata = Partial<Record<
 
 type DeniedEventType =
   | "staff.access.denied"
+  | "student.access.denied"
   | "assignment.change.denied"
   | "premium.entitlement.denied"
   | "document.access.denied"
@@ -79,7 +80,7 @@ export function sanitizeAuditMetadata(metadata: AuditMetadata | undefined): Reco
 }
 
 async function writeTrustedAuditEvent<T extends string>(
-  request: Request,
+  request: Request | undefined,
   outcome: "denied" | "failed" | "succeeded",
   input: TrustedAuditInput<T>
 ): Promise<void> {
@@ -99,7 +100,7 @@ async function writeTrustedAuditEvent<T extends string>(
 }
 
 async function writeBestEffort<T extends string>(
-  request: Request,
+  request: Request | undefined,
   outcome: "denied" | "failed",
   input: TrustedAuditInput<T>
 ): Promise<boolean> {
@@ -118,7 +119,7 @@ async function writeBestEffort<T extends string>(
 
 /** Denials remain denied even when their best-effort audit write is unavailable. */
 export async function recordDeniedAuditEvent(
-  request: Request,
+  request: Request | undefined,
   input: TrustedAuditInput<DeniedEventType>
 ): Promise<boolean> {
   return writeBestEffort(request, "denied", input);

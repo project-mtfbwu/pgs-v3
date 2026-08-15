@@ -45,6 +45,23 @@ describe("trusted server audit writes",()=>{
     }));
   });
 
+  it("records a server-rendered denied student read without client authority",async()=>{
+    await expect(recordDeniedAuditEvent(undefined,{
+      eventType:"student.access.denied",sourceSubsystem:"students",
+      targetType:"student",targetId:"student-id",
+      metadata:{
+        permission_required:"student_workspace.read",
+        reason_code:"viewer_relationship_required",
+        route:"/admin/students/[studentId]"
+      }
+    })).resolves.toBe(true);
+    expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
+      event_type:"student.access.denied",actor_user_id:"staff-user",
+      actor_kind:"staff",source_subsystem:"students",outcome:"denied",
+      request_id:"request-proof"
+    }));
+  });
+
   it("does not turn a denial into authorization when audit storage fails",async()=>{
     mocks.insert.mockResolvedValue({error:{code:"storage_unavailable"}});
     await expect(recordDeniedAuditEvent(new Request("https://pgs.test/api/staff/premium"),{

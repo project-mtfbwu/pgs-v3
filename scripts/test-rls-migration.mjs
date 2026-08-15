@@ -21,7 +21,8 @@ const mentorTriggerFixMigration = await readFile(new URL("../supabase/migrations
 const cleanDocumentGateMigration = await readFile(new URL("../supabase/migrations/20260814133451_phase4_0_clean_document_access_gate.sql", import.meta.url), "utf8");
 const actorContextMigration = await readFile(new URL("../supabase/migrations/20260814140833_phase4a_actor_context_rbac.sql", import.meta.url), "utf8");
 const auditFoundationMigration = await readFile(new URL("../supabase/migrations/20260815033903_phase4b_audit_foundation.sql", import.meta.url), "utf8");
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}`;
+const studentViewerMigration = await readFile(new URL("../supabase/migrations/20260815050550_phase4c_student_viewer_relationships.sql", import.meta.url), "utf8");
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -101,6 +102,10 @@ const required = [
   ,"prevent_canonical_audit_mutation"
   ,"private.write_audit_event"
   ,"premium_entitlement_events"
+  ,"student_viewer.assigned"
+  ,"student_viewer.ended"
+  ,"active Premium required"
+  ,"end_student_viewer_after_premium_loss"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -111,4 +116,9 @@ if (/grant execute on function public\.consume_request_rate_limit\(text,text\) t
 if (/grant (?:insert|update|delete|all).*public\.audit_events.*authenticated/i.test(auditFoundationMigration)) throw new Error("Authenticated clients must not write canonical audit events");
 if (/create table public\.domain_events/i.test(auditFoundationMigration)) throw new Error("Phase 4B must not create speculative domain events");
 if (/insert into public\.(?:admin_audit_logs|premium_audit_logs)/i.test(auditFoundationMigration)) throw new Error("Phase 4B must cut over legacy audit writers");
+if (/create table public\.(?:student_viewers|student_viewer_relationships|student_staff_access|student_access_grants|student_relationships)/i.test(studentViewerMigration)) throw new Error("Phase 4C must reuse mentor_assignments");
+const directoryFunction = studentViewerMigration.match(/create function public\.staff_student_directory[\s\S]*?\$\$([\s\S]*?)\$\$/i)?.[1] ?? "";
+if (!directoryFunction.includes("students.read") || directoryFunction.includes("student_workspace.")) throw new Error("Directory and private workspace permissions must remain distinct");
+if (!/returns table\(id uuid,full_name text,study_level text\)/i.test(studentViewerMigration)) throw new Error("Directory RPC must expose only approved minimal fields");
+if (/grant (?:insert|update|delete|all).*public\.mentor_assignments.*authenticated/i.test(studentViewerMigration)) throw new Error("Authenticated clients must not mutate viewer relationships directly");
 console.log("RLS migration static checks passed");

@@ -1,14 +1,14 @@
-import type { User } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getStaffContext } from "@/lib/staff-auth";
-import { resolvePremiumValidity, type PremiumEntitlementRecord } from "@/lib/premium-entitlement";
+import {
+  getStudentPremiumStatus,
+  requireStudentViewer,
+  StudentAccessError,
+  type StudentViewerActor
+} from "@/lib/student-access";
 
 export type PremiumStatus = "active" | "revoked" | "expired" | "none";
-export type WorkspaceActor = { user: User; kind: "student" | "mentor" | "admin" | "super_admin"; studentId: string };
-
-export class WorkspaceAccessError extends Error {
-  constructor(public readonly status: 401 | 403, message: string) { super(message); }
-}
+export type WorkspaceActor = StudentViewerActor;
+export { StudentAccessError as WorkspaceAccessError };
 
 export type BoardColumn = { id: string; key: string; title: string; sort_order: number };
 export type StudentTask = { id: string; column_id: string; title: string; details: string; sort_order: number; due_at: string | null };
@@ -31,34 +31,11 @@ export type PremiumWorkspace = {
 };
 
 export async function getPremiumStatus(studentId: string): Promise<PremiumStatus> {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.from("premium_entitlements").select("id,status,source,plan_code,duration_months,approved_at,starts_at,ends_at,revoked_at").eq("student_id", studentId).order("ends_at",{ascending:false}).limit(20);
-  return resolvePremiumValidity((data??[]) as PremiumEntitlementRecord[]).status;
+  return getStudentPremiumStatus(studentId);
 }
 
 export async function requirePremiumActor(studentId?: string, access: "read"|"manage"="read"): Promise<WorkspaceActor> {
-  const supabase = await createSupabaseServerClient();
-  const { data: authData } = await supabase.auth.getUser();
-  const user = authData.user;
-  if (!user) throw new WorkspaceAccessError(401, "Please log in.");
-  const target = studentId ?? user.id;
-  const status = await getPremiumStatus(target);
-  if (status !== "active") throw new WorkspaceAccessError(403, "An active Purple Premium entitlement is required.");
-  if (target === user.id) {
-    const { data: studentProfile } = await supabase.from("profiles").select("id").eq("id", user.id).maybeSingle();
-    if (!studentProfile) throw new WorkspaceAccessError(403, "A student context is required.");
-    return { user, kind: "student", studentId: target };
-  }
-
-  const staff=await getStaffContext();
-  if(!staff)throw new WorkspaceAccessError(403,"This student workspace is not assigned to you.");
-  const allPermission=access==="manage"?"student_workspace.manage_all":"student_workspace.read_all";
-  if(staff.permissions.has(allPermission))return {user,kind:staff.roles.includes("super_admin")?"super_admin":"admin",studentId:target};
-  const assignedPermission=access==="manage"?"student_workspace.manage":"student_workspace.read";
-  if(!staff.permissions.has(assignedPermission))throw new WorkspaceAccessError(403,"This student workspace is not assigned to you.");
-  const { data: assignment } = await supabase.from("mentor_assignments").select("id").eq("student_id", target).eq("mentor_id", user.id).eq("status", "active").maybeSingle();
-  if (!assignment) throw new WorkspaceAccessError(403, "This student workspace is not assigned to you.");
-  return { user, kind: "mentor", studentId: target };
+  return requireStudentViewer(studentId, { access });
 }
 
 export async function loadPremiumWorkspace(studentId: string): Promise<PremiumWorkspace> {

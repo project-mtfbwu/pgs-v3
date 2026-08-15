@@ -20,7 +20,7 @@ export function requestFingerprint(request: Request, scope: RateLimitScope, subj
 }
 
 /** Per-request audit correlation without trusting a browser-supplied identifier. */
-export function requestCorrelationId(request: Request): string {
+export function requestCorrelationId(request?: Request): string {
   void request;
   return randomUUID();
 }

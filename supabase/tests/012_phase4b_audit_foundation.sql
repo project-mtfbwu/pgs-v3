@@ -62,6 +62,10 @@ select results_eq(
 set local role authenticated;
 set local request.jwt.claims='{"sub":"a4500000-0000-4000-8000-000000000005","role":"authenticated"}';
 select lives_ok(
+  $$select public.set_premium_entitlement('a4100000-0000-4000-8000-000000000001','grant','12_month','grant')$$,
+  'Premium grant succeeds'
+);
+select lives_ok(
   $$select public.set_mentor_assignment('a4100000-0000-4000-8000-000000000001','a4200000-0000-4000-8000-000000000002',true,'assign')$$,
   'assignment create succeeds'
 );
@@ -74,15 +78,11 @@ select lives_ok(
   'assignment end succeeds'
 );
 select results_eq(
-  $$select event_type||':'||count(*)::text from public.audit_events where target_id='a4100000-0000-4000-8000-000000000001' and event_type like 'assignment.%' group by event_type order by event_type$$,
-  $$values ('assignment.created:1'::text),('assignment.ended:1'::text),('assignment.reassigned:1'::text)$$,
-  'assignment lifecycle has distinct canonical event types'
+  $$select event_type||':'||count(*)::text from public.audit_events where target_id='a4100000-0000-4000-8000-000000000001' and event_type like 'student_viewer.%' group by event_type order by event_type$$,
+  $$values ('student_viewer.assigned:2'::text),('student_viewer.ended:2'::text)$$,
+  'assignment lifecycle uses stable canonical viewer events'
 );
 
-select lives_ok(
-  $$select public.set_premium_entitlement('a4100000-0000-4000-8000-000000000001','grant','12_month','grant')$$,
-  'Premium grant succeeds'
-);
 select lives_ok(
   $$select public.set_premium_entitlement('a4100000-0000-4000-8000-000000000001','revoke',null,'revoke')$$,
   'Premium revoke succeeds'
