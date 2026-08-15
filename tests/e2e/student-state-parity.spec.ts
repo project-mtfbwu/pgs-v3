@@ -13,7 +13,8 @@ async function expectAuthenticatedHeader(page:import("@playwright/test").Page,st
 
 async function toggleSidebar(page:import("@playwright/test").Page){
   const toggle=page.locator("#toggleBtn");const sidebar=page.locator("#sidebar");
-  await toggle.click();await expect(sidebar).toHaveClass(/active/);await expect(toggle).toHaveAttribute("aria-expanded","true");
+  if(await toggle.getAttribute("aria-expanded")!=="true")await toggle.click();
+  await expect(sidebar).toHaveClass(/active/);await expect(toggle).toHaveAttribute("aria-expanded","true");
   await sidebar.locator("#close_Btn").click();await expect(sidebar).not.toHaveClass(/active/);await expect(toggle).toHaveAttribute("aria-expanded","false");
 }
 
@@ -30,9 +31,9 @@ test.describe("authoritative standard-student presentation",()=>{
   test("dashboard and retained pages keep the complete authenticated header and sidebar",async({page},testInfo)=>{
     await page.goto("/student/dashboard");
     const documentNavigations=await page.evaluate(()=>performance.getEntriesByType("navigation").length);
-    await expect(page.locator('.approved-student-shell[data-student-state="authenticated_standard"]')).toBeVisible();
-    await expect(page.getByText(/Yet to Unlock Full Access/i)).toBeVisible();
-    await page.locator('.approved-student-logo').click();
+    await expect(page.locator('[data-legacy-page="student-dashboard"]')).toHaveAttribute("data-student-state","authenticated_standard");
+    await expect(page.locator(".avatar-heading-right-box")).toContainText(/Yet to\s+Unlock\s+Full\s+Access/i);
+    await page.locator(testInfo.project.name==="mobile"?'header .mobile-header a[href="/"]:visible':'header .navbar-brand:visible').first().click();
     await expect(page.locator('[data-legacy-page="home"]')).toHaveAttribute("data-student-state","authenticated_standard");
     await expect(page.locator(".pgs-auth-account:visible").first()).toBeVisible();
     await expect(page.locator('a.btn-login',{hasText:"Login"})).toHaveCount(0);
@@ -43,15 +44,16 @@ test.describe("authoritative standard-student presentation",()=>{
   });
 
   test("Premium progress and documents retain the logged-in shell while locked",async({page})=>{
-    for(const [route,node] of [["/dashboard","17961:10662"],["/feed_track_progress","17041:14026"],["/upload_your_doc","17041:15941"]]){await page.goto(route);await expect(page.locator(`[data-node-id="${node}"]`)).toBeVisible();await expect(page.locator('.approved-student-shell[data-student-state="authenticated_standard"]')).toBeVisible();}
+    await page.goto("/dashboard");await expect(page.locator('[data-legacy-page="dashboard-locked"]')).toHaveAttribute("data-student-state","authenticated_standard");await expect(page.locator(".avatar-heading-right-box")).toContainText(/Yet to\s+Unlock\s+Full\s+Access/i);
+    for(const [route,legacyPage] of [["/feed_track_progress","progress-locked"],["/upload_your_doc","documents-locked"]]){await page.goto(route);await expect(page.locator(`[data-legacy-page="${legacyPage}"]`)).toHaveAttribute("data-student-state","authenticated_standard");await expect(page.locator(".lock-box-feed").first()).toBeVisible();}
   });
 
   test("standard students retain their identity across the required student routes",async({page})=>{
     await page.goto("/student/profile");
-    await expect(page.locator('.approved-student-shell[data-student-state="authenticated_standard"]')).toBeVisible();
+    await expect(page.locator('.developer-student-shell[data-student-state="authenticated_standard"]')).toBeVisible();
     await expect(page.getByRole("button",{name:"Save Profile"})).toBeVisible();
     await page.goto("/saved");
-    await expect(page.locator('.approved-student-shell[data-student-state="authenticated_standard"]')).toBeVisible();
+    await expect(page.locator('.developer-student-shell[data-student-state="authenticated_standard"]')).toBeVisible();
     await expect(page.getByRole("heading",{name:"Your Saved Picks"})).toBeVisible();
     await expect(page.locator(".sop-card-unique")).toHaveCount(2);
     await page.goto("/studentresources");
@@ -71,8 +73,10 @@ test.describe("isolated logout presentation",()=>{
   test.use({storageState:process.env.PLAYWRIGHT_STANDARD_LOGOUT_STORAGE_STATE??emptyState});
   test.skip(!process.env.PLAYWRIGHT_STANDARD_LOGOUT_STORAGE_STATE,"Supply a disposable standard-student logout state.");
   test("logout immediately restores the anonymous feed state",async({page},testInfo)=>{
-    test.skip(testInfo.project.name!=="desktop","The disposable logout session is certified once; private mobile shell design remains unresolved.");
-    await page.goto("/student/dashboard");await page.locator(".approved-student-account-button").click();await page.getByRole("button",{name:"Logout",exact:true}).click();
+    test.skip(testInfo.project.name!=="desktop","The disposable logout session is certified once; viewport reachability is covered separately.");
+    await page.goto("/student/dashboard");
+    if(await page.locator("#toggleBtn").getAttribute("aria-expanded")!=="true")await page.locator("#toggleBtn").click();
+    await page.locator("#sidebar").getByRole("link",{name:"Logout",exact:true}).click();
     await expect(page).toHaveURL(/\/$/);await expect(page.locator('[data-legacy-page="home"]')).toHaveAttribute("data-student-state","anonymous");await expect(page.locator('header a.btn-login[href="/Login"]',{hasText:"Login"})).toHaveCount(2);await expect(page.locator("header #ppWrapper")).toHaveCount(1);await expect(page.locator("header #exploreCountriesWrapper")).toHaveCount(1);await toggleSidebar(page);
   });
 });
@@ -85,7 +89,7 @@ test.describe("authoritative Premium presentation",()=>{
     await expectAuthenticatedHeader(page,"authenticated_premium");await toggleSidebar(page);await navigateToUsmle(page,testInfo.project.name);await expect(page.locator('[data-legacy-page="usmlerotation"]')).toHaveAttribute("data-student-state","authenticated_premium");await expectAuthenticatedHeader(page,"authenticated_premium");await toggleSidebar(page);expect(await page.evaluate(()=>performance.getEntriesByType("navigation").length)).toBe(documentNavigations);
     await page.goto("/dashboard");await expect(page.locator(".canonical-where-you-stand")).toBeVisible();await expect(page.locator(".premium-kanban")).toBeVisible();
     await page.goto("/feed_track_progress");await expect(page.locator(".premium-kanban")).toBeVisible();
-    await page.goto("/upload_your_doc");await expect(page.locator('[data-node-id="17041:15265"]')).toBeVisible();
+    await page.goto("/upload_your_doc");await expect(page.locator(".developer-documents-page")).toBeVisible();
   });
   test("Premium landing uses the active entitlement CTA",async({page})=>{
     await page.goto("/purplepremiumhome");
@@ -96,12 +100,13 @@ test.describe("authoritative Premium presentation",()=>{
 
   test("Premium students retain their identity across the required student routes",async({page})=>{
     await page.goto("/student/dashboard");
-    await expect(page.locator('.approved-student-shell[data-student-state="authenticated_premium"]')).toBeVisible();
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.locator('.developer-student-shell[data-student-state="authenticated_premium"]')).toBeVisible();
     await page.goto("/student/profile");
-    await expect(page.locator('.approved-student-shell[data-student-state="authenticated_premium"]')).toBeVisible();
+    await expect(page.locator('.developer-student-shell[data-student-state="authenticated_premium"]')).toBeVisible();
     await expect(page.getByRole("button",{name:"Save Profile"})).toBeVisible();
     await page.goto("/saved");
-    await expect(page.locator('.approved-student-shell[data-student-state="authenticated_premium"]')).toBeVisible();
+    await expect(page.locator('.developer-student-shell[data-student-state="authenticated_premium"]')).toBeVisible();
     await expect(page.getByRole("heading",{name:"Your Saved Picks"})).toBeVisible();
     await expect(page.locator(".sop-card-unique")).toHaveCount(2);
     await page.goto("/studentresources");
@@ -124,9 +129,9 @@ test.describe("audited grant/revoke state transition",()=>{
     const grantedContext=await browser.newContext({storageState:studentState});const grantedPage=await grantedContext.newPage();await grantedPage.goto("/dashboard");await expect(grantedPage.locator(".canonical-where-you-stand")).toBeVisible();await expect(grantedPage.locator(`.canonical-premium-calendar time[datetime="${entitlement.starts_at}"]`)).toBeVisible();await expect(grantedPage.locator(`.canonical-premium-calendar time[datetime="${entitlement.ends_at}"]`)).toBeVisible();await expect(grantedPage.getByText("PurplePremium activated",{exact:true})).toBeVisible();await expect(grantedPage.getByText("PurplePremium access ends",{exact:true})).toBeVisible();
     const originalEndsAt=entitlement.ends_at;
     const revoke=await request.post("/api/staff/premium",{data:{student_id:studentId,action:"revoke",reason:"Automated state parity revoke"}});expect(revoke.ok()).toBe(true);
-    await grantedPage.goto("/dashboard?certification=revoked",{waitUntil:"networkidle"});await expect(grantedPage.locator('[data-node-id="17961:10662"]')).toBeVisible();await grantedPage.goto("/feed_track_progress?certification=revoked");await expect(grantedPage.locator('[data-node-id="17041:14026"]')).toBeVisible();await grantedPage.goto("/upload_your_doc?certification=revoked");await expect(grantedPage.locator('[data-node-id="17041:15941"]')).toBeVisible();await grantedContext.close();
+    await grantedPage.goto("/dashboard?certification=revoked",{waitUntil:"networkidle"});await expect(grantedPage.locator('[data-legacy-page="dashboard-locked"]')).toBeVisible();await grantedPage.goto("/feed_track_progress?certification=revoked");await expect(grantedPage.locator('[data-legacy-page="progress-locked"]')).toBeVisible();await grantedPage.goto("/upload_your_doc?certification=revoked");await expect(grantedPage.locator('[data-legacy-page="documents-locked"]')).toBeVisible();await grantedContext.close();
     const reactivate=await request.post("/api/staff/premium",{data:{student_id:studentId,action:"reactivate",plan_code:"3_month",reason:"Automated state parity reactivate"}});expect(reactivate.ok()).toBe(true);const reactivated=(await reactivate.json()).entitlement;expect(reactivated.ends_at).toBe(originalEndsAt);
-    const reactivatedContext=await browser.newContext({storageState:studentState});const reactivatedPage=await reactivatedContext.newPage();await reactivatedPage.goto("/dashboard?certification=reactivated");await expect(reactivatedPage.locator(".premium-kanban")).toBeVisible();await reactivatedPage.goto("/feed_track_progress");await expect(reactivatedPage.locator(".premium-kanban")).toBeVisible();await reactivatedPage.goto("/upload_your_doc");await expect(reactivatedPage.locator('[data-node-id="17041:15265"]')).toBeVisible();await reactivatedContext.close();
+    const reactivatedContext=await browser.newContext({storageState:studentState});const reactivatedPage=await reactivatedContext.newPage();await reactivatedPage.goto("/dashboard?certification=reactivated");await expect(reactivatedPage.locator(".premium-kanban")).toBeVisible();await reactivatedPage.goto("/feed_track_progress");await expect(reactivatedPage.locator(".premium-kanban")).toBeVisible();await reactivatedPage.goto("/upload_your_doc");await expect(reactivatedPage.locator(".developer-documents-page")).toBeVisible();await reactivatedContext.close();
     const cleanup=await request.post("/api/staff/premium",{data:{student_id:studentId,action:"revoke",reason:"Automated state parity fixture restore"}});expect(cleanup.ok()).toBe(true);
   });
 });

@@ -34,9 +34,13 @@ export function ProfileForm({ profile, email, avatarUrl, completion = false }: P
   }
 
   return <form className="pgs-profile-form black-border" onSubmit={submit} encType="multipart/form-data">
-    <div className="choose-avatar d-flex align-items-center gap-3 position-relative">
+    <div className="choose-avatar d-flex align-items-center justify-content-center gap-3 position-relative">
       <div className="circle-avartar"><Image src={preview} alt="Profile avatar" width={92} height={92} unoptimized /></div>
-      <label className="pgs-avatar-picker">Choose profile image<input name="profile_image" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) setPreview(URL.createObjectURL(file)); }} /></label>
+      <label className="pgs-avatar-picker">
+        <Image src="/assets/img/edit-03.png" alt="" width={24} height={24} unoptimized />
+        <span className="sr-only">Choose profile image</span>
+        <input name="profile_image" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) setPreview(URL.createObjectURL(file)); }} />
+      </label>
     </div>
     <ProfileRow label="Full Name"><input name="name" defaultValue={profile.full_name} required minLength={2} maxLength={255} /></ProfileRow>
     <ProfileRow label="Email"><input value={email} readOnly aria-readonly="true" /></ProfileRow>
@@ -55,5 +59,5 @@ export function ProfileForm({ profile, email, avatarUrl, completion = false }: P
 }
 
 function ProfileRow({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="pgs-profile-row"><label>{label}</label><div>{children}</div></div>;
+  return <div className="pgs-profile-row d-flex align-items-center"><label>{label}</label><div>{children}</div></div>;
 }

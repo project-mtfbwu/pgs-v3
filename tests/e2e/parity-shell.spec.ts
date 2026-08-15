@@ -16,7 +16,7 @@ async function toggleRetainedSidebar(page:import("@playwright/test").Page){
   const toggle=page.locator("#toggleBtn");
   const sidebar=page.locator("#sidebar");
   await expect(toggle).toHaveCount(1);await expect(sidebar).toHaveCount(1);
-  await toggle.click();
+  if(await toggle.getAttribute("aria-expanded")!=="true")await toggle.click();
   await expect(sidebar).toHaveClass(/active/);await expect(sidebar).toHaveAttribute("aria-hidden","false");await expect(toggle).toHaveAttribute("aria-expanded","true");
   await expect(toggle.locator("i")).toHaveClass(/bi-arrow-left-square-fill/);
   await sidebar.locator("#close_Btn").click();
@@ -45,13 +45,22 @@ test("global security headers and same-origin mutation boundary are active",asyn
 
 test("anonymous Premium progress and documents render their resolved locked compositions",async({page})=>{
   await goto(page,"/feed_track_progress");
-  await expect(page.locator('.approved-student-shell[data-student-state="anonymous"]')).toBeVisible();
-  await expect(page.locator('[data-node-id="17041:14026"]')).toBeVisible();
+  await expect(page.locator('[data-legacy-page="progress-locked"]')).toHaveAttribute("data-student-state","anonymous");
+  await expect(page.locator(".lock-box-feed").first()).toBeVisible();
   await goto(page,"/upload_your_doc");
-  await expect(page.locator('.approved-student-shell[data-student-state="anonymous"]')).toBeVisible();
-  await expect(page.locator('[data-node-id="18375:11615"]')).toBeVisible();
+  await expect(page.locator('[data-legacy-page="documents-locked"]')).toHaveAttribute("data-student-state","anonymous");
+  await expect(page.locator(".lock-box-feed").first()).toBeVisible();
   await goto(page,"/dashboard");
   await expect(page).toHaveURL(/\/login\?redirect=%2Fdashboard/);
+});
+
+test("developer Premium Overview remains a distinct recovered route",async({page})=>{
+  await goto(page,"/home/purplepremium_overview");
+  await expect(page).toHaveURL(/\/home\/purplepremium_overview$/);
+  await expect(page.locator('[data-legacy-page="purplepremium-overview"]')).toHaveAttribute("data-student-state","anonymous");
+  await expect(page.getByRole("heading",{name:/Get Into Your Dream University Abroad/i})).toBeVisible();
+  await expect(page.getByRole("heading",{name:/With #PurplePremium, you can choose/i})).toBeVisible();
+  await expect(page.locator("#premiumHeroVideo")).toHaveAttribute("poster","/pgs_admin/assets/images/99421781870876.png");
 });
 
 test("notification panel, fixed sidebar and drawer retain their legacy states", async ({ page }, testInfo) => {

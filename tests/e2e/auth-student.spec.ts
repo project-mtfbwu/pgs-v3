@@ -7,6 +7,8 @@ test.describe("Batch 2 authentication boundary", () => {
     await goto(page, "/saved?tab=courses");
     await expect(page).toHaveURL(/\/login\?redirect=%2Fsaved%3Ftab%3Dcourses/);
     await expect(page.locator('form:not(#registerForm) input[name="email"]')).toBeVisible();
+    await goto(page, "/student/profile");
+    await expect(page).toHaveURL(/\/login\?redirect=%2Fstudent%2Fprofile/);
   });
 
   test("login exposes secure email, signup, recovery and Google architecture", async ({ page }) => {
@@ -41,9 +43,11 @@ test.describe("Batch 2 authentication boundary", () => {
     await expect(page.locator('[role="status"]')).toContainText(/Supabase Auth is not configured|If an account exists|Password recovery is temporarily unavailable/i);
   });
 
-  test("normal dashboard is protected and Premium application language is absent", async ({ page }) => {
+  test("anonymous Feed is a locked preview and Premium application language is absent", async ({ page }) => {
     await goto(page, "/student/dashboard");
-    await expect(page).toHaveURL(/\/login\?redirect=%2Fstudent%2Fdashboard/);
+    await expect(page).toHaveURL(/\/student\/dashboard$/);
+    await expect(page.locator('[data-legacy-page="student-dashboard"]')).toHaveAttribute("data-student-state", "anonymous");
+    await expect(page.locator(".avatar-heading-right-box")).toContainText(/Yet to\s+Unlock\s+Full\s+Access/i);
     await goto(page, "/purplepremiumhome");
     await expect(page.locator("body")).not.toContainText(/apply for purple premium|application pending/i);
   });
@@ -54,9 +58,9 @@ test.describe("Batch 2 authentication boundary", () => {
       await expect(page).toHaveURL(/\/login\?redirect=/);
     }
     await goto(page,"/feed_track_progress");
-    await expect(page.locator('[data-node-id="17041:14026"]')).toBeVisible();
+    await expect(page.locator('[data-legacy-page="progress-locked"]')).toHaveAttribute("data-student-state","anonymous");
     await goto(page,"/upload_your_doc");
-    await expect(page.locator('[data-node-id="18375:11615"]')).toBeVisible();
+    await expect(page.locator('[data-legacy-page="documents-locked"]')).toHaveAttribute("data-student-state","anonymous");
   });
 });
 

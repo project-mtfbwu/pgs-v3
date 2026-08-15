@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useStudentSidebarState } from "@/components/student-sidebar-state-provider";
+import { signOutAndNavigate } from "@/lib/logout-navigation";
 
 type Props = { html: string; page: string; studentState?: "anonymous" | "authenticated_standard" | "authenticated_premium" };
 
@@ -22,13 +24,12 @@ function uniqueElement(root:HTMLElement,selector:string):HTMLElement|null{
   return matches.length===1?matches[0]:null;
 }
 
-function toggleSidebar(root:HTMLElement) {
+function setSidebarPresentation(root: HTMLElement, open: boolean) {
   const sidebar = uniqueElement(root,"#sidebar");
   const toggle = uniqueElement(root,"#toggleBtn");
   if(!sidebar||!toggle)return;
   const icon = toggle?.querySelector("i");
-  sidebar.classList.toggle("active");
-  const open = sidebar.classList.contains("active");
+  sidebar.classList.toggle("active", open);
   toggle.classList.remove("hidenone");
   toggle.setAttribute("role","button");
   toggle.setAttribute("tabindex","0");
@@ -197,6 +198,12 @@ async function saveCatalogItem(target: HTMLElement) {
 
 export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
   const router = useRouter();
+  const { open: sidebarOpen } = useStudentSidebarState();
+
+  useEffect(() => {
+    const root = document.querySelector<HTMLElement>(`[data-legacy-page="${page}"]`);
+    if (root) setSidebarPresentation(root, sidebarOpen);
+  }, [page, sidebarOpen]);
 
   useEffect(() => {
     const root = document.querySelector<HTMLElement>(`[data-legacy-page="${page}"]`);
@@ -205,17 +212,6 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
     const abort = new AbortController();
     const options = { signal: abort.signal };
     root.dataset.interactionsReady = "true";
-
-    const sidebar=uniqueElement(root,"#sidebar");
-    const sidebarToggle=uniqueElement(root,"#toggleBtn");
-    if(sidebar&&sidebarToggle){sidebar.setAttribute("aria-hidden",String(!sidebar.classList.contains("active")));sidebarToggle.setAttribute("role","button");sidebarToggle.setAttribute("tabindex","0");sidebarToggle.setAttribute("aria-controls","sidebar");sidebarToggle.setAttribute("aria-expanded",String(sidebar.classList.contains("active")));}
-    root.addEventListener("click",(event)=>{
-      const target=event.target as HTMLElement;
-      if(!target.closest("#toggleBtn, #sidebar #close_Btn"))return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      toggleSidebar(root);
-    },{...options,capture:true});
 
     root.querySelectorAll<HTMLFormElement>("form").forEach((form) => {
       form.dataset.v3SubmitReady = "true";
@@ -394,6 +390,11 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
       }
 
       const rawHref = link?.getAttribute("href");
+      if (link && rawHref?.toLowerCase() === "/logout") {
+        event.preventDefault();
+        void signOutAndNavigate().catch(() => router.push("/logout"));
+        return;
+      }
       if (link && rawHref?.startsWith("/") && !rawHref.startsWith("//") && !link.hasAttribute("download") && link.target !== "_blank" && event instanceof MouseEvent && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
         event.preventDefault();
         router.push(rawHref);

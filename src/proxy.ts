@@ -17,7 +17,7 @@ const legacyControllers: Record<string, string> = {
 
 const exactLegacyRoutes: Record<string, string> = {
   "/home/user_dashboard": "/student/dashboard", "/home/defaultdashboard": "/student/dashboard",
-  "/home/user_profile": "/student/profile", "/home/purplepremium_overview": "/purplepremiumhome", "/home/apply_purplepremium": "/purplepremiumhome",
+  "/home/user_profile": "/student/profile", "/home/apply_purplepremium": "/purplepremiumhome",
   "/login/logout": "/logout", "/home/update_profile": "/api/student/profile", "/login/login": "/login", "/login/register": "/login",
   "/forgot_password/forgot_password": "/forgot_password", "/reset_password/reset_password": "/reset_password",
   "/change_password/change_password": "/change_password", "/singup/singup": "/singup",
@@ -28,11 +28,13 @@ const exactLegacyRoutes: Record<string, string> = {
   "/purplepremiumhome/purplepremiumhome": "/purplepremiumhome", "/purplepremium_offer/data": "/purplepremiumhome"
 };
 
-// Progress and document routes intentionally expose anonymous locked frames;
+// Feed, progress, and document routes intentionally expose anonymous locked frames;
 // the underlying resources remain independently protected by server Auth/RLS.
 const protectedPaths = ["/student", "/saved", "/notifications", "/singup", "/change_password", "/dashboard", "/mentor", "/admin", "/cms"];
+const anonymousPreviewPaths = new Set(["/student/dashboard"]);
 
 function legacyDestination(request: NextRequest): URL | null {
+  if (request.nextUrl.pathname.toLowerCase() === "/home/purplepremium_overview") return null;
   if (/^\/Notifications\/(?:open|delete)(?:\/|$)/i.test(request.nextUrl.pathname)) {
     const url = request.nextUrl.clone(); url.pathname = "/notifications"; return url;
   }
@@ -94,7 +96,9 @@ export async function proxy(request: NextRequest) {
     const { data } = await supabase.auth.getClaims();
     authenticated = Boolean(data?.claims?.sub);
   }
-  if (!authenticated && protectedPaths.some((path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`))) {
+  if (!authenticated
+    && !anonymousPreviewPaths.has(request.nextUrl.pathname.toLowerCase())
+    && protectedPaths.some((path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`))) {
     const login = request.nextUrl.clone(); login.pathname = "/login";
     login.search = `?redirect=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`;
     return NextResponse.redirect(login);
