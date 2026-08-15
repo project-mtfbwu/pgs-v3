@@ -19,13 +19,18 @@ test.describe("Batch 2 authentication boundary", () => {
     await expect(page.getByRole("link", { name: /Forgot Password/i })).toBeAttached();
   });
 
-  test("disabled Google OAuth returns a branded message and preserves the destination", async ({ page }) => {
+  test("Google OAuth begin respects the deployment gate and preserves the destination", async ({ page }) => {
     await goto(page, "/login?redirect=%2Fsaved");
     await page.getByText(/Continue with Google/i).first().click();
 
-    await expect(page).toHaveURL(/\/login\?error=oauth_unavailable&redirect=%2Fsaved/);
-    await expect(page.getByRole("status")).toContainText(/Google sign-in is not available yet/i);
-    await expect(page.locator("body")).not.toContainText(/Unsupported provider/i);
+    if (process.env.SUPABASE_GOOGLE_AUTH_ENABLED === "true") {
+      await expect(page).toHaveURL(/accounts\.google\.com|supabase\.co\/auth\/v1\/authorize/);
+      await expect(page).not.toHaveURL(/error=oauth_unavailable/);
+    } else {
+      await expect(page).toHaveURL(/\/login\?error=oauth_unavailable&redirect=%2Fsaved/);
+      await expect(page.getByRole("status")).toContainText(/Google sign-in is not available yet/i);
+      await expect(page.locator("body")).not.toContainText(/Unsupported provider/i);
+    }
   });
 
   test("wrong password has a safe configured-state response", async ({ page }) => {
