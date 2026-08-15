@@ -3,7 +3,7 @@ create extension if not exists pgtap with schema extensions;
 set local search_path=public,extensions;
 create temporary table phase4d_tap_output(tap text);
 grant insert,select on phase4d_tap_output to authenticated,service_role;
-insert into phase4d_tap_output(tap) select plan(34);
+insert into phase4d_tap_output(tap) select plan(36);
 
 insert into auth.users(
   instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,
@@ -188,6 +188,14 @@ insert into phase4d_tap_output(tap) select results_eq(
 insert into phase4d_tap_output(tap) select results_eq(
   $$select count(*)::bigint from public.audit_events where event_type='document.privileged_deleted' and target_id='d4970000-0000-4000-8000-000000000079'$$,
   array[1::bigint],'privileged delete leaves canonical audit lineage'
+);
+insert into phase4d_tap_output(tap) select lives_ok(
+  $$select public.complete_privileged_document_delete('d4920000-0000-4000-8000-000000000029',true)$$,
+  'privileged delete of an already-archived document completes'
+);
+insert into phase4d_tap_output(tap) select results_eq(
+  $$select count(*)::bigint from public.audit_events where event_type='document.privileged_deleted' and target_id='d4920000-0000-4000-8000-000000000029'$$,
+  array[1::bigint],'privileged delete of archived docs is not labeled as scheduled purge'
 );
 
 reset role;

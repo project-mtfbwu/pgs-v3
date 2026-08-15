@@ -27,7 +27,8 @@ const documentHardeningMigration = await readFile(new URL("../supabase/migration
 const documentRlsHelperMigration = await readFile(new URL("../supabase/migrations/20260815064501_phase4d_document_rls_helper_hardening.sql", import.meta.url), "utf8");
 const documentDeleteGuardMigration = await readFile(new URL("../supabase/migrations/20260815065211_phase4d_document_delete_completion_guards.sql", import.meta.url), "utf8");
 const privilegedDeleteFixMigration = await readFile(new URL("../supabase/migrations/20260815065707_phase4d_privileged_delete_tombstone_fix.sql", import.meta.url), "utf8");
-const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}`;
+const privilegedDeleteAuditMigration = await readFile(new URL("../supabase/migrations/20260815070040_phase4d_privileged_delete_audit_label.sql", import.meta.url), "utf8");
+const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}\n${privilegedDeleteAuditMigration}`;
 const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",

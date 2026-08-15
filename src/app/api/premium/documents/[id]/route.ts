@@ -28,11 +28,12 @@ export async function GET(request: Request, { params }: Context) {
     );
 
     const supabase = await createSupabaseServerClient();
-    let query = supabase.from("student_documents").select(deliverableSelect).eq("id", id);
-    if (actor.kind === "student") query = query.eq("student_id", actor.studentId);
-    else query = query.eq("student_id", actor.studentId);
-
-    const { data } = await query.maybeSingle();
+    const { data } = await supabase
+      .from("student_documents")
+      .select(deliverableSelect)
+      .eq("id", id)
+      .eq("student_id", actor.studentId)
+      .maybeSingle();
     if (!data || !isDeliverableDocumentRow(data)) {
       await recordDeniedAuditEvent(request, {
         eventType: "document.access.denied",
@@ -46,10 +47,6 @@ export async function GET(request: Request, { params }: Context) {
         }
       });
       return jsonError("Document not found.", 404);
-    }
-
-    if (actor.kind !== "student") {
-      // Byte access requires manage authority (already enforced by requirePremiumActor(..., "manage")).
     }
 
     const { data: signed, error } = await supabase.storage
