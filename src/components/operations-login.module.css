@@ -1,0 +1,145 @@
+.surface {
+  min-height: 100vh;
+  padding: 32px 20px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(111, 76, 184, 0.16), transparent 34%),
+    #f7f8fa;
+  color: #17171b;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.panel {
+  width: min(100%, 440px);
+  padding: 32px;
+  border: 1px solid #e3e4e8;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(28, 20, 46, 0.1);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand > span {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #19191d;
+  color: #fff;
+  font-weight: 800;
+}
+
+.brand div {
+  display: grid;
+  gap: 2px;
+}
+
+.brand strong {
+  font-size: 14px;
+}
+
+.brand small {
+  color: #696b74;
+  font-size: 12px;
+}
+
+.intro {
+  margin: 34px 0 24px;
+}
+
+.intro p {
+  margin: 0 0 8px;
+  color: #5938a7;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.intro h1 {
+  margin: 0;
+  font-size: clamp(28px, 6vw, 36px);
+  letter-spacing: -0.04em;
+}
+
+.intro span {
+  margin-top: 10px;
+  display: block;
+  color: #696b74;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.form label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.form input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #d8d9df;
+  border-radius: 8px;
+  background: #fff;
+  color: #17171b;
+  font: inherit;
+}
+
+.form input:focus-visible {
+  outline: 3px solid rgba(115, 87, 191, 0.3);
+  border-color: #7357bf;
+}
+
+.form button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: #19191d;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.form button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.message {
+  min-height: 20px;
+  margin: -4px 0;
+  color: #9a2335;
+  font-size: 12px;
+}
+
+.help {
+  margin: 24px 0 0;
+  color: #777984;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 520px) {
+  .surface {
+    padding: 18px 14px;
+  }
+
+  .panel {
+    padding: 24px 20px;
+  }
+}

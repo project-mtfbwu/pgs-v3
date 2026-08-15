@@ -5,7 +5,15 @@ const emptyState={cookies:[],origins:[]};
 test("anonymous users never receive the internal operations shell",async({page})=>{
   await page.goto("/admin/catalog/courses",{waitUntil:"domcontentloaded"});
   await expect(page).toHaveURL(/\/login\?redirect=/);
+  await expect(page.getByRole("heading",{name:"Sign in to Operations"})).toBeVisible();
   await expect(page.locator("[data-operations-shell]")).toHaveCount(0);
+});
+
+test("dedicated Operations Preview root enters the staff product",async({page})=>{
+  test.skip(process.env.PGS_EXPECT_OPERATIONS_ROOT!=="1","Run against the dedicated Operations Preview environment.");
+  await page.goto("/",{waitUntil:"domcontentloaded"});
+  await expect(page).toHaveURL(/\/login\?.*surface=operations/);
+  await expect(page.getByRole("heading",{name:"Sign in to Operations"})).toBeVisible();
 });
 
 test.describe("preview read-only staff workflow",()=>{

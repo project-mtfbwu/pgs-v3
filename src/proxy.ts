@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isOperationsPreviewSurface } from "@/lib/development-surface";
 
 const legacyControllers: Record<string, string> = {
   about: "/about", change_password: "/change_password", contact: "/contact",
@@ -63,6 +64,12 @@ function legacyDestination(request: NextRequest): URL | null {
 }
 
 export async function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname === "/" && isOperationsPreviewSurface()) {
+    const operations = request.nextUrl.clone();
+    operations.pathname = "/admin";
+    return NextResponse.redirect(operations);
+  }
+
   const destination = legacyDestination(request);
   if (destination) return NextResponse.redirect(destination, 308);
 
@@ -100,7 +107,12 @@ export async function proxy(request: NextRequest) {
     && !anonymousPreviewPaths.has(request.nextUrl.pathname.toLowerCase())
     && protectedPaths.some((path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`))) {
     const login = request.nextUrl.clone(); login.pathname = "/login";
-    login.search = `?redirect=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`;
+    const redirectPath = request.nextUrl.pathname + request.nextUrl.search;
+    login.search = "";
+    login.searchParams.set("redirect", redirectPath);
+    if (request.nextUrl.pathname === "/admin" || request.nextUrl.pathname.startsWith("/admin/")) {
+      login.searchParams.set("surface", "operations");
+    }
     return NextResponse.redirect(login);
   }
   return response;
