@@ -13,6 +13,11 @@ vi.mock("@/lib/premium-workspace", async () => {
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: createServerClient }));
 vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: createAdminClient }));
 vi.mock("@/lib/server-security", () => ({ logServerError: vi.fn() }));
+vi.mock("@/lib/audit",()=>({
+  recordDeniedAuditEvent:vi.fn().mockResolvedValue(true),
+  recordFailedAuditEvent:vi.fn().mockResolvedValue(true),
+  recordPrivilegedReadAuditEvent:vi.fn().mockResolvedValue(undefined)
+}));
 
 import { GET as downloadDocument } from "@/app/api/premium/documents/[id]/route";
 import { PATCH as reviewDocument } from "@/app/api/staff/students/[studentId]/workspace/[resource]/route";

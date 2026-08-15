@@ -20,7 +20,8 @@ const grantTimestampMigration = await readFile(new URL("../supabase/migrations/2
 const mentorTriggerFixMigration = await readFile(new URL("../supabase/migrations/20260814014045_phase36b_mentor_lifecycle_trigger_record_fix.sql", import.meta.url), "utf8");
 const cleanDocumentGateMigration = await readFile(new URL("../supabase/migrations/20260814133451_phase4_0_clean_document_access_gate.sql", import.meta.url), "utf8");
 const actorContextMigration = await readFile(new URL("../supabase/migrations/20260814140833_phase4a_actor_context_rbac.sql", import.meta.url), "utf8");
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}`;
+const auditFoundationMigration = await readFile(new URL("../supabase/migrations/20260815033903_phase4b_audit_foundation.sql", import.meta.url), "utf8");
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -95,6 +96,11 @@ const required = [
   ,"read_only_staff"
   ,"staff read own effective role permissions"
   ,"canonical_role text"
+  ,"create table public.audit_events"
+  ,"audit readers inspect canonical audit"
+  ,"prevent_canonical_audit_mutation"
+  ,"private.write_audit_event"
+  ,"premium_entitlement_events"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -102,4 +108,7 @@ if (missing.length) throw new Error(`RLS migration is missing: ${missing.join(",
 if (/service[_-]?role[_-]?key|password\s*=|smtp|oauth.*secret|eyJ[a-zA-Z0-9_-]{20,}/i.test(migration)) throw new Error("Potential secret or privileged credential found in migration");
 if (!hardeningMigration.includes('drop policy if exists "students upload own avatars"')) throw new Error("Direct avatar write policy was not removed");
 if (/grant execute on function public\.consume_request_rate_limit\(text,text\) to (?:anon|authenticated)/i.test(hardeningMigration)) throw new Error("Rate-limit RPC must remain server-only");
+if (/grant (?:insert|update|delete|all).*public\.audit_events.*authenticated/i.test(auditFoundationMigration)) throw new Error("Authenticated clients must not write canonical audit events");
+if (/create table public\.domain_events/i.test(auditFoundationMigration)) throw new Error("Phase 4B must not create speculative domain events");
+if (/insert into public\.(?:admin_audit_logs|premium_audit_logs)/i.test(auditFoundationMigration)) throw new Error("Phase 4B must cut over legacy audit writers");
 console.log("RLS migration static checks passed");

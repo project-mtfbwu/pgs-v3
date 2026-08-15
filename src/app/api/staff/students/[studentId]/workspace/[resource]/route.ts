@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { jsonError, readJsonObject } from "@/lib/http";
+import { recordDeniedAuditEvent, recordFailedAuditEvent } from "@/lib/audit";
+import { jsonError, readJsonObject, validUuid } from "@/lib/http";
 import { cleanWorkspaceText, requirePremiumActor, WorkspaceAccessError } from "@/lib/premium-workspace";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CLEAN_DOCUMENT_SCAN_STATUS } from "@/lib/document-access";
@@ -54,8 +55,9 @@ export async function POST(request: Request, route: Context) {
 }
 
 export async function PATCH(request: Request, route: Context) {
+  const routeParams=await route.params;
   try {
-    const { actor, resource, table } = await context(route.params);
+    const { actor, resource, table } = await context(Promise.resolve(routeParams));
     const input = await readJsonObject(request);
     if (resource === "profile") {
       const values = {
@@ -110,11 +112,25 @@ export async function PATCH(request: Request, route: Context) {
     let updateQuery=supabase.from(table).update(values).eq("id",recordId).eq("student_id",actor.studentId);
     if(resource==="documents")updateQuery=updateQuery.eq("scan_status",CLEAN_DOCUMENT_SCAN_STATUS);
     const {data,error}=await updateQuery.select("id").maybeSingle();
-    if(error)return jsonError("Unable to update the workspace item.",400);
+    if(error){
+      if(resource==="documents")await recordFailedAuditEvent(request,{
+        eventType:"document.review.failed",sourceSubsystem:"documents",
+        targetType:"student",targetId:actor.studentId,
+        metadata:{reason_code:"document_review_mutation_failed",route:"/api/staff/students/[studentId]/workspace/documents"}
+      });
+      return jsonError("Unable to update the workspace item.",400);
+    }
     if(!data)return jsonError("Workspace item not found.",404);
     return NextResponse.json({ ok: true });
   } catch (error) {
-    if (error instanceof WorkspaceAccessError) return jsonError(error.message, error.status);
+    if (error instanceof WorkspaceAccessError) {
+      if(routeParams.resource==="documents")await recordDeniedAuditEvent(request,{
+        eventType:"document.review.denied",sourceSubsystem:"documents",
+        targetType:"student",targetId:validUuid(routeParams.studentId)?routeParams.studentId:undefined,
+        metadata:{permission_required:"student_workspace.manage",reason_code:"workspace_access_denied",route:"/api/staff/students/[studentId]/workspace/documents"}
+      });
+      return jsonError(error.message, error.status);
+    }
     return jsonError(error instanceof Error ? error.message : "Invalid workspace update.", 400);
   }
 }

@@ -1,5 +1,5 @@
 import "server-only";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type RateLimitScope =
@@ -17,6 +17,12 @@ function clientAddress(request: Request): string {
 export function requestFingerprint(request: Request, scope: RateLimitScope, subject = ""): string {
   const salt = process.env.RATE_LIMIT_HASH_SECRET || "pgs-v3-unconfigured-rate-limit-salt";
   return createHash("sha256").update(`${salt}|${scope}|${clientAddress(request)}|${subject.toLowerCase()}`).digest("hex");
+}
+
+/** Per-request audit correlation without trusting a browser-supplied identifier. */
+export function requestCorrelationId(request: Request): string {
+  void request;
+  return randomUUID();
 }
 
 export async function consumeRateLimit(request: Request, scope: RateLimitScope, subject = ""): Promise<{ allowed: boolean; configured: boolean }> {

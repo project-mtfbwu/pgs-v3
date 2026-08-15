@@ -71,4 +71,14 @@ test.describe("preview Super Admin workflow",()=>{
     await expect(page.getByRole("heading",{name:"Invite or assign staff access"})).toBeVisible();
     await expect(page.getByRole("button",{name:"Save access"})).toBeVisible();
   });
+  test("Super Admin sees the canonical and historical audit read path",async({page,request})=>{
+    const selfId=process.env.PGS_SUPER_ADMIN_USER_ID;
+    test.skip(!selfId,"Supply the Phase 4A Super Admin fixture UUID.");
+    const denial=await request.post("/api/admin/staff",{data:{action:"assign",user_id:selfId,role:"admin",status:"active",reason:"self denial proof"}});
+    expect(denial.status()).toBe(403);
+    await page.goto("/admin/audit");
+    await expect(page.getByRole("heading",{name:"Activity and security audit"})).toBeVisible();
+    await expect(page.getByText(/staff\.access\.denied \(denied\)/).first()).toBeVisible();
+    await expect(page.locator(".ops-badge").first()).toBeVisible();
+  });
 });

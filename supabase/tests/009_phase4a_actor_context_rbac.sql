@@ -67,7 +67,7 @@ select results_eq($$select role from public.staff_profiles where user_id='950000
 select results_eq($$select r.key from public.staff_role_assignments a join public.staff_roles r on r.id=a.role_id where a.staff_user_id='95000000-0000-4000-8000-000000000005' and a.revoked_at is null$$,array['read_only_staff'::text],'legacy alias creates no viewer assignment');
 select results_eq($$select count(*)::bigint from public.profiles where id='95000000-0000-4000-8000-000000000005'$$,array[0::bigint],'staff role assignment does not fabricate student context');
 select results_eq($$select count(*)::bigint from public.premium_entitlements where student_id='95000000-0000-4000-8000-000000000005'$$,array[0::bigint],'staff role assignment does not grant Premium');
-select results_eq($$select new_values->>'role' from public.admin_audit_logs where target_user_id='95000000-0000-4000-8000-000000000005' order by created_at desc limit 1$$,array['read_only_staff'::text],'new audit evidence records the canonical role');
+select results_eq($$select metadata->>'new_role' from public.audit_events where target_id='95000000-0000-4000-8000-000000000005' order by occurred_at desc limit 1$$,array['read_only_staff'::text],'new canonical audit evidence records the canonical role');
 
 select * from finish();
 rollback;

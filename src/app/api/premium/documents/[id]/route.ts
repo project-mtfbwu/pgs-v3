@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { recordDeniedAuditEvent, recordFailedAuditEvent, recordPrivilegedReadAuditEvent } from "@/lib/audit";
 import { jsonError } from "@/lib/http";
 import { requirePremiumActor, WorkspaceAccessError } from "@/lib/premium-workspace";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -9,10 +10,10 @@ import { CLEAN_DOCUMENT_SCAN_STATUS, isCleanDocumentScanStatus } from "@/lib/doc
 
 type Context = { params: Promise<{ id: string }> };
 
-export async function GET(_request: Request, { params }: Context) {
+export async function GET(request: Request, { params }: Context) {
+  const { id } = await params;
   try {
     const actor = await requirePremiumActor();
-    const { id } = await params;
     if(!validUuid(id))return jsonError("Document not found.",404);
     const supabase = await createSupabaseServerClient();
     const { data } = await supabase.from("student_documents")
@@ -21,12 +22,38 @@ export async function GET(_request: Request, { params }: Context) {
       .eq("student_id", actor.studentId)
       .eq("scan_status", CLEAN_DOCUMENT_SCAN_STATUS)
       .maybeSingle();
-    if (!data || !isCleanDocumentScanStatus(data.scan_status)) return jsonError("Document not found.", 404);
+    if (!data || !isCleanDocumentScanStatus(data.scan_status)) {
+      await recordDeniedAuditEvent(request,{
+        eventType:"document.access.denied",sourceSubsystem:"documents",
+        targetType:"student_document",targetId:id,
+        metadata:{reason_code:"clean_document_not_accessible",route:"/api/premium/documents/[id]"}
+      });
+      return jsonError("Document not found.", 404);
+    }
     const { data: signed, error } = await supabase.storage.from("student-documents").createSignedUrl(data.storage_path, 300, { download: data.original_filename });
-    if (error || !signed?.signedUrl) return jsonError("Unable to open the document.", 400);
+    if (error || !signed?.signedUrl) {
+      await recordFailedAuditEvent(request,{
+        eventType:"document.access.failed",sourceSubsystem:"documents",
+        targetType:"student_document",targetId:id,
+        metadata:{reason_code:"signed_url_failed",route:"/api/premium/documents/[id]"}
+      });
+      return jsonError("Unable to open the document.", 400);
+    }
+    await recordPrivilegedReadAuditEvent(request,{
+      eventType:"document.accessed",sourceSubsystem:"documents",
+      targetType:"student_document",targetId:id,
+      metadata:{route:"/api/premium/documents/[id]"}
+    });
     return NextResponse.json({ ok: true, url: signed.signedUrl, expires_in: 300 }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
-    if (error instanceof WorkspaceAccessError) return jsonError(error.message, error.status);
+    if (error instanceof WorkspaceAccessError) {
+      await recordDeniedAuditEvent(request,{
+        eventType:"document.access.denied",sourceSubsystem:"documents",
+        targetType:"student_document",targetId:validUuid(id)?id:undefined,
+        metadata:{reason_code:error.status===401?"authentication_required":"workspace_access_denied",route:"/api/premium/documents/[id]"}
+      });
+      return jsonError(error.message, error.status);
+    }
     return jsonError("Unable to open the document.", 400);
   }
 }

@@ -65,9 +65,9 @@ set local request.jwt.claims='{"sub":"65000000-0000-4000-8000-000000000005","rol
 select is(private.has_staff_permission('roles.manage'),true,'super admin manages roles');
 select is(private.has_staff_permission('audit.read'),true,'super admin reads audit');
 select lives_ok($$select public.manage_staff_access('62000000-0000-4000-8000-000000000002','read_only_staff',false,'ended','','test revoke')$$,'super admin can revoke read-only staff role');
-select results_eq($$select count(*)::bigint from public.admin_audit_logs where action='staff_role_revoked' and target_user_id='62000000-0000-4000-8000-000000000002'$$,array[1::bigint],'staff role revoke is audited');
+select results_eq($$select count(*)::bigint from public.audit_events where event_type='staff.access_deactivated' and target_id='62000000-0000-4000-8000-000000000002'$$,array[1::bigint],'staff role revoke is canonically audited');
 select lives_ok($$insert into public.cms_page_revisions(page_id,content,created_by) select id,'{"heroHeading":"Draft"}'::jsonb,'65000000-0000-4000-8000-000000000005' from public.cms_pages limit 1$$,'super admin can create CMS revision');
-select results_eq($$select count(*)::bigint from public.admin_audit_logs where entity_type='cms_page_revisions'$$,array[1::bigint],'CMS revision is audited');
+select results_eq($$select count(*)::bigint from public.audit_events where event_type='cms.cms_page_revisions.insert' and target_type='cms_page_revisions'$$,array[1::bigint],'CMS revision is canonically audited');
 
 set local role anon;set local request.jwt.claims='{}';
 select is(has_table_privilege('anon','public.staff_roles','SELECT'),false,'anonymous has no staff-role table access');
