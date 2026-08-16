@@ -128,8 +128,8 @@ async function loadOrganizationBoard(context: StaffContext): Promise<OperationsS
     totalStudents === null || premiumStudents === null ? null : Math.max(totalStudents - premiumStudents, 0);
   const metrics: ScoreboardMetric[] = [
     { key: "visible", label: "Visible students", value: totalStudents, href: "/ops/students" },
-    { key: "premium", label: "Premium students", value: premiumStudents, href: "/ops/students?premium=active" },
-    { key: "standard", label: "Standard students", value: standardStudents, href: "/ops/students" },
+    { key: "premium", label: "Premium students", value: premiumStudents, href: "/ops/students?plan=premium" },
+    { key: "standard", label: "Standard students", value: standardStudents, href: "/ops/students?plan=standard" },
     { key: "team", label: "Active team members", value: countOrNull(staff), href: "/ops/team" }
   ];
   const mix =

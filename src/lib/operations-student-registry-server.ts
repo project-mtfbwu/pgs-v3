@@ -4,10 +4,15 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   REGISTRY_PAGE_SIZE,
   formatRegistryJoinedAt,
+  parseRegistryQuery,
+  parseSavedRegistryQuery,
   registryCompletion,
-  registryPage,
-  registryPremiumFilter,
+  registryQueriesEqual,
+  registryQueryHasSearchOrFilters,
+  type NormalizedRegistryQuery,
+  type RegistryMentorOption,
   type RegistryPlan,
+  type RegistrySavedView,
   type StudentRegistryResult,
   type StudentRegistryRow
 } from "@/lib/operations-student-registry";
@@ -45,25 +50,37 @@ export function registryShowsOpenColumn(context: StaffContext): boolean {
   return can(context, "student_workspace.read_all") || can(context, "student_workspace.read");
 }
 
+export function registryQueryCapabilities(context: StaffContext) {
+  return { allowOrgFilters: can(context, "student_workspace.read_all") };
+}
+
+function emptyResult(page: number, error = false): StudentRegistryResult {
+  return { rows: [], totalCount: 0, page, pageSize: REGISTRY_PAGE_SIZE, error };
+}
+
 export async function loadStaffStudentRegistry(
   context: StaffContext,
-  filters: { q?: string; premium?: string; page?: string }
+  query: NormalizedRegistryQuery
 ): Promise<StudentRegistryResult> {
-  const page = registryPage(filters.page);
   if (!canQueryStudentRegistry(context)) {
-    return { rows: [], totalCount: 0, page, pageSize: REGISTRY_PAGE_SIZE };
+    return emptyResult(query.page, false);
   }
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.rpc("staff_student_registry", {
-    search_text: filters.q ?? null,
-    premium_filter: registryPremiumFilter(filters.premium),
-    page_offset: (page - 1) * REGISTRY_PAGE_SIZE,
+    search_text: query.q,
+    plan_filter: query.plan,
+    mentor_filter: query.mentor,
+    study_level_filter: query.studyLevel,
+    completion_filter: query.completion,
+    joined_filter: query.joined,
+    sort_key: query.sort,
+    page_offset: (query.page - 1) * REGISTRY_PAGE_SIZE,
     page_size: REGISTRY_PAGE_SIZE
   });
 
   if (error || !data) {
-    return { rows: [], totalCount: 0, page, pageSize: REGISTRY_PAGE_SIZE };
+    return emptyResult(query.page, true);
   }
 
   const rows: StudentRegistryRow[] = (data as RegistryRpcRow[]).map((row) => ({
@@ -81,7 +98,58 @@ export async function loadStaffStudentRegistry(
   return {
     rows,
     totalCount: rows.length ? Number((data as RegistryRpcRow[])[0].total_count) : 0,
-    page,
-    pageSize: REGISTRY_PAGE_SIZE
+    page: query.page,
+    pageSize: REGISTRY_PAGE_SIZE,
+    error: false
+  };
+}
+
+export async function loadRegistryMentorOptions(context: StaffContext): Promise<RegistryMentorOption[]> {
+  if (!registryShowsMentorColumn(context)) return [];
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("staff_registry_mentor_options");
+  if (error || !data) return [];
+  return (data as Array<{ id: string; display_name: string }>).map((row) => ({
+    id: row.id,
+    displayName: row.display_name || "Mentor"
+  }));
+}
+
+export async function loadRegistrySavedViews(context: StaffContext): Promise<RegistrySavedView[]> {
+  if (!canQueryStudentRegistry(context)) return [];
+  const capabilities = registryQueryCapabilities(context);
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("staff_registry_saved_views")
+    .select("id,name,query")
+    .eq("staff_user_id", context.user.id)
+    .order("updated_at", { ascending: false });
+  if (error || !data) return [];
+  return data.map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+    query: parseSavedRegistryQuery(row.query, capabilities)
+  }));
+}
+
+export function resolveRegistryQueryFromRequest(
+  raw: Record<string, string | string[] | undefined>,
+  capabilities: ReturnType<typeof registryQueryCapabilities>,
+  savedViews: RegistrySavedView[]
+): NormalizedRegistryQuery {
+  const parsed = parseRegistryQuery(raw, capabilities);
+  const selected = parsed.view ? savedViews.find((view) => view.id === parsed.view) : null;
+  if (!selected) {
+    return { ...parsed, view: null };
+  }
+  if (registryQueryHasSearchOrFilters(parsed)) {
+    return registryQueriesEqual({ ...parsed, view: null, page: 1 }, { ...selected.query, view: null, page: 1 })
+      ? { ...parsed, view: selected.id }
+      : { ...parsed, view: null };
+  }
+  return {
+    ...selected.query,
+    page: parsed.page,
+    view: selected.id
   };
 }

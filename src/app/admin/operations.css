@@ -138,9 +138,50 @@ html.operations-session {
 }
 
 .operations-root[data-operations-product="true"] .ops-system-topbar {
-  height: 72px;
+  height: 96px;
   padding-inline: 24px;
   backdrop-filter: none;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-topbar-menu,
+.operations-root[data-operations-product="true"] .ops-system-topbar-notify {
+  flex-shrink: 0;
+  overflow: visible;
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0;
+  color: var(--operations-foreground);
+}
+
+.operations-root[data-operations-product="true"] .ops-system-topbar-menu svg,
+.operations-root[data-operations-product="true"] .ops-system-topbar-notify svg {
+  width: 48px;
+  height: 48px;
+  stroke-width: 2;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-topbar-avatar {
+  flex-shrink: 0;
+  overflow: visible;
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0;
+  color: inherit;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-topbar-avatar [data-slot="avatar"] {
+  width: 56px;
+  height: 56px;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-topbar-avatar [data-slot="avatar-fallback"] {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .operations-root[data-operations-product="true"] .ops-system-context {
@@ -150,8 +191,26 @@ html.operations-session {
 }
 
 .operations-root[data-operations-product="true"] .ops-system-current-section {
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+html.operations-session .ops-system-nav-sheet-title,
+.operations-root[data-operations-product="true"] .ops-system-nav-sheet-title {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 28px;
+  letter-spacing: -0.02em;
+}
+
+html.operations-session .ops-system-nav-sheet-description,
+.operations-root[data-operations-product="true"] .ops-system-nav-sheet-description {
+  margin: 0;
+  color: var(--operations-foreground);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 32px;
 }
 
 .operations-root[data-operations-product="true"] .ops-system-role-badge {
@@ -204,6 +263,28 @@ html.operations-session {
 
 .ops-system-page-actions {
   flex: none;
+}
+
+.operations-root .ops-system-primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: var(--operations-primary);
+  color: var(--operations-primary-foreground);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 20px;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.operations-root .ops-system-primary-action:hover,
+.operations-root .ops-system-primary-action:focus-visible {
+  background: color-mix(in srgb, var(--operations-primary) 86%, #ffffff);
+  color: var(--operations-primary-foreground);
 }
 
 .ops-system-card {
@@ -514,6 +595,137 @@ li:first-child .ops-system-compact-row {
   font-weight: 500;
 }
 
+.ops-registry-filters-mobile {
+  display: none;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--operations-border);
+}
+
+.ops-registry-mobile-search {
+  padding: 0;
+  border-bottom: 0;
+}
+
+.ops-registry-filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+
+.ops-registry-clear,
+.ops-registry-save-button,
+.ops-registry-delete-button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--operations-accent-foreground);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ops-registry-save-button,
+.ops-registry-delete-button {
+  border: 0;
+  padding: 0 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ops-registry-delete-button {
+  color: var(--operations-foreground);
+}
+
+.ops-registry-chips,
+.ops-registry-view-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 16px 0;
+  list-style: none;
+}
+
+.ops-registry-chip,
+.ops-registry-view-tabs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--operations-border);
+  border-radius: 999px;
+  background: var(--operations-secondary);
+  color: var(--operations-secondary-foreground);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+  text-decoration: none;
+}
+
+.ops-registry-view-tabs a[aria-current="page"] {
+  border-color: var(--operations-ring);
+  background: var(--operations-accent);
+  color: var(--operations-accent-foreground);
+}
+
+.ops-registry-views {
+  display: grid;
+  gap: 12px;
+  padding: 0 16px 12px;
+}
+
+.ops-registry-view-tabs {
+  padding: 12px 0 0;
+}
+
+.ops-registry-view-actions,
+.ops-registry-view-manage,
+.ops-registry-save-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+
+.ops-registry-save-form input[type="text"] {
+  min-height: 40px;
+  min-width: 180px;
+  padding: 8px 12px;
+  border: 1px solid var(--operations-input);
+  border-radius: 6px;
+  background: var(--operations-card);
+  color: var(--operations-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.ops-registry-view-limit,
+.ops-registry-status {
+  margin: 0;
+  padding: 0 16px;
+  color: var(--operations-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.ops-registry-status {
+  padding-top: 12px;
+}
+
+.ops-registry-sheet-form {
+  display: grid;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+
+.ops-system-filterbar.ops-registry-filters-desktop {
+  grid-template-columns: minmax(220px, 1.4fr) repeat(auto-fit, minmax(160px, 1fr));
+}
+
 @media (min-width: 1024px) {
   .operations-root[data-operations-product="true"] .ops-system-content {
     padding-left: 240px;
@@ -563,5 +775,13 @@ li:first-child .ops-system-compact-row {
 
   .ops-registry-mobile {
     display: block;
+  }
+
+  .ops-registry-filters-desktop {
+    display: none;
+  }
+
+  .ops-registry-filters-mobile {
+    display: grid;
   }
 }

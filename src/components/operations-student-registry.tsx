@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { OperationsTableFrame } from "@/components/operations-table-frame";
 import {
+  registryEmptyCopy,
+  registryEmptyState,
+  registryHref,
   registryPlanTone,
   registryVisibleColumns,
+  type NormalizedRegistryQuery,
   type StudentRegistryColumnKey,
   type StudentRegistryResult,
   type StudentRegistryRow
@@ -82,35 +86,46 @@ function TableCell({
   return <>{cellValue(row, column)}</>;
 }
 
-function registryQuery(searchParams: { q?: string; premium?: string }, page: number): string {
-  const params = new URLSearchParams();
-  if (searchParams.q) params.set("q", searchParams.q);
-  if (searchParams.premium) params.set("premium", searchParams.premium);
-  if (page > 1) params.set("page", String(page));
-  const query = params.toString();
-  return query ? `/ops/students?${query}` : "/ops/students";
+function resultSummary(result: StudentRegistryResult): string {
+  if (result.error) return "The registry could not be loaded.";
+  if (!result.totalCount) return "0 students";
+  const start = (result.page - 1) * result.pageSize + 1;
+  const end = Math.min(result.page * result.pageSize, result.totalCount);
+  return `Showing ${start}–${end} of ${result.totalCount} students`;
 }
 
 export function OperationsStudentRegistry({
   result,
+  query,
   showMentor,
   showJoined,
   showOpen,
-  searchParams
+  mentorScoped
 }: {
   result: StudentRegistryResult;
+  query: NormalizedRegistryQuery;
   showMentor: boolean;
   showJoined: boolean;
   showOpen: boolean;
-  searchParams: { q?: string; premium?: string };
+  mentorScoped: boolean;
 }) {
   const columns = registryVisibleColumns({ showMentor, showOpen, showJoined });
   const pageCount = Math.max(1, Math.ceil(result.totalCount / result.pageSize) || 1);
   const previousPage = result.page > 1 ? result.page - 1 : null;
   const nextPage = result.page < pageCount && result.totalCount > 0 ? result.page + 1 : null;
+  const empty = registryEmptyState({
+    error: result.error,
+    totalCount: result.totalCount,
+    query,
+    mentorScoped
+  });
+  const emptyCopy = empty ? registryEmptyCopy(empty, query) : null;
 
   return (
     <>
+      <p className="ops-registry-status" aria-live="polite">
+        {emptyCopy ?? resultSummary(result)}
+      </p>
       <div className="ops-registry-desktop">
         <OperationsTableFrame minimumWidth={920} ariaLabel="Scrollable student registry">
           <caption className="ops:sr-only">Authorized student registry</caption>
@@ -134,7 +149,7 @@ export function OperationsStudentRegistry({
             {!result.rows.length && (
               <tr>
                 <td className="ops-system-empty-cell" colSpan={columns.length}>
-                  No students match this authorized view.
+                  {emptyCopy}
                 </td>
               </tr>
             )}
@@ -171,21 +186,21 @@ export function OperationsStudentRegistry({
             ))}
           </ul>
         ) : (
-          <p className="ops-system-empty-cell">No students match this authorized view.</p>
+          <p className="ops-system-empty-cell">{emptyCopy}</p>
         )}
       </div>
 
       <nav className="ops-registry-pagination" aria-label="Student registry pagination">
         {previousPage ? (
-          <Link href={registryQuery(searchParams, previousPage)}>Previous page</Link>
+          <Link href={registryHref({ ...query, page: previousPage }, { includePage: true, includeView: true })}>Previous page</Link>
         ) : (
           <span aria-disabled="true">Previous page</span>
         )}
-        <p aria-live="polite">
+        <p>
           Page {result.page} of {pageCount}
         </p>
         {nextPage ? (
-          <Link href={registryQuery(searchParams, nextPage)}>Next page</Link>
+          <Link href={registryHref({ ...query, page: nextPage }, { includePage: true, includeView: true })}>Next page</Link>
         ) : (
           <span aria-disabled="true">Next page</span>
         )}

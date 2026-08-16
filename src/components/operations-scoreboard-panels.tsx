@@ -75,7 +75,7 @@ function StudentStatusPanel({ mix }: { mix: NonNullable<OperationsScoreboardMode
         />
         <ul className="ops:m-0 ops:flex ops:flex-col ops:gap-3 ops:p-0 ops:list-none">
           <li>
-            <Link href="/ops/students?premium=active" className="ops-system-compact-row ops:no-underline">
+            <Link href="/ops/students?plan=premium" className="ops-system-compact-row ops:no-underline">
               <span>
                 <strong>Premium</strong>
                 <span className="ops:block ops:text-xs ops:text-muted-foreground">Currently valid entitlement</span>
@@ -87,7 +87,7 @@ function StudentStatusPanel({ mix }: { mix: NonNullable<OperationsScoreboardMode
             </Link>
           </li>
           <li>
-            <Link href="/ops/students" className="ops-system-compact-row ops:no-underline">
+            <Link href="/ops/students?plan=standard" className="ops-system-compact-row ops:no-underline">
               <span>
                 <strong>Standard</strong>
                 <span className="ops:block ops:text-xs ops:text-muted-foreground">No currently valid Premium</span>

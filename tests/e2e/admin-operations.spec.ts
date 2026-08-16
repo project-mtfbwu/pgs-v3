@@ -81,7 +81,7 @@ test.describe("preview read-only staff workflow",()=>{
     await expect(page.getByRole("link",{name:/open workspace/i})).toHaveCount(0);
     await expect(page.getByText("PGS ID").first()).toBeVisible();
     await expect(page.getByText("directory",{exact:true})).toHaveCount(0);
-    await expect(page.getByLabel("Student name")).toBeVisible();
+    await expect(page.getByLabel("Search by name or PGS ID").first()).toBeVisible();
     await expect(page.getByRole("navigation",{name:"Student registry pagination"})).toBeVisible();
     const studentId=process.env.PGS_ASSIGNED_STUDENT_ID;
     test.skip(!studentId,"Supply a Premium student fixture UUID.");
@@ -110,7 +110,8 @@ test.describe("preview Mentor workflow",()=>{
     await page.goto("/ops/students");
     await expect(page.getByRole("heading",{name:"My Students"})).toBeVisible();
     await expect(page.getByRole("columnheader",{name:"Mentor"})).toHaveCount(0);
-    await expect(page.getByText("Mentor",{exact:true})).toHaveCount(0);
+    await expect(page.getByLabel("Mentor")).toHaveCount(0);
+    await expect(page.getByLabel("Joined")).toHaveCount(0);
     await expect(page.getByRole("link",{name:"Catalog"})).toHaveCount(0);
     const response=await request.post("/api/admin/catalog/courses",{data:{title:"Mentor attack",slug:"mentor-attack"}});
     expect(response.status()).toBe(403);
@@ -172,6 +173,8 @@ test.describe("preview Admin workflow",()=>{
     await page.goto("/ops/students");
     await expect(page.getByRole("heading",{name:"Student Registry"})).toBeVisible();
     await expect(page.getByRole("columnheader",{name:"Email"})).toHaveCount(0);
+    await expect(page.getByLabel("Plan").first()).toBeVisible();
+    await expect(page.getByRole("link",{name:"Premium"})).toBeVisible();
     await expect(page.getByRole("navigation",{name:"Student registry pagination"})).toBeVisible();
     await expect(page.getByText("Previous page")).toBeVisible();
     await expect(page.getByText("Next page")).toBeVisible();
@@ -187,7 +190,7 @@ test.describe("preview Admin workflow",()=>{
     if(await card.count()){
       await expect(card.first()).toBeVisible();
     }else{
-      await expect(page.getByText("No students match this authorized view.")).toBeVisible();
+      await expect(page.getByText(/No students in the registry yet\.|No students match|0 students/)).toBeVisible();
     }
     await expect(page.locator(".ops-registry-desktop table")).toBeHidden();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);

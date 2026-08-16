@@ -32,8 +32,9 @@ const phase4eMigration = await readFile(new URL("../supabase/migrations/20260815
 const phase4eGateMigration = await readFile(new URL("../supabase/migrations/20260815074452_phase4e_common_deliverability_gate.sql", import.meta.url), "utf8");
 const phase4eIndexMigration = await readFile(new URL("../supabase/migrations/20260815074749_phase4e_share_actor_indexes.sql", import.meta.url), "utf8");
 const ops02RegistryMigration = await readFile(new URL("../supabase/migrations/20260816152131_ops02_student_registry.sql", import.meta.url), "utf8");
+const ops03RegistryMigration = await readFile(new URL("../supabase/migrations/20260816163133_ops03_registry_search.sql", import.meta.url), "utf8");
 const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}\n${privilegedDeleteAuditMigration}`;
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}`;
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -141,6 +142,11 @@ const required = [
   ,"Asia/Kolkata"
   ,"last_sequence < 9999"
   ,"created_at desc, scoped.id desc"
+  ,"staff_registry_saved_views"
+  ,"staff_registry_mentor_options"
+  ,"private.normalize_registry_saved_query"
+  ,"saved view limit is 20"
+  ,"plan_filter"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -172,4 +178,9 @@ if (!phase4eIndexMigration.includes("document_shares_granted_by_idx") || !phase4
 if (ops02RegistryMigration.includes("^PGS[0-9]{6,}")) throw new Error("PGS codes must be exactly six digits after the prefix");
 if (/create policy[\s\S]*students\.read[\s\S]*on public\.profiles/i.test(ops02RegistryMigration)) throw new Error("OPS-02 must not restore a students.read table SELECT policy on profiles");
 if (!ops02RegistryMigration.includes("least(greatest(coalesce(page_size, 25), 1), 50)")) throw new Error("Registry RPC must clamp page size to 25 default / 50 maximum");
+if (/create policy[\s\S]*students\.read[\s\S]*on public\.profiles/i.test(ops03RegistryMigration)) throw new Error("OPS-03 must not restore a students.read table SELECT policy on profiles");
+if (ops03RegistryMigration.includes("create table public.student_tags") || ops03RegistryMigration.includes("manual tag")) throw new Error("OPS-03 must not create a manual tag domain");
+if (!ops03RegistryMigration.includes("staff_user_id = auth.uid()")) throw new Error("Saved views must remain owner-scoped to auth.uid()");
+if (!ops03RegistryMigration.includes("private.can_use_staff_registry()")) throw new Error("Saved views must require a current active staff registry identity");
+if (ops03RegistryMigration.includes("elasticsearch") || ops03RegistryMigration.includes("meilisearch")) throw new Error("OPS-03 must remain Postgres-first");
 console.log("RLS migration static checks passed");

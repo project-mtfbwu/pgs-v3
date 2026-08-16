@@ -6,9 +6,9 @@ select plan(42);
 select has_column('public', 'profiles', 'pgs_code', 'profiles store the immutable PGS business identifier');
 select has_table('private', 'student_code_counters', 'yearly PGS counters stay in the private schema');
 select has_function('private', 'issue_student_pgs_code', array['uuid']);
-select has_function('public', 'staff_student_registry', array['text', 'text', 'integer', 'integer']);
+select has_function('public', 'staff_student_registry', array['text', 'text', 'text', 'text', 'text', 'text', 'text', 'integer', 'integer']);
 select is(
-  has_function_privilege('authenticated', 'public.staff_student_registry(text,text,integer,integer)', 'EXECUTE'),
+  has_function_privilege('authenticated', 'public.staff_student_registry(text,text,text,text,text,text,text,integer,integer)', 'EXECUTE'),
   true,
   'authenticated staff may execute the registry RPC'
 );
@@ -18,7 +18,7 @@ select is(
   'browser/client roles cannot allocate PGS codes'
 );
 select is(
-  has_function_privilege('anon', 'public.staff_student_registry(text,text,integer,integer)', 'EXECUTE'),
+  has_function_privilege('anon', 'public.staff_student_registry(text,text,text,text,text,text,text,integer,integer)', 'EXECUTE'),
   false,
   'anonymous callers cannot execute the Operations registry'
 );
@@ -214,60 +214,60 @@ update public.premium_entitlements
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"d0210000-0000-4000-8000-000000000013","role":"authenticated"}';
 select results_eq(
-  $$select count(*)::bigint from public.staff_student_registry(null,null,0,25)$$,
+  $$select count(*)::bigint from public.staff_student_registry(null,null,null,null,null,null,null,0,25)$$,
   $$select count(*)::bigint from public.profiles where pgs_code is not null$$,
   'Admin registry enumerates coded student profiles in actor scope'
 );
 select results_eq(
-  $$select plan from public.staff_student_registry(null,null,0,50) where id='d0210000-0000-4000-8000-000000000007'$$,
+  $$select plan from public.staff_student_registry(null,null,null,null,null,null,null,0,50) where id='d0210000-0000-4000-8000-000000000007'$$,
   array['Premium'::text],
   'canonical Premium window projects as Premium'
 );
 select results_eq(
-  $$select plan from public.staff_student_registry(null,null,0,50) where id='d0210000-0000-4000-8000-000000000005'$$,
+  $$select plan from public.staff_student_registry(null,null,null,null,null,null,null,0,50) where id='d0210000-0000-4000-8000-000000000005'$$,
   array['Standard'::text],
   'expired status=active rows do not display Premium'
 );
 select results_eq(
-  $$select plan from public.staff_student_registry(null,null,0,50) where id='d0210000-0000-4000-8000-000000000006'$$,
+  $$select plan from public.staff_student_registry(null,null,null,null,null,null,null,0,50) where id='d0210000-0000-4000-8000-000000000006'$$,
   array['Standard'::text],
   'future status=active rows do not display Premium'
 );
 select results_eq(
-  $$select count(*)::bigint from public.staff_student_registry(null,'active',0,50) where plan<>'Premium'$$,
+  $$select count(*)::bigint from public.staff_student_registry(null,'premium',null,null,null,null,null,0,50) where plan<>'Premium'$$,
   array[0::bigint],
-  'the transitional premium=active filter is applied in SQL using the canonical window'
+  'the plan=premium filter is applied in SQL using the canonical window'
 );
 select results_eq(
-  $$select count(*)::bigint from public.staff_student_registry('First 2026',null,0,25)$$,
+  $$select count(*)::bigint from public.staff_student_registry('First 2026',null,null,null,null,null,null,0,25)$$,
   array[1::bigint],
-  'transitional q remains a name filter'
+  'name q remains a contains filter'
 );
 select results_eq(
-  $$select count(*)::bigint from public.staff_student_registry('PGS261111',null,0,25) where full_name not ilike '%PGS261111%'$$,
-  array[0::bigint],
-  'OPS-02 does not add exact PGS-code lookup'
+  $$select pgs_code from public.staff_student_registry('PGS261111',null,null,null,null,null,null,0,25)$$,
+  array['PGS261111'::text],
+  'exact PGS-code lookup is applied in the registry RPC'
 );
 select results_eq(
-  $$select count(*)::bigint from public.staff_student_registry(null,null,0,2)$$,
+  $$select count(*)::bigint from public.staff_student_registry(null,null,null,null,null,null,null,0,2)$$,
   array[2::bigint],
   'registry page size is applied in SQL'
 );
 select results_eq(
-  $$select (select id from public.staff_student_registry(null,null,0,1))
-     is distinct from (select id from public.staff_student_registry(null,null,1,1))$$,
+  $$select (select id from public.staff_student_registry(null,null,null,null,null,null,null,0,1))
+     is distinct from (select id from public.staff_student_registry(null,null,null,null,null,null,null,1,1))$$,
   array[true],
   'stable created_at DESC, id DESC pagination does not repeat the first row'
 );
 
 set local request.jwt.claims = '{"sub":"d0210000-0000-4000-8000-000000000012","role":"authenticated"}';
 select results_eq(
-  $$select id from public.staff_student_registry(null,null,0,50)$$,
+  $$select id from public.staff_student_registry(null,null,null,null,null,null,null,0,50)$$,
   array['d0210000-0000-4000-8000-000000000007'::uuid],
   'Mentor registry is limited to active assignments'
 );
 select results_eq(
-  $$select can_open_workspace from public.staff_student_registry(null,null,0,50) where id='d0210000-0000-4000-8000-000000000007'$$,
+  $$select can_open_workspace from public.staff_student_registry(null,null,null,null,null,null,null,0,50) where id='d0210000-0000-4000-8000-000000000007'$$,
   array[true],
   'assigned Mentor may open the canonical Premium workspace'
 );
@@ -279,7 +279,7 @@ select results_eq(
 
 set local request.jwt.claims = '{"sub":"d0210000-0000-4000-8000-000000000011","role":"authenticated"}';
 select lives_ok(
-  $$select * from public.staff_student_registry(null,null,0,25)$$,
+  $$select * from public.staff_student_registry(null,null,null,null,null,null,null,0,25)$$,
   'read-only staff can use the minimized registry RPC'
 );
 select results_eq(
@@ -288,14 +288,14 @@ select results_eq(
   'students.read does not become direct full-profile SELECT'
 );
 select results_eq(
-  $$select count(*)::bigint from public.staff_student_registry(null,null,0,50) where can_open_workspace$$,
+  $$select count(*)::bigint from public.staff_student_registry(null,null,null,null,null,null,null,0,50) where can_open_workspace$$,
   array[0::bigint],
   'read-only registry rows cannot open a workspace'
 );
 
 set local request.jwt.claims = '{"sub":"d0210000-0000-4000-8000-000000000008","role":"authenticated"}';
 select throws_ok(
-  $$select * from public.staff_student_registry(null,null,0,25)$$,
+  $$select * from public.staff_student_registry(null,null,null,null,null,null,null,0,25)$$,
   '42501',
   'not authorized',
   'a student cannot execute the Operations registry'
