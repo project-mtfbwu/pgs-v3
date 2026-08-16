@@ -9,6 +9,7 @@ import {
   requireStaffAccessDetail
 } from "@/lib/operations-staff-access-server";
 import { can, requireStaffPermission } from "@/lib/staff-auth";
+import { canStartStaffPreview, redirectMentorPreviewAwayFromPrivilegedPages } from "@/lib/staff-preview-server";
 
 export default async function StaffAccessPage({
   params
@@ -16,6 +17,7 @@ export default async function StaffAccessPage({
   params: Promise<{ id: string }>;
 }) {
   const context = await requireStaffPermission("staff.read");
+  await redirectMentorPreviewAwayFromPrivilegedPages();
   const { id } = await params;
   if (!validUuid(id)) notFound();
   const detail = await requireStaffAccessDetail(id);
@@ -34,6 +36,7 @@ export default async function StaffAccessPage({
       />
       <OperationsStaffAccessDetail
         canManage={can(context, "roles.manage")}
+        canPreviewMentor={canStartStaffPreview(context, null) && (detail.role_key === "mentor" || detail.role_key === "admin" || detail.role_key === "super_admin") && detail.status === "active" && !detail.invite_pending}
         detail={detail}
         email={email}
         history={history}

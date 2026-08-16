@@ -852,10 +852,15 @@ li:first-child .ops-system-compact-row {
   color: var(--operations-foreground);
 }
 
-.operations-root .ops-team-destructive:hover,
-.operations-root .ops-team-destructive:focus-visible {
-  background: var(--operations-secondary);
+.ops-registry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.ops-registry-actions > span {
   color: var(--operations-foreground);
+  font-size: 0.875rem;
 }
 
 .ops-team-card .ops-team-name {

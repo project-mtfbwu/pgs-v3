@@ -5,9 +5,9 @@ import { DeveloperStudentShell } from "@/components/developer-student-shell";
 import { DocumentWorkspace } from "@/components/document-workspace";
 import { RecoveredStudentLegacyPage } from "@/components/recovered-student-legacy-page";
 import { documentsLockedHtml } from "@/legacy/generated/documents-locked";
-import { displayName, getOwnAvatarUrl } from "@/lib/student-data";
+import { displayName } from "@/lib/student-data";
 import { loadPremiumWorkspace, requirePremiumActor } from "@/lib/premium-workspace";
-import { resolveStudentExperience } from "@/lib/student-experience";
+import { resolveStudentExperience, studentExperienceAvatarUrl, studentExperienceEmail, studentSubjectId } from "@/lib/student-experience";
 
 export const metadata:Metadata={title:"Upload Your Documents"};
 export const dynamic="force-dynamic";
@@ -16,10 +16,12 @@ export default async function DocumentsPage(){
   const state=await resolveStudentExperience();
   if(!state)notFound();
   if(state.kind==="anonymous")return <RecoveredStudentLegacyPage html={documentsLockedHtml} page="documents-locked" state={state}/>;
-  const {user,profile}=state;const avatarUrl=await getOwnAvatarUrl(profile.avatar_path);
+  const {user,profile}=state;const avatarUrl=await studentExperienceAvatarUrl(state);
   if(state.kind!=="authenticated_premium")return <RecoveredStudentLegacyPage html={documentsLockedHtml} page="documents-locked" state={state} avatarUrl={avatarUrl}/>;
-  await requirePremiumActor();const workspace=await loadPremiumWorkspace(user.id);
-  return <DeveloperStudentShell name={displayName(profile,user)} email={user.email??""} avatarUrl={avatarUrl} stateKind={state.kind} unreadCount={state.unreadCount} active="documents" contentClassName="developer-documents-page">
+  if (!state.preview) await requirePremiumActor();
+  const workspace=await loadPremiumWorkspace(studentSubjectId(state));
+  const name = state.preview ? state.name : displayName(profile,user);
+  return <DeveloperStudentShell name={name} email={studentExperienceEmail(state)} avatarUrl={avatarUrl} stateKind={state.kind} unreadCount={state.unreadCount} active="documents" preview={state.preview} contentClassName="developer-documents-page">
     <section className="pt-5 about-section half-section overlap-height position-relative overflow-hidden mobile-doc-section">
       <div className="container overlap-gap-section p-0">
         <div className="row justify-content-md-center align-items-center">
@@ -32,7 +34,7 @@ export default async function DocumentsPage(){
           </div>
         </div>
         <div className="row justify-content-md-center mt-3"><div className="col-lg-6"><p className="mb-0 text-black fs-19 lh-25"><span className="fs-22 d-block mb-1 fw-500">Make sure your file is under 50MB.</span>We accept PDF, JPG, PNG, and MS Word formats. Hit upload when you&apos;re ready.</p></div></div>
-        <DocumentWorkspace requirements={workspace.requirements}/>
+        <DocumentWorkspace requirements={workspace.requirements} readOnly={Boolean(state.preview)} />
         <div className="developer-team-goal"><Image src="/assets/img/team-goal.png" alt="" width={980} height={420} unoptimized/></div>
       </div>
     </section>

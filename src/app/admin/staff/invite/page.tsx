@@ -2,8 +2,10 @@ import Link from "next/link";
 import { OperationsPageHeader } from "@/components/operations-page-header";
 import { OperationsStaffInviteForm } from "@/components/operations-staff-invite-form";
 import { requireStaffPermission } from "@/lib/staff-auth";
+import { redirectMentorPreviewAwayFromPrivilegedPages } from "@/lib/staff-preview-server";
 
 export default async function InviteStaffPage() {
+  await redirectMentorPreviewAwayFromPrivilegedPages();
   await requireStaffPermission("roles.manage");
   return (
     <div className="ops:flex ops:flex-col ops:gap-6">

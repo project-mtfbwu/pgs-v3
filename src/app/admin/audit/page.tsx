@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { OperationsPageHeader } from "@/components/operations-page-header";
 import { OperationsTableFrame } from "@/components/operations-table-frame";
+import { identityLabel, resolveIdentityLabels } from "@/lib/identity-labels";
 import { requireStaffPermission } from "@/lib/staff-auth";
+import { redirectMentorPreviewAwayFromPrivilegedPages } from "@/lib/staff-preview-server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type AuditViewEvent = {
@@ -11,6 +13,7 @@ type AuditViewEvent = {
 };
 
 export default async function AuditPage({searchParams}:{searchParams:Promise<{domain?:string}>}){
+  await redirectMentorPreviewAwayFromPrivilegedPages();
   await requireStaffPermission("audit.read");
   const filters=await searchParams;
   const supabase=await createSupabaseServerClient();
@@ -20,6 +23,7 @@ export default async function AuditPage({searchParams}:{searchParams:Promise<{do
   if(filters.domain)query=query.eq("source_subsystem",filters.domain);
   const {data}=await query;
   const events=(data??[]) as AuditViewEvent[];
+  const labels = await resolveIdentityLabels(events.flatMap((event) => [event.actor_user_id, event.target_id]));
   return <div className="ops:flex ops:flex-col ops:gap-6">
     <OperationsPageHeader eyebrow="Activity" title="Operations activity" description="Authorized current history from the canonical audit_events ledger."/>
     <section className="ops-system-data-panel" aria-label="Authorized Operations activity">
@@ -35,11 +39,10 @@ export default async function AuditPage({searchParams}:{searchParams:Promise<{do
         <OperationsTableFrame minimumWidth={900}>
             <thead><tr><th>Time</th><th>Domain</th><th>Event</th><th>Target</th><th>Actor</th><th>Outcome</th></tr></thead>
             <tbody>
-              {events.map((event)=><tr key={event.id}><td className="ops:whitespace-nowrap"><time dateTime={event.occurred_at}>{new Date(event.occurred_at).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})}</time></td><td><span className="ops-system-badge">{event.source_subsystem}</span></td><td className="ops:font-medium">{event.event_type}</td><td>{event.target_type??"—"}<br/><code className="ops:text-muted-foreground">{event.target_id??"—"}</code></td><td>{event.actor_kind}<br/><code className="ops:text-muted-foreground">{event.actor_user_id??"system"}</code></td><td><span className="ops-system-badge is-accent">{event.outcome}</span></td></tr>)}
+              {events.map((event)=><tr key={event.id}><td className="ops:whitespace-nowrap"><time dateTime={event.occurred_at}>{new Date(event.occurred_at).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})}</time></td><td><span className="ops-system-badge">{event.source_subsystem}</span></td><td className="ops:font-medium">{event.event_type}</td><td>{event.target_type??"—"}<br/>{event.target_id ? identityLabel(labels, event.target_id) : "—"}</td><td>{event.actor_user_id ? identityLabel(labels, event.actor_user_id) : event.actor_kind}</td><td><span className="ops-system-badge is-accent">{event.outcome}</span></td></tr>)}
               {!events.length&&<tr><td className="ops-system-empty-cell" colSpan={6}>No authorized activity matches this view.</td></tr>}
             </tbody>
         </OperationsTableFrame>
     </section>
   </div>;
 }
-

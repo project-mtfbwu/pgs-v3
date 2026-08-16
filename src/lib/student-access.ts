@@ -4,6 +4,7 @@ import { recordDeniedAuditEvent } from "@/lib/audit";
 import { resolveActorContext, type ActorContext } from "@/lib/actor-context";
 import { resolvePremiumValidity, type PremiumEntitlementRecord } from "@/lib/premium-entitlement";
 import type { StaffPermission } from "@/lib/staff-auth";
+import { getStaffPreviewContext } from "@/lib/staff-preview-server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type StudentWorkspaceAccess = "read" | "manage";
@@ -121,6 +122,47 @@ export async function canViewStudent(
     };
   }
 
+  const preview = await getStaffPreviewContext(staff);
+  if (preview && access === "manage") {
+    return {
+      allowed: false,
+      actor,
+      status: 403,
+      reasonCode: "workspace_permission_denied",
+      message: "Preview is read-only. Exit preview to make changes."
+    };
+  }
+
+  async function assignedTo(mentorId: string) {
+    const supabase = await createSupabaseServerClient();
+    const { data: assignmentRow } = await supabase
+      .from("mentor_assignments")
+      .select("id,status")
+      .eq("student_id", targetStudent)
+      .eq("mentor_id", mentorId)
+      .order("assigned_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return assignmentRow;
+  }
+
+  if (preview?.mode === "mentor") {
+    const scoped = await assignedTo(preview.targetId);
+    if (scoped?.status === "active") {
+      return {
+        allowed: true,
+        actor: { user: actor.user, kind: "mentor", studentId: targetStudent }
+      };
+    }
+    return {
+      allowed: false,
+      actor,
+      status: 403,
+      reasonCode: scoped?.status === "ended" ? "viewer_relationship_ended" : "viewer_relationship_required",
+      message: "This student workspace is not assigned to you."
+    };
+  }
+
   const required = permissions[access];
   if (staff.permissions.has(required.global)) {
     return {
@@ -142,15 +184,7 @@ export async function canViewStudent(
     };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { data: assignment } = await supabase
-    .from("mentor_assignments")
-    .select("id,status")
-    .eq("student_id", targetStudent)
-    .eq("mentor_id", actor.user.id)
-    .order("assigned_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const assignment = await assignedTo(actor.user.id);
   if (assignment?.status === "active") {
     return {
       allowed: true,

@@ -34,11 +34,13 @@ type PendingAction = "role" | "suspend" | "reactivate" | "revoke" | null;
 export function OperationsStaffAccessDetail({
   detail,
   canManage,
+  canPreviewMentor = false,
   email,
   history
 }: {
   detail: StaffAccessDetail;
   canManage: boolean;
+  canPreviewMentor?: boolean;
   email: string | null;
   history: HistoryEvent[];
 }) {
@@ -50,6 +52,23 @@ export function OperationsStaffAccessDetail({
   const currentAccess = staffSurfaceAccess(detail.permission_keys, detail.role_key);
   const capabilities = staffCapabilityRows(detail.permission_keys, detail.role_key);
   const nextAccess = staffAccessPreview(role);
+
+  async function startMentorPreview() {
+    setPending(true);
+    setMessage("Starting mentor preview…");
+    const response = await fetch("/api/staff/preview", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mode: "mentor", target_id: detail.user_id })
+    });
+    const result = await response.json() as { ok?: boolean; redirect?: string; message?: string };
+    if (!response.ok) {
+      setPending(false);
+      setMessage(result.message ?? "Unable to start mentor preview.");
+      return;
+    }
+    window.location.assign(result.redirect ?? "/ops");
+  }
 
   async function send(body: Record<string, unknown>) {
     setPending(true);
@@ -70,7 +89,7 @@ export function OperationsStaffAccessDetail({
     setMessage("Staff access was updated.");
   }
 
-  const suspendWarning = detail.role_key === "mentor" && detail.status === "active"
+  const suspendWarning = detail.status === "active" && detail.assigned_student_count > 0
     ? assignmentLossWarning(detail.assigned_student_count)
     : undefined;
 
@@ -94,7 +113,7 @@ export function OperationsStaffAccessDetail({
         </div>
         <div>
           <dt>Assigned students</dt>
-          <dd>{detail.role_key === "mentor" ? detail.assigned_student_count : "—"}</dd>
+          <dd>{detail.assigned_student_count}</dd>
         </div>
       </dl>
 
@@ -144,10 +163,19 @@ export function OperationsStaffAccessDetail({
         </section>
       ) : null}
 
-      {canManage ? (
+      {canPreviewMentor || canManage ? (
         <section aria-labelledby="staff-actions-heading">
           <h2 id="staff-actions-heading">Access management</h2>
           {message ? <p className="ops-team-status" role="status">{message}</p> : null}
+          {canPreviewMentor ? (
+            <div className="ops-team-actions">
+              <Button disabled={pending} onClick={() => void startMentorPreview()} type="button" variant="outline">
+                View as Mentor
+              </Button>
+            </div>
+          ) : null}
+          {canManage ? (
+          <>
           <label className="ops-team-field">
             <span>Role</span>
             <select
@@ -192,6 +220,8 @@ export function OperationsStaffAccessDetail({
               </Button>
             ) : null}
           </div>
+          </>
+          ) : null}
         </section>
       ) : null}
 

@@ -4,10 +4,10 @@ import Image from "next/image";
 import { useState, type FormEvent, type ReactNode } from "react";
 import type { StudentProfile } from "@/lib/student-data";
 
-type Props = { profile: StudentProfile; email: string; avatarUrl: string; completion?: boolean };
+type Props = { profile: StudentProfile; email: string; avatarUrl: string; completion?: boolean; readOnly?: boolean };
 const studyLevels = ["UG", "PG", "PhD", "Post MBBS", "Medical Student"];
 
-export function ProfileForm({ profile, email, avatarUrl, completion = false }: Props) {
+export function ProfileForm({ profile, email, avatarUrl, completion = false, readOnly = false }: Props) {
   const [status, setStatus] = useState("");
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -34,6 +34,7 @@ export function ProfileForm({ profile, email, avatarUrl, completion = false }: P
   }
 
   return <form className="pgs-profile-form black-border" onSubmit={submit} encType="multipart/form-data">
+    <fieldset disabled={readOnly} className="pgs-profile-fieldset">
     <div className="choose-avatar d-flex align-items-center justify-content-center gap-3 position-relative">
       <div className="circle-avartar"><Image src={preview} alt="Profile avatar" width={92} height={92} unoptimized /></div>
       <label className="pgs-avatar-picker">
@@ -55,6 +56,7 @@ export function ProfileForm({ profile, email, avatarUrl, completion = false }: P
     {completion && <label className="pgs-terms"><input type="checkbox" required /> I agree to the Terms &amp; Privacy Policy</label>}
     <button type="submit" className="btn btn-purple" disabled={busy}>{busy ? "Saving…" : completion ? "Complete Profile" : "Save Profile"}</button>
     {status && <p role="status" className={error ? "pgs-form-error" : "pgs-form-success"}>{status}</p>}
+    </fieldset>
   </form>;
 }
 

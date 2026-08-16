@@ -4,9 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import type { MouseEvent, ReactNode } from "react";
 import { useState } from "react";
+import { StaffPreviewBanner } from "@/components/staff-preview-banner";
 import { useStudentSidebarState } from "@/components/student-sidebar-state-provider";
 import { signOutAndNavigate } from "@/lib/logout-navigation";
-import type { StudentExperienceKind } from "@/lib/student-experience";
+import type { StudentExperienceKind, StudentPreviewState } from "@/lib/student-experience";
 import {
   premiumShellDestination,
   studentSidebarLinks,
@@ -32,6 +33,7 @@ type Props = {
   active?: StudentShellNavKey;
   children: ReactNode;
   contentClassName?: string;
+  preview?: StudentPreviewState;
 };
 
 export function DeveloperStudentShell({
@@ -42,7 +44,8 @@ export function DeveloperStudentShell({
   unreadCount = 0,
   active,
   children,
-  contentClassName = ""
+  contentClassName = "",
+  preview
 }: Props) {
   const { open: sidebarOpen, toggle: toggleSidebarState } = useStudentSidebarState();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -73,6 +76,9 @@ export function DeveloperStudentShell({
 
   return (
     <div className="developer-student-shell" data-student-state={stateKind}>
+      {preview ? (
+        <StaffPreviewBanner actorName={preview.actorName} mode="student" targetName={preview.targetName} />
+      ) : null}
       <header className="developer-student-header">
         <div className="mobile-none">
           <nav className="navbar navbar-expand-lg header-light header-transparent bg-transparent disable-fixed">

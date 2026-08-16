@@ -16,6 +16,11 @@ import {
 } from "@/lib/operations-student-registry-server";
 import { registryJoinYearOptions } from "@/lib/operations-student-registry";
 import { can, requireStaffPermission } from "@/lib/staff-auth";
+import {
+  canAssignStudents,
+  canStartStaffPreview,
+  getStaffPreviewContext
+} from "@/lib/staff-preview-server";
 
 export default async function StudentsPage({
   searchParams
@@ -23,15 +28,22 @@ export default async function StudentsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const context = await requireStaffPermission("overview.read");
+  const preview = await getStaffPreviewContext(context);
   const raw = await searchParams;
-  const mentorScoped = isMentorScopedRegistry(context);
-  const capabilities = registryQueryCapabilities(context);
+  const mentorPreview = preview?.mode === "mentor";
+  const mentorScoped = isMentorScopedRegistry(context) || mentorPreview;
+  const capabilities = mentorPreview
+    ? { allowOrgFilters: false }
+    : registryQueryCapabilities(context);
   const allowOrgFilters = capabilities.allowOrgFilters;
   const [savedViews, mentors] = await Promise.all([
     loadRegistrySavedViews(context),
     loadRegistryMentorOptions(context)
   ]);
-  const query = resolveRegistryQueryFromRequest(raw, capabilities, savedViews);
+  let query = resolveRegistryQueryFromRequest(raw, capabilities, savedViews);
+  if (mentorPreview && preview) {
+    query = { ...query, mentor: preview.targetId, joined: null };
+  }
   const result = canQueryStudentRegistry(context)
     ? await loadStaffStudentRegistry(context, query)
     : { rows: [], totalCount: 0, page: query.page, pageSize: 25, error: true };
@@ -47,7 +59,7 @@ export default async function StudentsPage({
             : "Search the authorized student registry and open only the workspaces permitted by your current scope."
         }
         actions={
-          can(context, "premium.manage") ? (
+          can(context, "premium.manage") && !preview ? (
             <Link className="ops-system-primary-action" href="/admin/access">
               Premium & mentor controls
             </Link>
@@ -65,11 +77,14 @@ export default async function StudentsPage({
         <OperationsRegistryActiveFilters mentors={mentors} query={query} />
         <OperationsRegistrySavedViews query={query} views={savedViews} />
         <OperationsStudentRegistry
+          canManageAssignments={canAssignStudents(context, preview)}
+          canPreviewStudent={canStartStaffPreview(context, preview)}
+          handlers={mentors}
           mentorScoped={mentorScoped}
           query={query}
           result={result}
           showJoined={allowOrgFilters}
-          showMentor={registryShowsMentorColumn(context)}
+          showMentor={registryShowsMentorColumn(context) && !mentorPreview}
           showOpen={registryShowsOpenColumn(context)}
         />
       </section>

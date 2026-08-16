@@ -14,6 +14,7 @@ import {
   UsersRound
 } from "lucide-react";
 import { OperationsActorMenu } from "@/components/operations-actor-menu";
+import { StaffPreviewBanner } from "@/components/staff-preview-banner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -61,19 +62,26 @@ export function AdminShell({
   children,
   displayName,
   roles,
-  permissions
+  permissions,
+  preview = null
 }: {
   children: React.ReactNode;
   displayName: string;
   roles: StaffRoleKey[];
   permissions: StaffPermission[];
+  preview?: { mode: "student" | "mentor"; targetName: string; actorName: string } | null;
 }) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const isOperationsProduct = pathname === "/ops" || pathname.startsWith("/ops/");
   const allowed = new Set(permissions);
   const canViewScoreboard = canViewOperationsScoreboard({ roles, permissions: allowed });
-  const visibleItems = items.filter((item) => allowed.has(item.permission) && (!item.scoreboard || canViewScoreboard));
+  const mentorPreview = preview?.mode === "mentor";
+  const visibleItems = items.filter((item) => {
+    if (!allowed.has(item.permission) || (item.scoreboard && !canViewScoreboard)) return false;
+    if (mentorPreview && (item.href === "/ops/team" || item.href === "/ops/activity")) return false;
+    return true;
+  });
   const title = pathname.startsWith("/ops/team/") && pathname !== "/ops/team/invite"
     ? "Staff access"
     : (sectionTitles[pathname] ?? "Operations");
@@ -199,7 +207,14 @@ export function AdminShell({
             </div>
           </header>
 
-          <main className="ops-system-main ops:mx-auto ops:w-full ops:max-w-[1440px] ops:p-4 ops:sm:p-6 ops:lg:p-8">{children}</main>
+          <main className="ops-system-main ops:mx-auto ops:w-full ops:max-w-[1440px] ops:p-4 ops:sm:p-6 ops:lg:p-8">
+            {preview ? (
+              <div className="ops:mb-4">
+                <StaffPreviewBanner actorName={preview.actorName} mode={preview.mode} targetName={preview.targetName} />
+              </div>
+            ) : null}
+            {children}
+          </main>
         </div>
       </div>
     </TooltipProvider>

@@ -34,8 +34,9 @@ const phase4eIndexMigration = await readFile(new URL("../supabase/migrations/202
 const ops02RegistryMigration = await readFile(new URL("../supabase/migrations/20260816152131_ops02_student_registry.sql", import.meta.url), "utf8");
 const ops03RegistryMigration = await readFile(new URL("../supabase/migrations/20260816163133_ops03_registry_search.sql", import.meta.url), "utf8");
 const ops04PeopleMigration = await readFile(new URL("../supabase/migrations/20260816172729_ops04_people_access.sql", import.meta.url), "utf8");
+const ops05AssignmentsMigration = await readFile(new URL("../supabase/migrations/20260816183545_ops05_assignments_view_as.sql", import.meta.url), "utf8");
 const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}\n${privilegedDeleteAuditMigration}`;
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}`;
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -153,6 +154,10 @@ const required = [
   ,"staff.invited"
   ,"staff.access_revoked"
   ,"p.key not in ('overview.read', 'students.read')"
+  ,"private.is_assignable_handler"
+  ,"r.key in ('mentor', 'admin', 'super_admin')"
+  ,"private.is_staff_invite_pending"
+  ,"mentor_id uuid"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -195,4 +200,7 @@ if (ops04PeopleMigration.includes("ops.access") || ops04PeopleMigration.includes
 if (!ops04PeopleMigration.includes("staff.invited") || !ops04PeopleMigration.includes("staff.access_revoked")) throw new Error("OPS-04 must write the approved staff lifecycle audit events");
 if (!ops04PeopleMigration.includes("private.has_staff_permission('staff.read')")) throw new Error("People directory must require staff.read");
 if (!ops04PeopleMigration.includes("private.has_staff_permission('roles.manage')")) throw new Error("Invite identity lookup must require roles.manage");
+if (!ops05AssignmentsMigration.includes("private.is_assignable_handler")) throw new Error("OPS-05 must keep a single handler eligibility helper");
+if (ops05AssignmentsMigration.includes("r.key = 'mentor'") && !ops05AssignmentsMigration.includes("r.key in ('mentor', 'admin', 'super_admin')")) throw new Error("OPS-05 must allow Admin and Super Admin handlers");
+if (ops05AssignmentsMigration.includes("create table public.assignments")) throw new Error("OPS-05 must not create a second assignment table");
 console.log("RLS migration static checks passed");

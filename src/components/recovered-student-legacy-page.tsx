@@ -1,4 +1,5 @@
 import { LegacyPage } from "@/components/legacy-page";
+import { StaffPreviewBanner } from "@/components/staff-preview-banner";
 import { applyAuthenticatedShell } from "@/lib/account-shell";
 import { applyPremiumBusinessRule } from "@/lib/premium-business-rule";
 import type { StudentExperience } from "@/lib/student-experience";
@@ -88,5 +89,12 @@ export function RecoveredStudentLegacyPage({
     rendered = applyStudentIdentity(rendered, state, avatarUrl);
   }
   rendered = applyPremiumBusinessRule(rendered);
-  return <LegacyPage page={page} html={rendered} studentState={state.kind} />;
+  return (
+    <>
+      {state.kind !== "anonymous" && state.preview ? (
+        <StaffPreviewBanner actorName={state.preview.actorName} mode="student" targetName={state.preview.targetName} />
+      ) : null}
+      <LegacyPage page={page} html={rendered} studentState={state.kind} />
+    </>
+  );
 }

@@ -21,7 +21,7 @@ async function sha256Hex(file: File): Promise<string> {
 
 type LocalSelection = { requirementId: string; file: File; previewUrl: string | null };
 
-export function DocumentWorkspace({ requirements }: { requirements: DocumentRequirement[] }) {
+export function DocumentWorkspace({ requirements, readOnly = false }: { requirements: DocumentRequirement[]; readOnly?: boolean }) {
   const [message, setMessage] = useState("");
   const [selection, setSelection] = useState<LocalSelection | null>(null);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -129,7 +129,7 @@ export function DocumentWorkspace({ requirements }: { requirements: DocumentRequ
   const groups = ["required", "additional"];
   return <>
     <p role="status" className="premium-document-status">{message}</p>
-    {selection && <section className="premium-document-group" aria-label="Selected file preview">
+    {selection && !readOnly && <section className="premium-document-group" aria-label="Selected file preview">
       <h2 className="fnt-family">Selected file</h2>
       <p className="mb-2">{selection.file.name} · {(selection.file.size / (1024 * 1024)).toFixed(2)} MB</p>
       {/* Local blob preview — next/image cannot optimize object URLs */}
@@ -155,10 +155,14 @@ export function DocumentWorkspace({ requirements }: { requirements: DocumentRequ
                 <td>
                   <div className="premium-document-actions">
                     {document && document.scan_status === "clean" && <button type="button" className="btn btn-black-outline" onClick={() => void open(document.id)}>View</button>}
-                    <label className="btn btn-black-upload">{document ? "Re-upload" : "Upload"}
-                      <input hidden type="file" accept={ACCEPT} onChange={(event) => selectLocal(requirement.id, event.target.files?.[0])} />
-                    </label>
-                    {document && <button type="button" className="premium-delete-document" onClick={() => void requestDeletion(document.id)}>Request deletion</button>}
+                    {!readOnly ? (
+                      <>
+                        <label className="btn btn-black-upload">{document ? "Re-upload" : "Upload"}
+                          <input hidden type="file" accept={ACCEPT} onChange={(event) => selectLocal(requirement.id, event.target.files?.[0])} />
+                        </label>
+                        {document && <button type="button" className="premium-delete-document" onClick={() => void requestDeletion(document.id)}>Request deletion</button>}
+                      </>
+                    ) : null}
                   </div>
                 </td>
               </tr>;

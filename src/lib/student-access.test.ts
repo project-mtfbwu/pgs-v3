@@ -4,7 +4,8 @@ const mocks = vi.hoisted(() => ({
   resolveActorContext: vi.fn(),
   premiumLimit: vi.fn(),
   assignmentMaybeSingle: vi.fn(),
-  recordDeniedAuditEvent: vi.fn()
+  recordDeniedAuditEvent: vi.fn(),
+  getStaffPreviewContext: vi.fn() as ReturnType<typeof vi.fn>
 }));
 
 vi.mock("@/lib/actor-context", () => ({
@@ -12,6 +13,9 @@ vi.mock("@/lib/actor-context", () => ({
 }));
 vi.mock("@/lib/audit", () => ({
   recordDeniedAuditEvent: mocks.recordDeniedAuditEvent
+}));
+vi.mock("@/lib/staff-preview-server", () => ({
+  getStaffPreviewContext: mocks.getStaffPreviewContext
 }));
 vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: async () => {
@@ -81,6 +85,7 @@ describe("student viewer access", () => {
       data: { id: "assignment", status: "active" }
     });
     mocks.recordDeniedAuditEvent.mockResolvedValue(true);
+    mocks.getStaffPreviewContext.mockResolvedValue(null);
   });
 
   it("allows a student to read their own active Premium workspace", async () => {
@@ -179,5 +184,26 @@ describe("student viewer access", () => {
       reasonCode: "premium_required"
     });
     expect(mocks.assignmentMaybeSingle).not.toHaveBeenCalled();
+  });
+
+  it("keeps privileged preview read-only even when the actor has global workspace manage", async () => {
+    mocks.resolveActorContext.mockResolvedValue(staffActor(
+      "admin",
+      ["admin"],
+      ["students.read", "student_workspace.read_all", "student_workspace.manage_all"]
+    ));
+    mocks.getStaffPreviewContext.mockResolvedValue({
+      mode: "student",
+      actorId: "admin",
+      actorName: "Admin",
+      targetId: "student",
+      targetName: "Student",
+      targetRole: null
+    });
+
+    await expect(canViewStudent("student", "manage")).resolves.toMatchObject({
+      allowed: false,
+      reasonCode: "workspace_permission_denied"
+    });
   });
 });

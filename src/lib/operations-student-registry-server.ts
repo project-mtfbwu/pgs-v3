@@ -26,6 +26,7 @@ type RegistryRpcRow = {
   created_at: string;
   plan: RegistryPlan;
   mentor_name: string;
+  mentor_id: string | null;
   can_open_workspace: boolean;
   total_count: number | string;
 };
@@ -90,6 +91,7 @@ export async function loadStaffStudentRegistry(
     studyLevel: row.study_level,
     plan: row.plan === "Premium" ? "Premium" : "Standard",
     mentorName: row.mentor_name || "Unassigned",
+    mentorId: row.mentor_id || null,
     joinedAt: formatRegistryJoinedAt(row.created_at),
     completion: registryCompletion(row.profile_completed_at),
     canOpenWorkspace: Boolean(row.can_open_workspace)
@@ -109,9 +111,10 @@ export async function loadRegistryMentorOptions(context: StaffContext): Promise<
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.rpc("staff_registry_mentor_options");
   if (error || !data) return [];
-  return (data as Array<{ id: string; display_name: string }>).map((row) => ({
+  return (data as Array<{ id: string; display_name: string; role_key?: string | null }>).map((row) => ({
     id: row.id,
-    displayName: row.display_name || "Mentor"
+    displayName: row.display_name || "Staff",
+    roleKey: row.role_key ?? null
   }));
 }
 

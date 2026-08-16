@@ -25,5 +25,6 @@ export const OPERATIONS_CONTRAST_PAIRS = [
   { name: "secondary badge", foreground: "#25262b", background: "#f0f1f4", minimum: 4.5 },
   { name: "premium badge", foreground: "#5938a7", background: "#f0ecff", minimum: 4.5 },
   { name: "primary button", foreground: "#ffffff", background: "#19191d", minimum: 4.5 },
-  { name: "focus ring on card", foreground: "#7357bf", background: "#ffffff", minimum: 3 }
+  { name: "preview banner text", foreground: "#17171b", background: "#fff8e5", minimum: 4.5 },
+  { name: "preview exit button", foreground: "#ffffff", background: "#17171b", minimum: 4.5 }
 ] as const;

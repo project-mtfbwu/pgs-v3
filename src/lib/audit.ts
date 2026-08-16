@@ -26,7 +26,8 @@ export type AuditMetadata = Partial<Record<
   | "share_id"
   | "recipient_user_id"
   | "expires_at"
-  | "result",
+  | "result"
+  | "preview_mode",
   SafeMetadataValue
 >>;
 
@@ -40,7 +41,8 @@ type DeniedEventType =
   | "document.share_change_denied"
   | "document.review.denied"
   | "cms.change.denied"
-  | "auth.context.denied";
+  | "auth.context.denied"
+  | PreviewDeniedEventType;
 
 type FailedEventType =
   | "staff.access.failed"
@@ -58,12 +60,16 @@ type StaffLifecycleEventType =
   | "staff.role_changed"
   | "staff.suspended"
   | "staff.reactivated"
-  | "staff.access_revoked";
+  | "staff.access_revoked"
+  | "staff_preview.started"
+  | "staff_preview.ended";
+
+type PreviewDeniedEventType = "staff_preview.denied";
 
 const allowedMetadataKeys = new Set([
   "permission_required","reason_code","route","role","previous_role","new_role",
   "previous_status","new_status","assignment_id","mentor_id","previous_mentor_id",
-  "entitlement_id","qc_decision","share_id","recipient_user_id","expires_at","result"
+  "entitlement_id","qc_decision","share_id","recipient_user_id","expires_at","result","preview_mode"
 ]);
 
 type TrustedAuditInput<T extends string> = {

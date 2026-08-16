@@ -128,6 +128,12 @@ describe("Registry V1 columns", () => {
     ]);
   });
 
+  it("adds assignment and View as Student actions for Admin without showing UUIDs", () => {
+    expect(registryVisibleColumns({ showMentor: true, showJoined: true, showOpen: true, showActions: true })).toEqual([
+      "pgsCode", "student", "studyLevel", "plan", "mentor", "joined", "completion", "open", "actions"
+    ]);
+  });
+
   it("hides organization mentor/joined columns for Mentor and Open for read-only", () => {
     expect(registryVisibleColumns({ showMentor: false, showJoined: false, showOpen: true })).toEqual([
       "pgsCode", "student", "studyLevel", "plan", "completion", "open"

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OperationsRegistryAssignmentActions } from "@/components/operations-registry-assignment-actions";
 import { OperationsTableFrame } from "@/components/operations-table-frame";
 import {
   registryEmptyCopy,
@@ -7,6 +8,7 @@ import {
   registryPlanTone,
   registryVisibleColumns,
   type NormalizedRegistryQuery,
+  type RegistryMentorOption,
   type StudentRegistryColumnKey,
   type StudentRegistryResult,
   type StudentRegistryRow
@@ -20,7 +22,8 @@ const COLUMN_LABELS: Record<StudentRegistryColumnKey, string> = {
   mentor: "Mentor",
   joined: "Joined",
   completion: "Completion",
-  open: "Open"
+  open: "Open",
+  actions: "Actions"
 };
 
 function cellValue(row: StudentRegistryRow, column: StudentRegistryColumnKey): string {
@@ -31,6 +34,7 @@ function cellValue(row: StudentRegistryRow, column: StudentRegistryColumnKey): s
   if (column === "mentor") return row.mentorName;
   if (column === "joined") return row.joinedAt;
   if (column === "completion") return row.completion;
+  if (column === "actions") return "";
   return row.canOpenWorkspace ? "Open workspace" : "Workspace not available";
 }
 
@@ -61,10 +65,16 @@ function OpenCell({ row }: { row: StudentRegistryRow }) {
 
 function TableCell({
   row,
-  column
+  column,
+  handlers,
+  canManage,
+  canPreviewStudent
 }: {
   row: StudentRegistryRow;
   column: StudentRegistryColumnKey;
+  handlers: RegistryMentorOption[];
+  canManage: boolean;
+  canPreviewStudent: boolean;
 }) {
   if (column === "student") {
     return (
@@ -83,6 +93,22 @@ function TableCell({
   if (column === "open") {
     return <OpenCell row={row} />;
   }
+  if (column === "actions") {
+    return (
+      <OperationsRegistryAssignmentActions
+        canManage={canManage}
+        canPreviewStudent={canPreviewStudent}
+        handlers={handlers}
+        row={{
+          id: row.id,
+          fullName: row.fullName,
+          plan: row.plan,
+          mentorId: row.mentorId,
+          mentorName: row.mentorName
+        }}
+      />
+    );
+  }
   return <>{cellValue(row, column)}</>;
 }
 
@@ -100,7 +126,10 @@ export function OperationsStudentRegistry({
   showMentor,
   showJoined,
   showOpen,
-  mentorScoped
+  mentorScoped,
+  handlers = [],
+  canManageAssignments = false,
+  canPreviewStudent = false
 }: {
   result: StudentRegistryResult;
   query: NormalizedRegistryQuery;
@@ -108,8 +137,12 @@ export function OperationsStudentRegistry({
   showJoined: boolean;
   showOpen: boolean;
   mentorScoped: boolean;
+  handlers?: RegistryMentorOption[];
+  canManageAssignments?: boolean;
+  canPreviewStudent?: boolean;
 }) {
-  const columns = registryVisibleColumns({ showMentor, showOpen, showJoined });
+  const showActions = canManageAssignments || canPreviewStudent;
+  const columns = registryVisibleColumns({ showMentor, showOpen, showJoined, showActions });
   const pageCount = Math.max(1, Math.ceil(result.totalCount / result.pageSize) || 1);
   const previousPage = result.page > 1 ? result.page - 1 : null;
   const nextPage = result.page < pageCount && result.totalCount > 0 ? result.page + 1 : null;
@@ -141,7 +174,13 @@ export function OperationsStudentRegistry({
               <tr key={row.id}>
                 {columns.map((column) => (
                   <td key={column} data-column={column}>
-                    <TableCell row={row} column={column} />
+                    <TableCell
+                      row={row}
+                      column={column}
+                      handlers={handlers}
+                      canManage={canManageAssignments}
+                      canPreviewStudent={canPreviewStudent}
+                    />
                   </td>
                 ))}
               </tr>
@@ -165,12 +204,20 @@ export function OperationsStudentRegistry({
                 <article className="ops-registry-card" aria-labelledby={`registry-student-${row.id}`}>
                   <h2 className="ops-registry-student-name" id={`registry-student-${row.id}`}>{row.fullName}</h2>
                   <dl className="ops-registry-card-fields">
-                    {columns.filter((column) => column !== "student" && column !== "open").map((column) => (
+                    {columns.filter((column) => column !== "student" && column !== "open" && column !== "actions").map((column) => (
                       <div key={column}>
                         <dt>{COLUMN_LABELS[column]}</dt>
                         <dd>
                           {column === "plan" || column === "completion" || column === "pgsCode"
-                            ? <TableCell row={row} column={column} />
+                            ? (
+                              <TableCell
+                                row={row}
+                                column={column}
+                                handlers={handlers}
+                                canManage={canManageAssignments}
+                                canPreviewStudent={canPreviewStudent}
+                              />
+                            )
                             : cellValue(row, column)}
                         </dd>
                       </div>
@@ -180,6 +227,20 @@ export function OperationsStudentRegistry({
                     <p className="ops-registry-card-open">
                       <OpenCell row={row} />
                     </p>
+                  ) : null}
+                  {showActions ? (
+                    <OperationsRegistryAssignmentActions
+                      canManage={canManageAssignments}
+                      canPreviewStudent={canPreviewStudent}
+                      handlers={handlers}
+                      row={{
+                        id: row.id,
+                        fullName: row.fullName,
+                        plan: row.plan,
+                        mentorId: row.mentorId,
+                        mentorName: row.mentorName
+                      }}
+                    />
                   ) : null}
                 </article>
               </li>

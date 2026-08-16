@@ -25,10 +25,10 @@ export function OperationsActorMenu({
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Open account menu"
-        className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ops:rounded-full")}
+        className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ops-system-topbar-avatar ops:rounded-full")}
       >
         <Avatar className="ops:size-8">
-          <AvatarFallback className="ops:bg-accent ops:text-xs ops:font-bold ops:text-accent-foreground">
+          <AvatarFallback className="ops:bg-accent ops:text-xs ops:font-extrabold ops:text-accent-foreground">
             {operationsInitials(displayName)}
           </AvatarFallback>
         </Avatar>

@@ -91,6 +91,14 @@ export async function proxy(request: NextRequest) {
   if (destination) return NextResponse.redirect(destination, 308);
 
   if (request.nextUrl.pathname.startsWith("/api/") && !["GET","HEAD","OPTIONS"].includes(request.method)
+    && request.cookies.get("pgs_staff_preview")?.value
+    && request.nextUrl.pathname !== "/api/staff/preview"
+    && !request.nextUrl.pathname.startsWith("/api/auth/")
+    ) {
+    return NextResponse.json({ ok: false, message: "Preview is read-only. Exit preview to make changes." }, { status: 403 });
+  }
+
+  if (request.nextUrl.pathname.startsWith("/api/") && !["GET","HEAD","OPTIONS"].includes(request.method)
     ) {
     const origin = request.headers.get("origin");
     const fetchSite = request.headers.get("sec-fetch-site");

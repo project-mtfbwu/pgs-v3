@@ -68,12 +68,12 @@ function countOrNull(result: { count: number | null; error: { message: string } 
   return result.error ? null : result.count;
 }
 
-function operateLinks(context: StaffContext): ScoreboardOperateLink[] {
+function operateLinks(context: StaffContext, mentorPreview = false): ScoreboardOperateLink[] {
   const links: ScoreboardOperateLink[] = [];
   if (can(context, "overview.read")) links.push({ href: "/ops/students", label: "Students" });
-  if (can(context, "staff.read")) links.push({ href: "/ops/team", label: "Team" });
+  if (can(context, "staff.read") && !mentorPreview) links.push({ href: "/ops/team", label: "Team" });
   if (can(context, "overview.read")) links.push({ href: "/ops/notifications", label: "Notifications" });
-  if (can(context, "audit.read")) links.push({ href: "/ops/activity", label: "Activity" });
+  if (can(context, "audit.read") && !mentorPreview) links.push({ href: "/ops/activity", label: "Activity" });
   return links;
 }
 
@@ -149,17 +149,17 @@ async function loadOrganizationBoard(context: StaffContext): Promise<OperationsS
   };
 }
 
-async function loadAssignedBoard(context: StaffContext): Promise<OperationsScoreboardModel> {
+async function loadAssignedBoard(context: StaffContext, mentorId = context.user.id, mentorPreview = false): Promise<OperationsScoreboardModel> {
   const supabase = await createSupabaseServerClient();
   const assigned = supabase
     .from("mentor_assignments")
     .select("id", { count: "exact", head: true })
-    .eq("mentor_id", context.user.id)
+    .eq("mentor_id", mentorId)
     .eq("status", "active");
   const rosterQuery = supabase
     .from("mentor_assignments")
     .select("student_id,profiles!mentor_assignments_student_id_fkey(id,full_name,profile_completed_at,study_level)")
-    .eq("mentor_id", context.user.id)
+    .eq("mentor_id", mentorId)
     .eq("status", "active")
     .order("assigned_at", { ascending: false })
     .limit(ROSTER_LIMIT);
@@ -190,7 +190,7 @@ async function loadAssignedBoard(context: StaffContext): Promise<OperationsScore
     activity: null,
     roster,
     rosterTotal: countOrNull(countResult),
-    operate: operateLinks(context)
+    operate: operateLinks(context, mentorPreview)
   };
 }
 
@@ -208,7 +208,13 @@ function loadRestrictedBoard(context: StaffContext): OperationsScoreboardModel {
   };
 }
 
-export async function loadOperationsScoreboard(context: StaffContext): Promise<OperationsScoreboardModel> {
+export async function loadOperationsScoreboard(
+  context: StaffContext,
+  options: { mentorPreviewTargetId?: string } = {}
+): Promise<OperationsScoreboardModel> {
+  if (options.mentorPreviewTargetId) {
+    return loadAssignedBoard(context, options.mentorPreviewTargetId, true);
+  }
   const scope = resolveOperationsScoreboardScope(context);
   if (scope === "organization") return loadOrganizationBoard(context);
   if (scope === "assigned_students") return loadAssignedBoard(context);

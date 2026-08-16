@@ -215,6 +215,29 @@ test.describe("preview Admin workflow",()=>{
     });
     expect(clipped).toBe(false);
   });
+  test("Admin assignment actions use names and keep Standard students from active assignment", async ({ page }) => {
+    await page.goto("/ops/students");
+    await expect(page.getByRole("heading", { name: "Student Registry" })).toBeVisible();
+    const uuid = /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
+    const previewButtons = page.getByRole("button", { name: "View as Student" });
+    if (await previewButtons.count()) {
+      await expect(previewButtons.first()).toBeVisible();
+      await expect(page.getByRole("button", { name: "Assign mentor" }).or(page.getByText("Premium required for mentor assignment")).first()).toBeVisible();
+      const visibleText = (await page.locator("table, .ops-registry-card").allInnerTexts()).join("\n");
+      expect(visibleText).not.toMatch(uuid);
+    }
+    await page.goto("/admin/access");
+    await expect(page.getByRole("heading", { name: "Premium plans and mentor assignments" })).toBeVisible();
+    const studentSelect = page.locator('select[name="student_id"]');
+    if (await studentSelect.count()) {
+      expect(await studentSelect.innerText()).not.toMatch(uuid);
+    }
+    const mentorSelect = page.locator('select[name="mentor_id"]');
+    if (await mentorSelect.count()) {
+      expect(await mentorSelect.innerText()).not.toMatch(uuid);
+    }
+    await expect(page.locator("code")).toHaveCount(0);
+  });
 });
 
 test.describe("preview Super Admin workflow",()=>{
@@ -240,6 +263,8 @@ test.describe("preview Super Admin workflow",()=>{
     await expect(page.getByRole("heading",{name:"Operations activity"})).toBeVisible();
     await expect(page.getByText("staff.access.denied").first()).toBeVisible();
     await expect(page.getByText("denied",{exact:true}).first()).toBeVisible();
+    const uuid = /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
+    expect((await page.locator("table").allInnerTexts()).join("\n")).not.toMatch(uuid);
   });
   test("Super Admin can open every OPS-01 checkpoint route",async({page})=>{
     const routes=[

@@ -62,6 +62,23 @@ describe("canonical Operations product routing", () => {
     expect(location.searchParams.get("surface")).toBeNull();
   });
 
+  it("blocks mutating APIs while a staff preview cookie is present", async () => {
+    mocks.getClaims.mockResolvedValue({ data: { claims: { sub: "admin" } } });
+    const mutating = new NextRequest(new URL("/api/staff/assignments", "https://preview.example.test"), {
+      method: "POST",
+      headers: { cookie: "pgs_staff_preview=forged" }
+    });
+    const blocked = await proxy(mutating);
+    expect(blocked.status).toBe(403);
+    expect(await blocked.json()).toMatchObject({ message: "Preview is read-only. Exit preview to make changes." });
+    const exit = new NextRequest(new URL("/api/staff/preview", "https://preview.example.test"), {
+      method: "POST",
+      headers: { cookie: "pgs_staff_preview=forged" }
+    });
+    const allowed = await proxy(exit);
+    expect(allowed.status).not.toBe(403);
+  });
+
   it("maps canonical Operations URLs to the existing admin implementation", async () => {
     expect(typeof nextConfig.rewrites).toBe("function");
     const rewrites = await nextConfig.rewrites!();

@@ -9,7 +9,6 @@ import {
 } from "@/lib/operations-staff-access";
 
 function AssignedCount({ row }: { row: StaffDirectoryRow }) {
-  if (row.role_key !== "mentor") return <span>—</span>;
   return <span>{row.assigned_student_count}</span>;
 }
 
@@ -84,12 +83,10 @@ export function OperationsStaffDirectory({
                     <dt>Scope</dt>
                     <dd>{staffStudentScopeLabel(row.role_key)}</dd>
                   </div>
-                  {row.role_key === "mentor" ? (
-                    <div>
-                      <dt>Assigned students</dt>
-                      <dd>{row.assigned_student_count}</dd>
-                    </div>
-                  ) : null}
+                  <div>
+                    <dt>Assigned students</dt>
+                    <dd>{row.assigned_student_count}</dd>
+                  </div>
                 </dl>
                 <Link className="ops-registry-card-open" href={`/ops/team/${row.user_id}`}>
                   {actionLabel}

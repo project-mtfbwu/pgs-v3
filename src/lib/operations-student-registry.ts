@@ -37,6 +37,7 @@ export type StudentRegistryRow = {
   studyLevel: string | null;
   plan: RegistryPlan;
   mentorName: string;
+  mentorId: string | null;
   joinedAt: string;
   completion: RegistryCompletion;
   canOpenWorkspace: boolean;
@@ -58,7 +59,8 @@ export type StudentRegistryColumnKey =
   | "mentor"
   | "joined"
   | "completion"
-  | "open";
+  | "open"
+  | "actions";
 
 export type RegistryQueryParams = {
   q?: string;
@@ -94,6 +96,7 @@ export type RegistrySavedView = {
 export type RegistryMentorOption = {
   id: string;
   displayName: string;
+  roleKey: string | null;
 };
 
 export type RegistryQueryCapabilities = {
@@ -291,12 +294,14 @@ export function registryVisibleColumns(options: {
   showMentor: boolean;
   showJoined: boolean;
   showOpen: boolean;
+  showActions?: boolean;
 }): StudentRegistryColumnKey[] {
   const columns: StudentRegistryColumnKey[] = ["pgsCode", "student", "studyLevel", "plan"];
   if (options.showMentor) columns.push("mentor");
   if (options.showJoined) columns.push("joined");
   columns.push("completion");
   if (options.showOpen) columns.push("open");
+  if (options.showActions) columns.push("actions");
   return columns;
 }
 
