@@ -255,6 +255,30 @@ export function registryHref(
   return search ? `/ops/students?${search}` : "/ops/students";
 }
 
+export function registryPremiumUnassignedQuery(): NormalizedRegistryQuery {
+  return {
+    q: null,
+    plan: "premium",
+    mentor: "unassigned",
+    studyLevel: null,
+    completion: null,
+    joined: null,
+    sort: null,
+    page: 1,
+    view: null
+  };
+}
+
+export function isRegistryPremiumUnassignedView(query: NormalizedRegistryQuery): boolean {
+  return query.plan === "premium"
+    && query.mentor === "unassigned"
+    && !query.q
+    && !query.studyLevel
+    && !query.completion
+    && !query.joined
+    && !query.sort;
+}
+
 export function omitRegistryFilter(
   query: NormalizedRegistryQuery,
   key: "q" | "plan" | "mentor" | "studyLevel" | "completion" | "joined" | "sort"
@@ -325,6 +349,9 @@ export function registryEmptyCopy(
 ): string {
   if (state === "error") return "The registry could not be loaded. Try again.";
   if (state === "no_search_results") return `No students match “${query.q}”.`;
+  if (state === "filter_zero" && isRegistryPremiumUnassignedView(query)) {
+    return "No Premium students are currently Unassigned.";
+  }
   if (state === "filter_zero") return "No students match these filters.";
   if (state === "no_authorized_scope") return "No students are currently assigned to you.";
   return "No students in the registry yet.";

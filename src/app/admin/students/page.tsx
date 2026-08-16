@@ -75,7 +75,7 @@ export default async function StudentsPage({
           query={query}
         />
         <OperationsRegistryActiveFilters mentors={mentors} query={query} />
-        <OperationsRegistrySavedViews query={query} views={savedViews} />
+        <OperationsRegistrySavedViews allowOrgFilters={allowOrgFilters} query={query} views={savedViews} />
         <OperationsStudentRegistry
           canManageAssignments={canAssignStudents(context, preview)}
           canPreviewStudent={canStartStaffPreview(context, preview)}

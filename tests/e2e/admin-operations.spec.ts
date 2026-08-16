@@ -185,7 +185,13 @@ test.describe("preview Admin workflow",()=>{
     await expect(page.getByRole("heading",{name:"Student Registry"})).toBeVisible();
     await expect(page.getByRole("columnheader",{name:"Email"})).toHaveCount(0);
     await expect(page.getByLabel("Plan").first()).toBeVisible();
-    await expect(page.getByRole("link",{name:"Premium"})).toBeVisible();
+    await expect(page.getByRole("link",{name:"Premium",exact:true})).toBeVisible();
+    await expect(page.getByRole("navigation",{name:"Registry views"}).getByRole("link",{name:"Premium Unassigned"})).toBeVisible();
+    await page.getByRole("navigation",{name:"Registry views"}).getByRole("link",{name:"Premium Unassigned"}).click();
+    await expect(page).toHaveURL(/plan=premium/);
+    await expect(page).toHaveURL(/mentor=unassigned/);
+    await expect(page.getByLabel("Plan").first()).toHaveValue("premium");
+    await expect(page.getByLabel("Mentor").first()).toHaveValue("unassigned");
     await expect(page.getByRole("navigation",{name:"Student registry pagination"})).toBeVisible();
     await expect(page.getByText("Previous page")).toBeVisible();
     await expect(page.getByText("Next page")).toBeVisible();
@@ -201,7 +207,7 @@ test.describe("preview Admin workflow",()=>{
     if(await card.count()){
       await expect(card.first()).toBeVisible();
     }else{
-      await expect(page.getByText(/No students in the registry yet\.|No students match|0 students/)).toBeVisible();
+      await expect(page.getByText(/No students in the registry yet\.|No students match|No Premium students are currently Unassigned|0 students/)).toBeVisible();
     }
     await expect(page.locator(".ops-registry-desktop table")).toBeHidden();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);

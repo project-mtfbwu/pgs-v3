@@ -5,8 +5,11 @@ import {
   omitRegistryFilter,
   parseRegistryQuery,
   PGS_CODE_PATTERN,
+  isRegistryPremiumUnassignedView,
+  registryEmptyCopy,
   registryEmptyState,
   registryHref,
+  registryPremiumUnassignedQuery,
   registryJoinYearOptions,
   registryPage,
   registryQueryString,
@@ -118,6 +121,16 @@ describe("Registry empty states", () => {
     expect(registryEmptyState({ error: false, totalCount: 0, query: base, mentorScoped: true })).toBe("no_authorized_scope");
     expect(registryEmptyState({ error: false, totalCount: 0, query: { ...base, q: "priya" }, mentorScoped: false })).toBe("no_search_results");
     expect(registryEmptyState({ error: false, totalCount: 0, query: { ...base, plan: "premium" }, mentorScoped: false })).toBe("filter_zero");
+  });
+
+  it("keeps Premium + Unassigned as a combined operating view, not a Scoreboard metric", () => {
+    const query = parseRegistryQuery({ plan: "premium", mentor: "unassigned" }, admin);
+    expect(query.plan).toBe("premium");
+    expect(query.mentor).toBe("unassigned");
+    expect(isRegistryPremiumUnassignedView(query)).toBe(true);
+    expect(registryHref(registryPremiumUnassignedQuery())).toBe("/ops/students?plan=premium&mentor=unassigned");
+    expect(registryEmptyCopy("filter_zero", query)).toBe("No Premium students are currently Unassigned.");
+    expect(registryEmptyCopy("filter_zero", { ...query, studyLevel: "PG" })).toBe("No students match these filters.");
   });
 });
 

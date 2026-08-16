@@ -1,4 +1,14 @@
-import { REGISTRY_SAVED_VIEW_MAX, REGISTRY_SAVED_VIEW_NAME_MAX, registryHref, registryQueriesEqual, registrySavedQueryFromNormalized, type NormalizedRegistryQuery, type RegistrySavedView } from "@/lib/operations-student-registry";
+import {
+  REGISTRY_SAVED_VIEW_MAX,
+  REGISTRY_SAVED_VIEW_NAME_MAX,
+  isRegistryPremiumUnassignedView,
+  registryHref,
+  registryPremiumUnassignedQuery,
+  registryQueriesEqual,
+  registrySavedQueryFromNormalized,
+  type NormalizedRegistryQuery,
+  type RegistrySavedView
+} from "@/lib/operations-student-registry";
 
 function HiddenQuery({ query }: { query: NormalizedRegistryQuery }) {
   const saved = registrySavedQueryFromNormalized(query);
@@ -13,15 +23,19 @@ function HiddenQuery({ query }: { query: NormalizedRegistryQuery }) {
 
 export function OperationsRegistrySavedViews({
   query,
-  views
+  views,
+  allowOrgFilters = false
 }: {
   query: NormalizedRegistryQuery;
   views: RegistrySavedView[];
+  allowOrgFilters?: boolean;
 }) {
   const atLimit = views.length >= REGISTRY_SAVED_VIEW_MAX;
   const active = query.view ? views.find((view) => view.id === query.view) : views.find((view) => registryQueriesEqual({ ...query, page: 1, view: null }, { ...view.query, page: 1, view: null }));
   const allHref = "/ops/students";
   const premiumHref = registryHref({ ...query, q: null, plan: "premium", mentor: null, studyLevel: null, completion: null, joined: null, sort: null, page: 1, view: null });
+  const premiumUnassignedHref = registryHref(registryPremiumUnassignedQuery());
+  const premiumOnly = query.plan === "premium" && !query.q && !query.mentor && !query.studyLevel && !query.completion && !query.joined && !query.sort && !query.view;
 
   return (
     <div className="ops-registry-views">
@@ -29,9 +43,14 @@ export function OperationsRegistrySavedViews({
         <a aria-current={!query.q && !query.plan && !query.mentor && !query.studyLevel && !query.completion && !query.joined && !query.sort && !query.view ? "page" : undefined} href={allHref}>
           All Students
         </a>
-        <a aria-current={query.plan === "premium" && !query.q && !query.mentor && !query.studyLevel && !query.completion && !query.joined && !query.sort && !query.view ? "page" : undefined} href={premiumHref}>
+        <a aria-current={premiumOnly ? "page" : undefined} href={premiumHref}>
           Premium
         </a>
+        {allowOrgFilters ? (
+          <a aria-current={isRegistryPremiumUnassignedView(query) && !query.view ? "page" : undefined} href={premiumUnassignedHref}>
+            Premium Unassigned
+          </a>
+        ) : null}
         {views.map((view) => (
           <a
             aria-current={active?.id === view.id ? "page" : undefined}
