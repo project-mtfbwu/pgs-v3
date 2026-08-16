@@ -104,6 +104,14 @@ export async function clearStaffPreviewCookie() {
   (await cookies()).set(staffPreviewCookieName, "", { ...staffPreviewCookieOptions, maxAge: 0 });
 }
 
+export async function getActiveStudentPreviewTargetId(): Promise<string | null> {
+  const claims = verifyStaffPreviewToken(await readStaffPreviewCookie());
+  if (!claims || claims.mode !== "student") return null;
+  const context = await getStaffContext();
+  if (!context || context.user.id !== claims.actorId || !canUseStaffPreview(context)) return null;
+  return claims.targetId;
+}
+
 export async function loadPreviewStudentProfile(studentId: string) {
   const admin = createSupabaseAdminClient();
   const { data: profile } = await admin

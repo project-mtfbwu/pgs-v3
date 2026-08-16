@@ -83,7 +83,10 @@ export async function canViewStudent(
     };
   }
 
-  const targetStudent = studentId ?? actor.user.id;
+  const staff = actor.staff;
+  const preview = staff ? await getStaffPreviewContext(staff) : null;
+  const targetStudent = studentId
+    ?? (preview?.mode === "student" ? preview.targetId : actor.user.id);
   const premiumStatus = await getStudentPremiumStatus(targetStudent);
   if (premiumStatus !== "active") {
     return {
@@ -111,7 +114,6 @@ export async function canViewStudent(
     };
   }
 
-  const staff = actor.staff;
   if (!staff) {
     return {
       allowed: false,
@@ -122,7 +124,6 @@ export async function canViewStudent(
     };
   }
 
-  const preview = await getStaffPreviewContext(staff);
   if (preview && access === "manage") {
     return {
       allowed: false,

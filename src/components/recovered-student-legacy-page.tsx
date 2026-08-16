@@ -53,7 +53,7 @@ function replaceFirstDivByClass(source: string, className: string, transform: (f
 
 export function applyStudentIdentity(html: string, state: Exclude<StudentExperience, { kind: "anonymous" }>, avatarUrl: string): string {
   const name = escapeHtml(state.name);
-  const email = escapeHtml(state.preview?.targetEmail || state.subject?.email || state.user.email || "");
+  const email = escapeHtml(state.user.email ?? "");
   const pathway = escapeHtml(state.profile.study_level || "STUDENT");
   const avatar = escapeHtml(avatarUrl);
   return replaceFirstDivByClass(html, "card-box-avatar", (card) => card

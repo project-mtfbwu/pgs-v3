@@ -1,5 +1,10 @@
 import { beforeEach,describe,expect,it,vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
+vi.mock("server-only",()=>({}));
+vi.mock("@/lib/staff-preview-server",()=>({
+  getActiveStudentPreviewTargetId: async () => null,
+  loadPreviewStudentAvatarUrl: async () => "/assets/img/default-avatar.png"
+}));
 vi.mock("@/lib/supabase/server",()=>({createSupabaseServerClient:vi.fn()}));
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getOwnProfile } from "@/lib/student-data";

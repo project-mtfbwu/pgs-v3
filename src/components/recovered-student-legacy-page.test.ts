@@ -47,8 +47,8 @@ describe("recovered student legacy access rules", () => {
     const source = '<div class="card-box-avatar"><div class="avatar-info"><div class="avatar-img"><img src="/assets/img/default-avatar.png"><div class="avatar_name"><h5 class="mb-3">Guest</h5><span></span><span><a href="/logout">Logout</a></span></div></div><div class="title-info"><h5>#purplePremium</h5><h6 class="mb-0">stem PATHWAY</h6></div></div><div class="avatar-heading-right-box"><h4>#PURPLEPREMIUM</h4></div></div>';
     const state = {
       kind: "authenticated_premium",
-      user: { id: "admin-id", email: "admin@pgs.test" },
-      subject: { id: "student-id", email: "student-a@pgs.test", profile: { id: "student-id", full_name: "Student A", study_level: "Medical" }, name: "Student A" },
+      user: { id: "student-id", email: "student-a@pgs.test" },
+      actor: { id: "admin-id", user: { id: "admin-id", email: "admin@pgs.test" }, name: "Ops Admin" },
       profile: { id: "student-id", full_name: "Student A", study_level: "Medical" },
       name: "Student A",
       unreadCount: 0,

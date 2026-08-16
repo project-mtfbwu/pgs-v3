@@ -1,4 +1,6 @@
-import {describe,expect,it} from "vitest";
+import {describe,expect,it,vi} from "vitest";
+vi.mock("server-only",()=>({}));
+vi.mock("@/lib/staff-preview-server",()=>({getActiveStudentPreviewTargetId:async()=>null}));
 import {applyPublishedCatalogCards,applyPublishedCatalogDetail,applyPublishedEventDetail,applyPublishedEvents} from "@/lib/public-catalog";
 
 describe("published relational catalog parity",()=>{

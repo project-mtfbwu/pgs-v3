@@ -5,6 +5,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("next/navigation", () => ({ redirect: vi.fn(), notFound: vi.fn() }));
 vi.mock("@/lib/staff-preview-server", () => ({
   getStaffPreviewContext: vi.fn(),
+  getActiveStudentPreviewTargetId: vi.fn(),
   loadPreviewStudentAvatarUrl: vi.fn(),
   loadPreviewStudentEntitlements: vi.fn(),
   loadPreviewStudentNotifications: vi.fn(),
@@ -105,6 +106,8 @@ describe("View as Student actor/subject composition", () => {
     expect(state?.kind).toBe("authenticated_premium");
     expect(studentActorId(state!)).toBe(adminUser.id);
     expect(studentSubjectId(state!)).toBe(studentAUser.id);
+    expect(state?.user.id).toBe(studentAUser.id);
+    expect(state?.actor.user.id).toBe(adminUser.id);
     expect(studentExperienceEmail(state!)).toBe("student-a@pgs.test");
     expect(state?.name).toBe("Student A");
     expect(state?.premiumStatus).toBe("active");

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getActiveStudentPreviewTargetId } from "@/lib/staff-preview-server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
@@ -87,18 +88,11 @@ export async function loadPremiumWorkspaceWithClient(
 }
 
 export async function loadPremiumWorkspace(studentId: string): Promise<PremiumWorkspace> {
-  return loadPremiumWorkspaceWithClient(await createSupabaseServerClient(), studentId);
-}
-
-export async function loadPreviewPremiumWorkspace(studentId: string): Promise<PremiumWorkspace> {
-  return loadPremiumWorkspaceWithClient(createSupabaseAdminClient(), studentId);
-}
-
-export async function loadPremiumWorkspaceForSubject(
-  studentId: string,
-  preview: boolean
-): Promise<PremiumWorkspace> {
-  return preview ? loadPreviewPremiumWorkspace(studentId) : loadPremiumWorkspace(studentId);
+  const previewTarget = await getActiveStudentPreviewTargetId();
+  const client = previewTarget === studentId
+    ? createSupabaseAdminClient()
+    : await createSupabaseServerClient();
+  return loadPremiumWorkspaceWithClient(client, studentId);
 }
 
 export function cleanWorkspaceText(value: unknown, max: number): string {

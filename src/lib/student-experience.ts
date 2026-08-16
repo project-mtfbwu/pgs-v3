@@ -7,7 +7,6 @@ import { resolvePremiumValidity, type PremiumEntitlementRecord } from "@/lib/pre
 import { displayName, getOwnAvatarUrl, type StudentProfile } from "@/lib/student-data";
 import {
   getStaffPreviewContext,
-  loadPreviewStudentAvatarUrl,
   loadPreviewStudentEntitlements,
   loadPreviewStudentNotifications,
   loadPreviewStudentProfile,
@@ -82,11 +81,12 @@ export function composeAuthenticatedStudentExperience(input: {
     profile: input.subjectProfile,
     name: subjectName
   };
+  const user = { ...input.actorUser, id: subject.id, email: subject.email };
   return {
     kind,
     actor,
     subject,
-    user: actor.user,
+    user,
     profile: subject.profile,
     name: subject.name,
     unreadCount: input.unreadCount,
@@ -112,7 +112,7 @@ export function studentSubjectId(state: AuthenticatedStudentExperience): string 
 }
 
 export function studentExperienceEmail(state: AuthenticatedStudentExperience): string {
-  return state.subject?.email || state.preview?.targetEmail || state.user.email || "";
+  return state.user.email || state.subject?.email || state.preview?.targetEmail || "";
 }
 
 export function usesPrivilegedPreviewStudentLoader(state: AuthenticatedStudentExperience): boolean {
@@ -120,7 +120,6 @@ export function usesPrivilegedPreviewStudentLoader(state: AuthenticatedStudentEx
 }
 
 export async function studentExperienceAvatarUrl(state: AuthenticatedStudentExperience): Promise<string> {
-  if (state.preview) return loadPreviewStudentAvatarUrl(state.profile.avatar_path);
   return getOwnAvatarUrl(state.profile.avatar_path);
 }
 

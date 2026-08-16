@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   adminFrom: vi.fn(),
   sessionFrom: vi.fn(),
+  previewTarget: null as string | null,
   log: [] as Array<{ client: "admin" | "session"; table: string; studentId?: string }>
 }));
 
@@ -28,6 +29,10 @@ function query(client: "admin" | "session", table: string) {
   return api;
 }
 
+vi.mock("server-only", () => ({}));
+vi.mock("@/lib/staff-preview-server", () => ({
+  getActiveStudentPreviewTargetId: async () => mocks.previewTarget
+}));
 vi.mock("@/lib/supabase/admin", () => ({
   createSupabaseAdminClient: () => ({
     from: (table: string) => {
@@ -50,7 +55,7 @@ vi.mock("@/lib/student-access", () => ({
   StudentAccessError: class StudentAccessError extends Error {}
 }));
 
-import { loadPremiumWorkspaceForSubject } from "@/lib/premium-workspace";
+import { loadPremiumWorkspace } from "@/lib/premium-workspace";
 
 const studentA = "c4100000-0000-4000-8000-000000000001";
 const studentB = "c4200000-0000-4000-8000-000000000002";
@@ -58,12 +63,14 @@ const studentB = "c4200000-0000-4000-8000-000000000002";
 describe("Premium workspace subject loaders", () => {
   beforeEach(() => {
     mocks.log.length = 0;
+    mocks.previewTarget = null;
     mocks.adminFrom.mockClear();
     mocks.sessionFrom.mockClear();
   });
 
   it("loads Premium preview workspace through the admin client constrained to the target student", async () => {
-    const workspace = await loadPremiumWorkspaceForSubject(studentA, true);
+    mocks.previewTarget = studentA;
+    const workspace = await loadPremiumWorkspace(studentA);
     expect(workspace.studentId).toBe(studentA);
     expect(mocks.sessionFrom).not.toHaveBeenCalled();
     expect(mocks.adminFrom).toHaveBeenCalled();
@@ -75,14 +82,14 @@ describe("Premium workspace subject loaders", () => {
   });
 
   it("keeps ordinary Premium and Standard workspace loads on the session client", async () => {
-    await loadPremiumWorkspaceForSubject(studentA, false);
+    await loadPremiumWorkspace(studentA);
     expect(mocks.adminFrom).not.toHaveBeenCalled();
     expect(mocks.sessionFrom).toHaveBeenCalled();
     expect(mocks.log.every((entry) => entry.client === "session" && entry.studentId === studentA)).toBe(true);
 
     mocks.log.length = 0;
     mocks.sessionFrom.mockClear();
-    await loadPremiumWorkspaceForSubject(studentB, false);
+    await loadPremiumWorkspace(studentB);
     expect(mocks.adminFrom).not.toHaveBeenCalled();
     expect(mocks.log.every((entry) => entry.client === "session" && entry.studentId === studentB)).toBe(true);
   });

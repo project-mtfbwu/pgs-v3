@@ -5,8 +5,9 @@ import { DeveloperStudentShell } from "@/components/developer-student-shell";
 import { DocumentWorkspace } from "@/components/document-workspace";
 import { RecoveredStudentLegacyPage } from "@/components/recovered-student-legacy-page";
 import { documentsLockedHtml } from "@/legacy/generated/documents-locked";
-import { loadPremiumWorkspaceForSubject, requirePremiumActor } from "@/lib/premium-workspace";
-import { resolveStudentExperience, studentExperienceAvatarUrl, studentExperienceEmail, studentSubjectId } from "@/lib/student-experience";
+import { displayName, getOwnAvatarUrl } from "@/lib/student-data";
+import { loadPremiumWorkspace, requirePremiumActor } from "@/lib/premium-workspace";
+import { resolveStudentExperience } from "@/lib/student-experience";
 
 export const metadata:Metadata={title:"Upload Your Documents"};
 export const dynamic="force-dynamic";
@@ -15,12 +16,10 @@ export default async function DocumentsPage(){
   const state=await resolveStudentExperience();
   if(!state)notFound();
   if(state.kind==="anonymous")return <RecoveredStudentLegacyPage html={documentsLockedHtml} page="documents-locked" state={state}/>;
-  const avatarUrl=await studentExperienceAvatarUrl(state);
+  const {user,profile}=state;const avatarUrl=await getOwnAvatarUrl(profile.avatar_path);
   if(state.kind!=="authenticated_premium")return <RecoveredStudentLegacyPage html={documentsLockedHtml} page="documents-locked" state={state} avatarUrl={avatarUrl}/>;
-  if (!state.preview) await requirePremiumActor();
-  const workspace=await loadPremiumWorkspaceForSubject(studentSubjectId(state), Boolean(state.preview));
-  const name = state.name;
-  return <DeveloperStudentShell name={name} email={studentExperienceEmail(state)} avatarUrl={avatarUrl} stateKind={state.kind} unreadCount={state.unreadCount} active="documents" preview={state.preview} contentClassName="developer-documents-page">
+  await requirePremiumActor();const workspace=await loadPremiumWorkspace(user.id);
+  return <DeveloperStudentShell name={displayName(profile,user)} email={user.email??""} avatarUrl={avatarUrl} stateKind={state.kind} unreadCount={state.unreadCount} active="documents" preview={state.preview} contentClassName="developer-documents-page">
     <section className="pt-5 about-section half-section overlap-height position-relative overflow-hidden mobile-doc-section">
       <div className="container overlap-gap-section p-0">
         <div className="row justify-content-md-center align-items-center">

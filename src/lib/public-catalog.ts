@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getActiveStudentPreviewTargetId } from "@/lib/staff-preview-server";
 
 export type PublicCatalogCard={id:number;title:string;summary:string;saved:boolean};
 export type PublicCatalogDetail=PublicCatalogCard&{description:string;kind:"programs"|"courses"};
@@ -10,11 +11,11 @@ export type PublicEvent={id:number;title:string;summary:string;description:strin
 
 function escapeHtml(value:string):string{return value.replace(/[&<>'"]/g,(character)=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[character]??character);}
 
-async function savedLookupClient(privileged?:boolean){
-  return privileged?createSupabaseAdminClient():await createSupabaseServerClient();
+async function savedLookupClient(){
+  return (await getActiveStudentPreviewTargetId())?createSupabaseAdminClient():await createSupabaseServerClient();
 }
 
-export async function getPublicCatalogCards(kind:"programs"|"courses",studentId?:string,options?:{privileged?:boolean}):Promise<PublicCatalogCard[]>{
+export async function getPublicCatalogCards(kind:"programs"|"courses",studentId?:string):Promise<PublicCatalogCard[]>{
   const config=getSupabasePublicConfig();
   if(!config)return [];
   const client=createClient(config.url,config.key,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -22,7 +23,7 @@ export async function getPublicCatalogCards(kind:"programs"|"courses",studentId?
   if(error||!data?.length)return [];
   let savedIds=new Set<number>();
   if(studentId){
-    const server=await savedLookupClient(options?.privileged);
+    const server=await savedLookupClient();
     const savedTable=kind==="programs"?"saved_programs":"saved_courses";
     const idColumn=kind==="programs"?"program_id":"course_id";
     const saved=await server.from(savedTable).select(idColumn).eq("student_id",studentId);
@@ -31,13 +32,13 @@ export async function getPublicCatalogCards(kind:"programs"|"courses",studentId?
   return data.map((row)=>({id:Number(row.id),title:String(row.title),summary:typeof row.short_description==="string"?row.short_description:"",saved:savedIds.has(Number(row.id))}));
 }
 
-export async function getPublicCatalogDetail(kind:"programs"|"courses",id:number,studentId?:string,options?:{privileged?:boolean}):Promise<PublicCatalogDetail|null>{
+export async function getPublicCatalogDetail(kind:"programs"|"courses",id:number,studentId?:string):Promise<PublicCatalogDetail|null>{
   const config=getSupabasePublicConfig();if(!config)return null;
   const client=createClient(config.url,config.key,{auth:{persistSession:false,autoRefreshToken:false}});
   const {data,error}=await client.from(kind).select("id,title,short_description,description").eq("id",id).eq("published",true).maybeSingle();
   if(error||!data)return null;
   let saved=false;
-  if(studentId){const server=await savedLookupClient(options?.privileged);const table=kind==="programs"?"saved_programs":"saved_courses";const column=kind==="programs"?"program_id":"course_id";const result=await server.from(table).select(column,{count:"exact",head:true}).eq("student_id",studentId).eq(column,id);saved=!result.error&&Boolean(result.count);}
+  if(studentId){const server=await savedLookupClient();const table=kind==="programs"?"saved_programs":"saved_courses";const column=kind==="programs"?"program_id":"course_id";const result=await server.from(table).select(column,{count:"exact",head:true}).eq("student_id",studentId).eq(column,id);saved=!result.error&&Boolean(result.count);}
   return {kind,id:Number(data.id),title:String(data.title),summary:typeof data.short_description==="string"?data.short_description:"",description:typeof data.description==="string"?data.description:"",saved};
 }
 

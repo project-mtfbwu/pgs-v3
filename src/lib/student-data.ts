@@ -1,4 +1,5 @@
 import type { User } from "@supabase/supabase-js";
+import { getActiveStudentPreviewTargetId, loadPreviewStudentAvatarUrl } from "@/lib/staff-preview-server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type StudentProfile = {
@@ -25,6 +26,7 @@ export async function getOwnProfile(user: User): Promise<StudentProfile | null> 
 
 export async function getOwnAvatarUrl(path: string | null): Promise<string> {
   if (!path) return "/assets/img/default-avatar.png";
+  if (await getActiveStudentPreviewTargetId()) return loadPreviewStudentAvatarUrl(path);
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.storage.from("student-avatars").createSignedUrl(path, 300);
   return data?.signedUrl ?? "/assets/img/default-avatar.png";

@@ -1,6 +1,10 @@
 import { describe,expect,it,vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 vi.mock("server-only",()=>({}));
+vi.mock("@/lib/staff-preview-server",()=>({
+  getActiveStudentPreviewTargetId:async()=>null,
+  loadPreviewStudentAvatarUrl:async()=>"/assets/img/default-avatar.png"
+}));
 vi.mock("@/lib/supabase/server",()=>({createSupabaseServerClient:vi.fn()}));
 import { composeActorContext, decideAutomaticStudentContextClaim } from "@/lib/actor-context";
 import type { StaffContext } from "@/lib/staff-auth";

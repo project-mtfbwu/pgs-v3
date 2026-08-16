@@ -206,4 +206,25 @@ describe("student viewer access", () => {
       reasonCode: "workspace_permission_denied"
     });
   });
+
+  it("uses the previewed student as the workspace subject when no studentId is passed", async () => {
+    mocks.resolveActorContext.mockResolvedValue(staffActor(
+      "admin",
+      ["admin"],
+      ["students.read", "student_workspace.read_all"]
+    ));
+    mocks.getStaffPreviewContext.mockResolvedValue({
+      mode: "student",
+      actorId: "admin",
+      actorName: "Admin",
+      targetId: "student-a",
+      targetName: "Student A",
+      targetRole: null
+    });
+
+    await expect(canViewStudent()).resolves.toMatchObject({
+      allowed: true,
+      actor: { kind: "admin", studentId: "student-a" }
+    });
+  });
 });
