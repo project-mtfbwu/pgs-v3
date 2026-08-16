@@ -8,6 +8,7 @@ import { displayName, getOwnAvatarUrl, type StudentProfile } from "@/lib/student
 import {
   getStaffPreviewContext,
   loadPreviewStudentAvatarUrl,
+  loadPreviewStudentEntitlements,
   loadPreviewStudentNotifications,
   loadPreviewStudentProfile,
   type StaffPreviewContext
@@ -21,9 +22,22 @@ export type StudentPreviewState = {
   targetName: string;
   targetEmail: string;
 };
+export type StudentExperienceActor = {
+  id: string;
+  user: User;
+  name: string;
+};
+export type StudentExperienceSubject = {
+  id: string;
+  email: string;
+  profile: StudentProfile;
+  name: string;
+};
 export type AnonymousStudentExperience = { kind: "anonymous"; user: null; profile: null; name: null; unreadCount: 0; premiumStatus: "none"; preview?: undefined };
 export type AuthenticatedStudentExperience = {
   kind: "authenticated_standard" | "authenticated_premium";
+  actor: StudentExperienceActor;
+  subject: StudentExperienceSubject;
   user: User;
   profile: StudentProfile;
   name: string;
@@ -45,12 +59,64 @@ export function classifyStudentExperience(
   return premiumStatus === "active" ? "authenticated_premium" : "authenticated_standard";
 }
 
+export function composeAuthenticatedStudentExperience(input: {
+  actorUser: User;
+  actorName: string;
+  subjectProfile: StudentProfile;
+  subjectEmail: string;
+  unreadCount: number;
+  validity: { status: AuthenticatedStudentExperience["premiumStatus"]; entitlement: PremiumEntitlementRecord | null };
+  preview?: { actorName: string };
+}): AuthenticatedStudentExperience | null {
+  const kind = classifyStudentExperience(true, true, input.validity.status);
+  if (kind !== "authenticated_standard" && kind !== "authenticated_premium") return null;
+  const subjectName = input.subjectProfile.full_name || input.subjectEmail.split("@")[0] || "Student";
+  const actor: StudentExperienceActor = {
+    id: input.actorUser.id,
+    user: input.actorUser,
+    name: input.actorName
+  };
+  const subject: StudentExperienceSubject = {
+    id: input.subjectProfile.id,
+    email: input.subjectEmail,
+    profile: input.subjectProfile,
+    name: subjectName
+  };
+  return {
+    kind,
+    actor,
+    subject,
+    user: actor.user,
+    profile: subject.profile,
+    name: subject.name,
+    unreadCount: input.unreadCount,
+    premiumStatus: input.validity.status,
+    premiumEntitlement: input.validity.entitlement,
+    preview: input.preview
+      ? {
+          mode: "student",
+          actorName: input.preview.actorName,
+          targetName: subject.name,
+          targetEmail: subject.email
+        }
+      : undefined
+  };
+}
+
+export function studentActorId(state: AuthenticatedStudentExperience): string {
+  return state.actor?.id ?? state.user.id;
+}
+
 export function studentSubjectId(state: AuthenticatedStudentExperience): string {
-  return state.profile.id;
+  return state.subject?.id ?? state.profile.id;
 }
 
 export function studentExperienceEmail(state: AuthenticatedStudentExperience): string {
-  return state.preview?.targetEmail || state.user.email || "";
+  return state.subject?.email || state.preview?.targetEmail || state.user.email || "";
+}
+
+export function usesPrivilegedPreviewStudentLoader(state: AuthenticatedStudentExperience): boolean {
+  return Boolean(state.preview);
 }
 
 export async function studentExperienceAvatarUrl(state: AuthenticatedStudentExperience): Promise<string> {
@@ -76,26 +142,18 @@ async function previewStudentExperience(
   const loaded = await loadPreviewStudentProfile(preview.targetId);
   if (!loaded) return null;
   const [validity, notifications] = await Promise.all([
-    entitlementsForStudent(loaded.profile.id),
+    loadPreviewStudentEntitlements(loaded.profile.id),
     loadPreviewStudentNotifications(loaded.profile.id)
   ]);
-  const kind = classifyStudentExperience(true, true, validity.status);
-  if (!kind || kind === "anonymous") return null;
-  return {
-    kind,
-    user,
-    profile: loaded.profile as StudentProfile,
-    name: loaded.profile.full_name || "Student",
+  return composeAuthenticatedStudentExperience({
+    actorUser: user,
+    actorName: preview.actorName,
+    subjectProfile: loaded.profile as StudentProfile,
+    subjectEmail: loaded.email,
     unreadCount: notifications.unreadCount,
-    premiumStatus: validity.status,
-    premiumEntitlement: validity.entitlement,
-    preview: {
-      mode: "student",
-      actorName: preview.actorName,
-      targetName: loaded.profile.full_name || "Student",
-      targetEmail: loaded.email
-    }
-  };
+    validity,
+    preview: { actorName: preview.actorName }
+  });
 }
 
 /** Null means an authenticated actor exists, but no genuine student context does. */
@@ -116,15 +174,14 @@ export async function resolveStudentExperience(): Promise<StudentExperienceResol
     supabase.from("notifications").select("id",{count:"exact",head:true}).is("read_at",null),
     entitlementsForStudent(user.id)
   ]);
-  return {
-    kind: classifyStudentExperience(true, true, validity.status) as AuthenticatedStudentExperience["kind"],
-    user,
-    profile,
-    name: displayName(profile, user),
+  return composeAuthenticatedStudentExperience({
+    actorUser: user,
+    actorName: displayName(profile, user),
+    subjectProfile: profile,
+    subjectEmail: user.email ?? "",
     unreadCount: notifications.count ?? 0,
-    premiumStatus: validity.status,
-    premiumEntitlement: validity.entitlement
-  };
+    validity
+  });
 }
 
 export async function requireStudentExperience(nextPath:string):Promise<AuthenticatedStudentExperience>{

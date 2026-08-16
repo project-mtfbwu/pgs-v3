@@ -42,4 +42,22 @@ describe("recovered student legacy access rules", () => {
     expect(recovered).toContain('<a href="/logout">Logout</a>');
     expect(recovered).not.toContain(">Guest<");
   });
+
+  it("shows the preview subject email, not the signed-in Admin email", () => {
+    const source = '<div class="card-box-avatar"><div class="avatar-info"><div class="avatar-img"><img src="/assets/img/default-avatar.png"><div class="avatar_name"><h5 class="mb-3">Guest</h5><span></span><span><a href="/logout">Logout</a></span></div></div><div class="title-info"><h5>#purplePremium</h5><h6 class="mb-0">stem PATHWAY</h6></div></div><div class="avatar-heading-right-box"><h4>#PURPLEPREMIUM</h4></div></div>';
+    const state = {
+      kind: "authenticated_premium",
+      user: { id: "admin-id", email: "admin@pgs.test" },
+      subject: { id: "student-id", email: "student-a@pgs.test", profile: { id: "student-id", full_name: "Student A", study_level: "Medical" }, name: "Student A" },
+      profile: { id: "student-id", full_name: "Student A", study_level: "Medical" },
+      name: "Student A",
+      unreadCount: 0,
+      premiumStatus: "active",
+      premiumEntitlement: null,
+      preview: { mode: "student", actorName: "Ops Admin", targetName: "Student A", targetEmail: "student-a@pgs.test" }
+    } as unknown as AuthenticatedStudentExperience;
+    const recovered = applyStudentIdentity(source, state, "/assets/img/default-avatar.png");
+    expect(recovered).toContain("<span>student-a@pgs.test</span>");
+    expect(recovered).not.toContain("admin@pgs.test");
+  });
 });

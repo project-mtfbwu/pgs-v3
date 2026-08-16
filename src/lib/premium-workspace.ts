@@ -1,3 +1,5 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   getStudentPremiumStatus,
@@ -51,20 +53,22 @@ export async function requirePremiumActor(studentId?: string, access: "read"|"ma
   return requireStudentViewer(studentId, { access });
 }
 
-export async function loadPremiumWorkspace(studentId: string): Promise<PremiumWorkspace> {
-  const supabase = await createSupabaseServerClient();
+export async function loadPremiumWorkspaceWithClient(
+  client: Pick<SupabaseClient, "from">,
+  studentId: string
+): Promise<PremiumWorkspace> {
   const [profile, premiumProfile, assignment, alerts, columns, tasks, comments, reviews, notes, requirements, universities] = await Promise.all([
-    supabase.from("profiles").select("full_name,avatar_path,study_level").eq("id", studentId).maybeSingle(),
-    supabase.from("premium_workspace_profiles").select("pathway_label,intake_label,universities_applied,offers_received,visa_status").eq("student_id", studentId).maybeSingle(),
-    supabase.from("mentor_assignments").select("mentor_id,staff_profiles!mentor_assignments_mentor_id_fkey(user_id,display_name)").eq("student_id", studentId).eq("status", "active").maybeSingle(),
-    supabase.from("student_alerts").select("id,alert_text,severity").eq("student_id", studentId).eq("active", true).order("sort_order").limit(3),
-    supabase.from("student_board_columns").select("id,key,title,sort_order").eq("student_id", studentId).order("sort_order"),
-    supabase.from("student_tasks").select("id,column_id,title,details,sort_order,due_at").eq("student_id", studentId).order("sort_order"),
-    supabase.from("workspace_comments").select("id,parent_id,author_id,body,created_at").eq("student_id", studentId).order("created_at"),
-    supabase.from("review_queue_items").select("id,title,details,status,sort_order").eq("student_id", studentId).order("sort_order"),
-    supabase.from("counselor_notes").select("id,body,visibility,created_at").eq("student_id", studentId).order("created_at", { ascending: false }),
-    supabase.from("student_document_requirements").select("id,document_type,requirement_kind,status,instructions,sort_order,student_documents(id,requirement_id,original_filename,mime_type,byte_size,version,qc_status,scan_status,uploaded_at,superseded_at,archived_at,purged_at)").eq("student_id", studentId).order("sort_order"),
-    supabase.from("student_university_selections").select("id,stage,sort_order,universities(id,name,slug)").eq("student_id", studentId).order("sort_order")
+    client.from("profiles").select("full_name,avatar_path,study_level").eq("id", studentId).maybeSingle(),
+    client.from("premium_workspace_profiles").select("pathway_label,intake_label,universities_applied,offers_received,visa_status").eq("student_id", studentId).maybeSingle(),
+    client.from("mentor_assignments").select("mentor_id,staff_profiles!mentor_assignments_mentor_id_fkey(user_id,display_name)").eq("student_id", studentId).eq("status", "active").maybeSingle(),
+    client.from("student_alerts").select("id,alert_text,severity").eq("student_id", studentId).eq("active", true).order("sort_order").limit(3),
+    client.from("student_board_columns").select("id,key,title,sort_order").eq("student_id", studentId).order("sort_order"),
+    client.from("student_tasks").select("id,column_id,title,details,sort_order,due_at").eq("student_id", studentId).order("sort_order"),
+    client.from("workspace_comments").select("id,parent_id,author_id,body,created_at").eq("student_id", studentId).order("created_at"),
+    client.from("review_queue_items").select("id,title,details,status,sort_order").eq("student_id", studentId).order("sort_order"),
+    client.from("counselor_notes").select("id,body,visibility,created_at").eq("student_id", studentId).order("created_at", { ascending: false }),
+    client.from("student_document_requirements").select("id,document_type,requirement_kind,status,instructions,sort_order,student_documents(id,requirement_id,original_filename,mime_type,byte_size,version,qc_status,scan_status,uploaded_at,superseded_at,archived_at,purged_at)").eq("student_id", studentId).order("sort_order"),
+    client.from("student_university_selections").select("id,stage,sort_order,universities(id,name,slug)").eq("student_id", studentId).order("sort_order")
   ]);
   const mentorRelation = assignment.data?.staff_profiles as unknown as { user_id: string; display_name: string } | Array<{ user_id: string; display_name: string }> | null;
   const mentor = Array.isArray(mentorRelation) ? (mentorRelation[0] ?? null) : mentorRelation;
@@ -80,6 +84,21 @@ export async function loadPremiumWorkspace(studentId: string): Promise<PremiumWo
       return { ...selection, universities: Array.isArray(relation) ? (relation[0] ?? null) : relation };
     }) as PremiumWorkspace["universities"]
   };
+}
+
+export async function loadPremiumWorkspace(studentId: string): Promise<PremiumWorkspace> {
+  return loadPremiumWorkspaceWithClient(await createSupabaseServerClient(), studentId);
+}
+
+export async function loadPreviewPremiumWorkspace(studentId: string): Promise<PremiumWorkspace> {
+  return loadPremiumWorkspaceWithClient(createSupabaseAdminClient(), studentId);
+}
+
+export async function loadPremiumWorkspaceForSubject(
+  studentId: string,
+  preview: boolean
+): Promise<PremiumWorkspace> {
+  return preview ? loadPreviewPremiumWorkspace(studentId) : loadPremiumWorkspace(studentId);
 }
 
 export function cleanWorkspaceText(value: unknown, max: number): string {

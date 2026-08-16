@@ -7,7 +7,7 @@ import { PremiumComments } from "@/components/premium-comments";
 import { RecoveredStudentLegacyPage } from "@/components/recovered-student-legacy-page";
 import { StudentKanbanBoard } from "@/components/student-kanban-board";
 import { studentDashboardHtml } from "@/legacy/generated/student-dashboard";
-import { loadPremiumWorkspace, requirePremiumActor } from "@/lib/premium-workspace";
+import { loadPremiumWorkspaceForSubject, requirePremiumActor } from "@/lib/premium-workspace";
 import { resolveStudentExperience, studentExperienceEmail, studentExperienceAvatarUrl, studentSubjectId } from "@/lib/student-experience";
 import { premiumCalendarEvents } from "@/lib/premium-entitlement";
 
@@ -16,11 +16,11 @@ export const dynamic = "force-dynamic";
 
 export default async function PremiumDashboardPage() {
   const state=await resolveStudentExperience();if(!state)notFound();if(state.kind==="anonymous")redirect("/login?redirect=%2Fdashboard");
-  const user=state.user;const profile=state.profile;const avatarUrl=await studentExperienceAvatarUrl(state);
+  const profile=state.profile;const avatarUrl=await studentExperienceAvatarUrl(state);
   if (state.kind!=="authenticated_premium") return <RecoveredStudentLegacyPage html={studentDashboardHtml} page="dashboard-locked" state={state} avatarUrl={avatarUrl}/>;
   if (!state.preview) await requirePremiumActor();
-  const workspace=await loadPremiumWorkspace(studentSubjectId(state));
-  const name = state.preview ? state.name : (profile.full_name || user.email?.split("@")[0] || "Student");
+  const workspace=await loadPremiumWorkspaceForSubject(studentSubjectId(state), Boolean(state.preview));
+  const name = state.name;
   const email = studentExperienceEmail(state);
   const dashboard = workspace.premiumProfile;
   const calendarEvents=premiumCalendarEvents(state.premiumEntitlement);

@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { resolvePremiumValidity, type PremiumEntitlementRecord } from "@/lib/premium-entitlement";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
@@ -141,6 +142,16 @@ export async function loadPreviewSavedItems(studentId: string) {
     admin.from("saved_courses").select("course_id,courses(id,title,slug,short_description)").eq("student_id", studentId).order("saved_at", { ascending: false })
   ]);
   return { programs: programs.data ?? [], courses: courses.data ?? [] };
+}
+
+export async function loadPreviewStudentEntitlements(studentId: string) {
+  const { data } = await createSupabaseAdminClient()
+    .from("premium_entitlements")
+    .select("id,status,source,plan_code,duration_months,approved_at,starts_at,ends_at,revoked_at,premium_plans(label)")
+    .eq("student_id", studentId)
+    .order("ends_at", { ascending: false })
+    .limit(20);
+  return resolvePremiumValidity((data ?? []) as unknown as PremiumEntitlementRecord[]);
 }
 
 export function mentorPreviewBlocksPath(pathname: string): boolean {
