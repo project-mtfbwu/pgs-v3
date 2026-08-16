@@ -5,8 +5,22 @@ const emptyState={cookies:[],origins:[]};
 test("anonymous /ops users receive only the Operations staff login",async({page})=>{
   await page.goto("/ops",{waitUntil:"domcontentloaded"});
   await expect(page).toHaveURL(/\/login\?.*redirect=%2Fops.*surface=operations/);
-  await expect(page.getByRole("heading",{name:"Sign in to Operations"})).toBeVisible();
+  const heading=page.getByRole("heading",{name:"Sign in to Operations"});
+  await expect(heading).toBeVisible();
   await expect(page.locator("[data-operations-shell]")).toHaveCount(0);
+  const visualContract=await heading.evaluate((element)=>{
+    const title=getComputedStyle(element);
+    const surface=getComputedStyle(element.closest("main")!);
+    return {fontFamily:surface.fontFamily,fontSize:title.fontSize,lineHeight:title.lineHeight};
+  });
+  expect(visualContract.fontFamily).toContain("Roboto");
+  expect(visualContract.fontSize).toBe("28px");
+  expect(visualContract.lineHeight).toBe("32px");
+  const panel=await page.locator("main > section").boundingBox();
+  expect(panel).not.toBeNull();
+  expect(panel!.x).toBeGreaterThanOrEqual(0);
+  expect(panel!.x+panel!.width).toBeLessThanOrEqual(await page.evaluate(()=>window.innerWidth));
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
 });
 
 test("anonymous nested Operations routes preserve the exact return path",async({page})=>{
@@ -20,6 +34,7 @@ test("the application root remains the public student product",async({page})=>{
   await expect(page).toHaveURL(/\/$/);
   await expect(page.locator('[data-legacy-page="home"]')).toBeVisible();
   await expect(page.locator("[data-operations-shell]")).toHaveCount(0);
+  await expect(page.locator("[data-operations-product]")).toHaveCount(0);
 });
 
 test("only mapped core /admin routes redirect to canonical /ops URLs",async({request})=>{
@@ -46,6 +61,7 @@ test.describe("preview read-only staff workflow",()=>{
     await page.goto("/admin/catalog/courses");
     await expect(page).toHaveURL(/\/admin\/catalog\/courses$/);
     await expect(page.getByRole("heading",{name:"Courses"})).toBeVisible();
+    await expect(page.locator("[data-operations-product]")).toHaveCount(0);
     await expect(page.getByRole("button",{name:/add/i})).toHaveCount(0);
     const response=await request.post("/api/admin/catalog/courses",{data:{title:"Viewer attack",slug:"viewer-attack"}});
     expect(response.status()).toBe(403);
@@ -115,8 +131,18 @@ test.describe("preview Admin workflow",()=>{
     await page.goto("/ops");
     await expect(page).toHaveURL(/\/ops$/);
     await expect(page.getByRole("navigation",{name:"Operations navigation"}).first()).toBeVisible();
+    await expect(page.locator('[data-operations-product="true"]')).toBeVisible();
     await expect(page.locator('[data-scoreboard-scope="organization"]')).toBeVisible();
-    await expect(page.getByRole("heading",{name:"Your Operations pulse."})).toBeVisible();
+    const heading=page.getByRole("heading",{name:"Your Operations pulse."});
+    await expect(heading).toBeVisible();
+    const visualContract=await heading.evaluate((element)=>{
+      const title=getComputedStyle(element);
+      const shell=getComputedStyle(element.closest("[data-operations-product]")!);
+      return {fontFamily:shell.fontFamily,fontSize:title.fontSize,lineHeight:title.lineHeight};
+    });
+    expect(visualContract.fontFamily).toContain("Roboto");
+    expect(visualContract.fontSize).toBe("28px");
+    expect(visualContract.lineHeight).toBe("32px");
     await expect(page.getByText("Visible students",{exact:true})).toBeVisible();
     await expect(page.getByRole("link",{name:"Scoreboard"}).first()).toBeVisible();
     await expect(page.getByRole("link",{name:"Sign out"})).toBeVisible();
@@ -125,6 +151,7 @@ test.describe("preview Admin workflow",()=>{
     await expect(page.locator('[data-scoreboard-scope="organization"]')).toBeVisible();
     await page.setViewportSize({width:390,height:844});
     await expect(page.locator('nav[aria-label="Operations navigation"]:visible')).toBeVisible();
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
     const response=await request.post("/api/admin/staff",{data:{action:"assign",userId:"00000000-0000-0000-0000-000000000000",role:"super_admin"}});
     expect(response.status()).toBe(403);
   });

@@ -48,7 +48,7 @@
   --ops-deep: #19191d;
   --ops-yellow: #ffd75f;
   min-height: 100vh;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-operations, Arial, Helvetica, sans-serif);
 }
 
 .operations-root *,
@@ -66,4 +66,351 @@
 .operations-root select,
 .operations-root textarea {
   font: inherit;
+}
+
+/* OPS-01B visual system. These rules activate only on canonical /ops URLs.
+   Unrelated /admin CMS and catalog routes keep their existing presentation. */
+.operations-root[data-operations-product="true"] {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.operations-root[data-operations-product="true"] :focus-visible {
+  outline: 2px solid var(--operations-ring);
+  outline-offset: 2px;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-sidebar {
+  width: 240px;
+  padding: 24px 16px 16px;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-brand {
+  min-height: 40px;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-brand > span:first-child {
+  border-radius: 8px;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-brand strong,
+.operations-root[data-operations-product="true"] .ops-system-navigation a,
+.operations-root[data-operations-product="true"] .ops-system-user strong {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-brand span span,
+.operations-root[data-operations-product="true"] .ops-system-user span span {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-navigation {
+  gap: 4px;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-navigation a {
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-navigation a[aria-current="page"] {
+  padding-left: 9px;
+  border-left: 3px solid var(--operations-accent-foreground);
+}
+
+.operations-root[data-operations-product="true"] .ops-system-user {
+  padding-top: 16px;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-topbar {
+  height: 64px;
+  padding-inline: 24px;
+  backdrop-filter: none;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-context {
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-current-section {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-role-badge {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.operations-root[data-operations-product="true"] .ops-system-main {
+  max-width: 1280px;
+  padding: 32px;
+}
+
+.ops-system-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.ops-system-page-heading {
+  min-width: 0;
+}
+
+.ops-system-eyebrow {
+  margin: 0 0 4px;
+  color: var(--operations-accent-foreground);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ops-system-page-heading h1 {
+  margin: 0;
+  color: var(--operations-foreground);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 32px;
+  letter-spacing: -0.02em;
+}
+
+.ops-system-page-description {
+  max-width: 720px;
+  margin: 8px 0 0;
+  color: var(--operations-muted-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.ops-system-page-actions {
+  flex: none;
+}
+
+.ops-system-card {
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.ops-system-metric-card {
+  min-height: 152px;
+}
+
+.ops-system-metric-card strong {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 36px;
+}
+
+.ops-system-metric-card:hover {
+  border-color: var(--operations-ring);
+  background: color-mix(in srgb, var(--operations-accent) 35%, var(--operations-card));
+}
+
+.ops-system-card-title {
+  font-size: 16px !important;
+  line-height: 24px !important;
+}
+
+.ops-system-filterbar {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--operations-border);
+}
+
+.ops-system-filterbar input,
+.ops-system-filterbar select,
+.ops-system-control {
+  min-height: 40px;
+  border-radius: 6px;
+}
+
+.ops-system-data-panel {
+  min-width: 0;
+  border: 1px solid var(--operations-border);
+  border-radius: 8px;
+  background: var(--operations-card);
+  overflow: hidden;
+}
+
+.ops-system-data-panel .ops-system-table-frame {
+  border: 0;
+  border-radius: 0;
+}
+
+.ops-system-table-frame {
+  min-width: 0;
+  border: 1px solid var(--operations-border);
+  border-radius: 8px;
+  background: var(--operations-card);
+  overflow: hidden;
+}
+
+.ops-system-table-hint {
+  display: none;
+  margin: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--operations-border);
+  color: var(--operations-muted-foreground);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.ops-system-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+}
+
+.ops-system-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--operations-foreground);
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+}
+
+.ops-system-table th {
+  padding: 10px 16px;
+  background: var(--operations-muted);
+  color: var(--operations-muted-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.ops-system-table td {
+  padding: 12px 16px;
+  border-top: 1px solid var(--operations-border);
+  vertical-align: middle;
+}
+
+.ops-system-table tbody tr {
+  transition: background-color 120ms ease;
+}
+
+.ops-system-table tbody tr:hover {
+  background: color-mix(in srgb, var(--operations-muted) 48%, transparent);
+}
+
+.ops-system-table code,
+.ops-system-table small,
+.ops-system-metadata {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.ops-system-badge {
+  display: inline-flex;
+  width: max-content;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--operations-secondary);
+  color: var(--operations-secondary-foreground);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.ops-system-badge.is-accent {
+  background: var(--operations-accent);
+  color: var(--operations-accent-foreground);
+}
+
+.ops-system-empty-cell {
+  padding: 32px 16px !important;
+  color: var(--operations-muted-foreground);
+  text-align: center;
+}
+
+.ops-system-empty-state {
+  display: grid;
+  max-width: 640px;
+  justify-items: start;
+  gap: 8px;
+}
+
+.ops-system-empty-icon {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--operations-accent);
+  color: var(--operations-accent-foreground);
+}
+
+@media (min-width: 1024px) {
+  .operations-root[data-operations-product="true"] .ops-system-content {
+    padding-left: 240px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .operations-root[data-operations-product="true"] .ops-system-mobile-nav {
+    position: sticky;
+    top: 64px;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+  }
+
+  .operations-root[data-operations-product="true"] .ops-system-mobile-nav nav {
+    flex: none;
+  }
+
+  .operations-root[data-operations-product="true"] .ops-system-mobile-nav::after {
+    position: sticky;
+    right: 0;
+    width: 24px;
+    flex: none;
+    border-left: 1px solid var(--operations-border);
+    background: var(--operations-card);
+    content: "";
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .operations-root[data-operations-product="true"] .ops-system-topbar {
+    padding-inline: 16px;
+  }
+
+  .operations-root[data-operations-product="true"] .ops-system-main {
+    padding: 24px 16px 32px;
+  }
+
+  .ops-system-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .ops-system-page-actions {
+    width: 100%;
+  }
+
+  .ops-system-page-actions > * {
+    width: 100%;
+  }
+
+  .ops-system-table-hint {
+    display: block;
+  }
 }

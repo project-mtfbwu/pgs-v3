@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { canViewOperationsScoreboard } from "@/lib/operations-authorization";
+import { operationsRoboto } from "@/lib/operations-font";
 import { cn } from "@/lib/utils";
 import type { StaffPermission, StaffRoleKey } from "@/lib/staff-auth";
 
@@ -61,16 +62,17 @@ export function AdminShell({
   permissions: StaffPermission[];
 }) {
   const pathname = usePathname();
+  const isOperationsProduct = pathname === "/ops" || pathname.startsWith("/ops/");
   const allowed = new Set(permissions);
   const canViewScoreboard = canViewOperationsScoreboard({ roles, permissions: allowed });
   const visibleItems = items.filter((item) => allowed.has(item.permission) && (!item.scoreboard || canViewScoreboard));
   const title = sectionTitles[pathname] ?? "Operations";
 
   const navigation = (
-    <nav aria-label="Operations navigation" className="ops:flex ops:gap-1 ops:lg:flex-col">
+    <nav aria-label="Operations navigation" className="ops-system-navigation ops:flex ops:gap-1 ops:lg:flex-col">
       {visibleItems.map((item) => {
         const Icon = item.icon;
-        const active = pathname === item.href;
+        const active = pathname === item.href || (item.href !== "/ops" && pathname.startsWith(`${item.href}/`));
         return (
           <Link
             key={item.href}
@@ -90,9 +92,16 @@ export function AdminShell({
   );
 
   return (
-    <div data-operations-shell className="operations-root ops:min-h-screen ops:bg-background ops:text-foreground">
-      <aside className="ops:fixed ops:inset-y-0 ops:left-0 ops:z-30 ops:hidden ops:w-64 ops:flex-col ops:border-r ops:border-border ops:bg-card ops:px-4 ops:py-5 ops:lg:flex">
-        <Link href="/ops" className="ops:flex ops:items-center ops:gap-3 ops:px-2 ops:no-underline">
+    <div
+      data-operations-shell
+      data-operations-product={isOperationsProduct ? "true" : undefined}
+      className={cn(
+        "operations-root ops:min-h-screen ops:bg-background ops:text-foreground",
+        isOperationsProduct && operationsRoboto.variable
+      )}
+    >
+      <aside className="ops-system-sidebar ops:fixed ops:inset-y-0 ops:left-0 ops:z-30 ops:hidden ops:w-64 ops:flex-col ops:border-r ops:border-border ops:bg-card ops:px-4 ops:py-5 ops:lg:flex">
+        <Link href="/ops" className="ops-system-brand ops:flex ops:items-center ops:gap-3 ops:px-2 ops:no-underline">
           <span className="ops:flex ops:size-9 ops:items-center ops:justify-center ops:rounded-lg ops:bg-primary ops:text-sm ops:font-bold ops:text-primary-foreground">P</span>
           <span className="ops:flex ops:flex-col">
             <strong className="ops:text-sm ops:tracking-tight">Purple Guide</strong>
@@ -100,7 +109,7 @@ export function AdminShell({
           </span>
         </Link>
         <div className="ops:mt-8 ops:flex-1">{navigation}</div>
-        <div className="ops:border-t ops:border-border ops:pt-4">
+        <div className="ops-system-user ops:border-t ops:border-border ops:pt-4">
           <div className="ops:flex ops:items-center ops:gap-3 ops:px-2">
             <span className="ops:flex ops:size-9 ops:items-center ops:justify-center ops:rounded-full ops:bg-accent ops:text-xs ops:font-bold ops:text-accent-foreground">
               {displayName.slice(0, 2).toUpperCase()}
@@ -116,17 +125,21 @@ export function AdminShell({
         </div>
       </aside>
 
-      <div className="ops:min-w-0 ops:lg:pl-64">
-        <header className="ops:sticky ops:top-0 ops:z-20 ops:flex ops:h-16 ops:items-center ops:justify-between ops:border-b ops:border-border ops:bg-card/95 ops:px-4 ops:backdrop-blur ops:sm:px-6">
+      <div className="ops-system-content ops:min-w-0 ops:lg:pl-64">
+        <header className="ops-system-topbar ops:sticky ops:top-0 ops:z-20 ops:flex ops:h-16 ops:items-center ops:justify-between ops:border-b ops:border-border ops:bg-card/95 ops:px-4 ops:backdrop-blur ops:sm:px-6">
           <div>
-            <p className="ops:m-0 ops:flex ops:items-center ops:gap-1.5 ops:text-[11px] ops:font-semibold ops:uppercase ops:tracking-[0.14em] ops:text-muted-foreground">
+            <p className="ops-system-context ops:m-0 ops:flex ops:items-center ops:gap-1.5 ops:text-[11px] ops:font-semibold ops:uppercase ops:tracking-[0.14em] ops:text-muted-foreground">
               <ShieldCheck aria-hidden="true" className="ops:size-3.5" />
               Internal operations
             </p>
-            <h1 className="ops:m-0 ops:mt-0.5 ops:text-base ops:font-semibold ops:tracking-tight">{title}</h1>
+            {isOperationsProduct ? (
+              <p className="ops-system-current-section ops:m-0 ops:mt-0.5 ops:text-base ops:font-semibold ops:tracking-tight">{title}</p>
+            ) : (
+              <h1 className="ops:m-0 ops:mt-0.5 ops:text-base ops:font-semibold ops:tracking-tight">{title}</h1>
+            )}
           </div>
           <div className="ops:flex ops:items-center ops:gap-2">
-            <Badge className="ops:hidden ops:sm:inline-flex">{roleLabel(roles)}</Badge>
+            <Badge className="ops-system-role-badge ops:hidden ops:sm:inline-flex">{roleLabel(roles)}</Badge>
             {allowed.has("overview.read") && (
               <Link href="/ops/notifications" aria-label="Open notifications" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
                 <Bell aria-hidden="true" className="ops:size-4" />
@@ -142,11 +155,11 @@ export function AdminShell({
           </div>
         </header>
 
-        <div className="ops:overflow-x-auto ops:border-b ops:border-border ops:bg-card ops:px-3 ops:py-2 ops:lg:hidden">
+        <div className="ops-system-mobile-nav ops:overflow-x-auto ops:border-b ops:border-border ops:bg-card ops:px-3 ops:py-2 ops:lg:hidden">
           {navigation}
         </div>
 
-        <main className="ops:mx-auto ops:w-full ops:max-w-[1440px] ops:p-4 ops:sm:p-6 ops:lg:p-8">{children}</main>
+        <main className="ops-system-main ops:mx-auto ops:w-full ops:max-w-[1440px] ops:p-4 ops:sm:p-6 ops:lg:p-8">{children}</main>
       </div>
     </div>
   );

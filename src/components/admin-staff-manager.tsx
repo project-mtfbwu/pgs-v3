@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { OperationsTableFrame } from "@/components/operations-table-frame";
 
 const fieldClass = "ops:grid ops:gap-1.5 ops:text-sm ops:font-medium";
 const controlClass = "ops:min-h-10 ops:w-full ops:rounded-md ops:border ops:border-input ops:bg-card ops:px-3 ops:py-2 ops:text-sm ops:outline-none ops:focus-visible:ring-2 ops:focus-visible:ring-ring";
@@ -18,9 +19,9 @@ export function AdminStaffManager({staff,canManage}:{staff:Array<Record<string,u
   }
   return <>
     <p className="ops:m-0 ops:text-sm ops:text-muted-foreground" role="status">{message}</p>
-    {canManage&&<Card>
+    {canManage&&<Card className="ops-system-card">
       <CardHeader>
-        <CardTitle>Invite or assign staff access</CardTitle>
+        <CardTitle className="ops-system-card-title">Invite or assign staff access</CardTitle>
         <CardDescription>Use the existing Supabase Auth identity and relational role assignment workflow.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -36,17 +37,11 @@ export function AdminStaffManager({staff,canManage}:{staff:Array<Record<string,u
         <p className="ops:mb-0 ops:mt-4 ops:text-xs ops:text-muted-foreground">Invitations require preview SMTP and the server-only Supabase service key. No password is created here.</p>
       </CardContent>
     </Card>}
-    <Card>
-      <CardContent className="ops:p-0">
-        <div className="ops:overflow-x-auto">
-          <table className="ops:w-full ops:min-w-[800px] ops:border-collapse ops:text-left ops:text-sm">
-            <thead className="ops:bg-muted/60 ops:text-xs ops:uppercase ops:tracking-wide ops:text-muted-foreground"><tr><th className="ops:px-4 ops:py-3 ops:font-semibold">Staff user</th><th className="ops:px-4 ops:py-3 ops:font-semibold">Roles</th><th className="ops:px-4 ops:py-3 ops:font-semibold">Status</th><th className="ops:px-4 ops:py-3 ops:font-semibold">Created</th>{canManage&&<th className="ops:px-4 ops:py-3 ops:font-semibold">Access actions</th>}</tr></thead>
-            <tbody>{staff.map((row)=><tr className="ops:border-t ops:border-border" key={String(row.user_id)}><td className="ops:px-4 ops:py-3"><strong>{String(row.display_name||"Staff")}</strong><br/><code className="ops:text-xs ops:text-muted-foreground">{String(row.user_id)}</code></td><td className="ops:px-4 ops:py-3"><span className="ops:rounded-full ops:bg-accent ops:px-2.5 ops:py-1 ops:text-xs ops:font-medium ops:text-accent-foreground">{String(row.role).replaceAll("_"," ")}</span><br/><small className="ops:mt-2 ops:inline-block ops:text-muted-foreground">{String(row.role_history??"Current primary role")}</small></td><td className="ops:px-4 ops:py-3">{String(row.status)}</td><td className="ops:px-4 ops:py-3">{new Date(String(row.created_at)).toLocaleDateString("en-GB")}</td>{canManage&&<td className="ops:px-4 ops:py-3"><div className="ops:flex ops:flex-wrap ops:gap-2"><Button variant="outline" size="sm" onClick={()=>void send({action:"assign",user_id:row.user_id,role:row.role,status:row.status==="active"?"suspended":"active",reason:row.status==="active"?"Suspended from staff manager":"Reactivated from staff manager"})}>{row.status==="active"?"Suspend":"Reactivate"}</Button><Button variant="ghost" size="sm" className="ops:text-red-700 ops:hover:bg-red-50" onClick={()=>void send({action:"revoke",user_id:row.user_id,role:row.role,status:"ended",reason:"Revoked from staff manager"})}>Revoke primary role</Button></div></td>}</tr>)}
-              {!staff.length&&<tr><td className="ops:px-4 ops:py-12 ops:text-center ops:text-muted-foreground" colSpan={canManage?5:4}>No authorized staff identities were returned.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+    <OperationsTableFrame minimumWidth={800}>
+      <thead><tr><th>Staff user</th><th>Roles</th><th>Status</th><th>Created</th>{canManage&&<th>Access actions</th>}</tr></thead>
+      <tbody>{staff.map((row)=><tr key={String(row.user_id)}><td><strong>{String(row.display_name||"Staff")}</strong><br/><code className="ops:text-muted-foreground">{String(row.user_id)}</code></td><td><span className="ops-system-badge is-accent">{String(row.role).replaceAll("_"," ")}</span><br/><small className="ops:mt-2 ops:inline-block ops:text-muted-foreground">{String(row.role_history??"Current primary role")}</small></td><td><span className="ops-system-badge">{String(row.status)}</span></td><td>{new Date(String(row.created_at)).toLocaleDateString("en-GB")}</td>{canManage&&<td><div className="ops:flex ops:flex-wrap ops:gap-2"><Button variant="outline" size="sm" onClick={()=>void send({action:"assign",user_id:row.user_id,role:row.role,status:row.status==="active"?"suspended":"active",reason:row.status==="active"?"Suspended from staff manager":"Reactivated from staff manager"})}>{row.status==="active"?"Suspend":"Reactivate"}</Button><Button variant="ghost" size="sm" className="ops:text-red-700 ops:hover:bg-red-50" onClick={()=>void send({action:"revoke",user_id:row.user_id,role:row.role,status:"ended",reason:"Revoked from staff manager"})}>Revoke primary role</Button></div></td>}</tr>)}
+        {!staff.length&&<tr><td className="ops-system-empty-cell" colSpan={canManage?5:4}>No authorized staff identities were returned.</td></tr>}
+      </tbody>
+    </OperationsTableFrame>
   </>;
 }

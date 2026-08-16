@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ getAuthenticatedUser: vi.fn() }));
 
+vi.mock("next/font/google", () => ({
+  Roboto: () => ({ className: "operations-roboto", variable: "operations-roboto-variable" })
+}));
+
 vi.mock("@/lib/auth", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/auth")>();
   return { ...actual, getAuthenticatedUser: mocks.getAuthenticatedUser };

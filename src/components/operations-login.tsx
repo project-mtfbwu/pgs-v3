@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { operationsRoboto } from "@/lib/operations-font";
 import styles from "./operations-login.module.css";
 
 export function OperationsLogin({ redirectPath }: { redirectPath: string }) {
@@ -31,7 +32,7 @@ export function OperationsLogin({ redirectPath }: { redirectPath: string }) {
   }
 
   return (
-    <main className={styles.surface}>
+    <main className={`${styles.surface} ${operationsRoboto.variable}`}>
       <section className={styles.panel} aria-labelledby="operations-login-title">
         <div className={styles.brand}>
           <span aria-hidden="true">P</span>

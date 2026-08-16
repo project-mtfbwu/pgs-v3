@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, CircleGauge, GraduationCap, LockKeyhole, Sparkles, UsersRound } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { OperationsPageHeader } from "@/components/operations-page-header";
 import { resolveOperationsScoreboardScope } from "@/lib/operations-authorization";
 import { can, requireStaffPermission } from "@/lib/staff-auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -57,13 +58,7 @@ export default async function AdminOverview() {
 
   return (
     <div data-scoreboard-scope={scope} className="ops:flex ops:flex-col ops:gap-6">
-      <header>
-        <p className="ops:m-0 ops:text-xs ops:font-semibold ops:uppercase ops:tracking-[0.14em] ops:text-accent-foreground">Scoreboard</p>
-        <h2 className="ops:m-0 ops:mt-2 ops:text-2xl ops:font-semibold ops:tracking-tight ops:sm:text-3xl">Your Operations pulse.</h2>
-        <p className="ops:m-0 ops:mt-2 ops:max-w-2xl ops:text-sm ops:leading-6 ops:text-muted-foreground">
-          {description}
-        </p>
-      </header>
+      <OperationsPageHeader eyebrow="Scoreboard" title="Your Operations pulse." description={description} />
 
       {metrics.length > 0 ? (
         <section aria-label="Operations metrics" className="ops:grid ops:gap-4 ops:sm:grid-cols-2 ops:xl:grid-cols-4">
@@ -71,14 +66,14 @@ export default async function AdminOverview() {
             const Icon = metric.icon;
             return (
               <Link href={metric.href} key={metric.label} className="ops:no-underline">
-                <Card className="ops:h-full ops:transition-colors ops:hover:border-ring">
-                  <CardContent className="ops:flex ops:h-full ops:flex-col ops:gap-5 ops:p-5">
-                    <span className="ops:flex ops:size-9 ops:items-center ops:justify-center ops:rounded-lg ops:bg-accent ops:text-accent-foreground">
+                <Card className="ops-system-card ops-system-metric-card ops:h-full ops:transition-colors">
+                  <CardContent className="ops:flex ops:h-full ops:flex-col ops:gap-4 ops:p-4">
+                    <span className="ops:flex ops:size-9 ops:items-center ops:justify-center ops:rounded-md ops:bg-accent ops:text-accent-foreground">
                       <Icon aria-hidden="true" className="ops:size-4" />
                     </span>
                     <div>
                       <p className="ops:m-0 ops:text-sm ops:text-muted-foreground">{metric.label}</p>
-                      <strong className="ops:mt-1 ops:block ops:text-3xl ops:font-semibold ops:tracking-tight">
+                      <strong className="ops:mt-1 ops:block ops:tracking-tight">
                         {metric.value ?? "—"}
                       </strong>
                     </div>
@@ -92,12 +87,12 @@ export default async function AdminOverview() {
           })}
         </section>
       ) : (
-        <Card>
+        <Card className="ops-system-card">
           <CardHeader>
-            <span className="ops:mb-3 ops:flex ops:size-10 ops:items-center ops:justify-center ops:rounded-lg ops:bg-accent ops:text-accent-foreground">
+            <span className="ops:mb-3 ops:flex ops:size-10 ops:items-center ops:justify-center ops:rounded-md ops:bg-accent ops:text-accent-foreground">
               <LockKeyhole aria-hidden="true" className="ops:size-5" />
             </span>
-            <CardTitle>Restricted Scoreboard foundation</CardTitle>
+            <CardTitle className="ops-system-card-title">Restricted Scoreboard foundation</CardTitle>
             <CardDescription>
               No organization-wide metrics are available within this actor&apos;s current permissions. This truthful empty state does not broaden access.
             </CardDescription>
@@ -106,9 +101,9 @@ export default async function AdminOverview() {
       )}
 
       <section className="ops:grid ops:gap-4 ops:lg:grid-cols-[1.4fr_1fr]">
-        <Card>
+        <Card className="ops-system-card">
           <CardHeader>
-            <CardTitle>Operational workspace</CardTitle>
+            <CardTitle className="ops-system-card-title">Operational workspace</CardTitle>
             <CardDescription>
               What happened, what is pending, why, and the next action remain honest foundation states until their approved operational domains exist.
             </CardDescription>
@@ -119,9 +114,9 @@ export default async function AdminOverview() {
             {can(context, "audit.read") && <Link href="/ops/activity" className="ops:rounded-md ops:border ops:border-border ops:px-3 ops:py-2 ops:text-sm ops:font-medium ops:no-underline ops:hover:bg-secondary">Open activity</Link>}
           </CardContent>
         </Card>
-        <Card>
+        <Card className="ops-system-card">
           <CardHeader>
-            <CardTitle>Authorization boundary</CardTitle>
+            <CardTitle className="ops-system-card-title">Authorization boundary</CardTitle>
             <CardDescription>{authorizationDescription}</CardDescription>
           </CardHeader>
         </Card>
