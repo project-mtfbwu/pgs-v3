@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addCalendarMonths, premiumCalendarEvents, resolvePremiumValidity, type PremiumEntitlementRecord } from "@/lib/premium-entitlement";
+import { addCalendarMonths, isCanonicallyActivePremium, premiumCalendarEvents, resolvePremiumValidity, type PremiumEntitlementRecord } from "@/lib/premium-entitlement";
 
 const period = (overrides: Partial<PremiumEntitlementRecord> = {}): PremiumEntitlementRecord => ({
   id: "10000000-0000-4000-8000-000000000001",
@@ -30,6 +30,17 @@ describe("Premium calendar-month validity", () => {
     expect(resolvePremiumValidity([period()], now).status).toBe("active");
     expect(resolvePremiumValidity([period({ ends_at:"2026-08-31T23:59:59.000Z" })], now).status).toBe("expired");
     expect(resolvePremiumValidity([period({ status:"revoked" })], now).status).toBe("revoked");
+  });
+
+  it("matches canonical Premium window semantics used by Scoreboard counts", () => {
+    const now = new Date("2026-09-01T00:00:00.000Z");
+    expect(isCanonicallyActivePremium(period(), now)).toBe(true);
+    expect(isCanonicallyActivePremium(period({ ends_at: "2026-08-31T23:59:59.000Z" }), now)).toBe(false);
+    expect(isCanonicallyActivePremium(period({
+      starts_at: "2026-10-01T00:00:00.000Z",
+      ends_at: "2027-01-01T00:00:00.000Z"
+    }), now)).toBe(false);
+    expect(isCanonicallyActivePremium(period({ status: "revoked" }), now)).toBe(false);
   });
 
   it("derives start and end calendar entries from the entitlement truth", () => {

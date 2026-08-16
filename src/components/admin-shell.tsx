@@ -1,21 +1,34 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
   Bell,
-  ExternalLink,
   Gauge,
   GraduationCap,
   LogOut,
+  Menu,
   ShieldCheck,
   UsersRound
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { OperationsActorMenu } from "@/components/operations-actor-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger
+} from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { canViewOperationsScoreboard } from "@/lib/operations-authorization";
 import { operationsRoboto } from "@/lib/operations-font";
+import { operationsInitials, operationsRoleLabel } from "@/lib/operations-presentation";
 import { cn } from "@/lib/utils";
 import type { StaffPermission, StaffRoleKey } from "@/lib/staff-auth";
 
@@ -43,13 +56,6 @@ const sectionTitles: Record<string, string> = {
   "/ops/activity": "Activity"
 };
 
-function roleLabel(roles: StaffRoleKey[]) {
-  if (roles.includes("super_admin")) return "Super Admin";
-  if (roles.includes("admin")) return "Admin";
-  if (roles.includes("mentor")) return "Mentor";
-  return "Read-only Staff";
-}
-
 export function AdminShell({
   children,
   displayName,
@@ -62,14 +68,25 @@ export function AdminShell({
   permissions: StaffPermission[];
 }) {
   const pathname = usePathname();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const isOperationsProduct = pathname === "/ops" || pathname.startsWith("/ops/");
   const allowed = new Set(permissions);
   const canViewScoreboard = canViewOperationsScoreboard({ roles, permissions: allowed });
   const visibleItems = items.filter((item) => allowed.has(item.permission) && (!item.scoreboard || canViewScoreboard));
   const title = sectionTitles[pathname] ?? "Operations";
+  const currentRole = operationsRoleLabel(roles);
+
+  useEffect(() => {
+    if (!isOperationsProduct) return;
+    const root = document.documentElement;
+    root.classList.add("operations-session", operationsRoboto.variable);
+    return () => {
+      root.classList.remove("operations-session", operationsRoboto.variable);
+    };
+  }, [isOperationsProduct]);
 
   const navigation = (
-    <nav aria-label="Operations navigation" className="ops-system-navigation ops:flex ops:gap-1 ops:lg:flex-col">
+    <nav aria-label="Operations navigation" className="ops-system-navigation ops:flex ops:flex-col ops:gap-1">
       {visibleItems.map((item) => {
         const Icon = item.icon;
         const active = pathname === item.href || (item.href !== "/ops" && pathname.startsWith(`${item.href}/`));
@@ -78,6 +95,7 @@ export function AdminShell({
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
+            onClick={() => setMobileNavOpen(false)}
             className={cn(
               "ops:flex ops:min-w-fit ops:items-center ops:gap-3 ops:rounded-lg ops:px-3 ops:py-2.5 ops:text-sm ops:font-medium ops:text-muted-foreground ops:transition-colors ops:hover:bg-secondary ops:hover:text-foreground",
               active && "ops:bg-accent ops:text-accent-foreground"
@@ -92,75 +110,95 @@ export function AdminShell({
   );
 
   return (
-    <div
-      data-operations-shell
-      data-operations-product={isOperationsProduct ? "true" : undefined}
-      className={cn(
-        "operations-root ops:min-h-screen ops:bg-background ops:text-foreground",
-        isOperationsProduct && operationsRoboto.variable
-      )}
-    >
-      <aside className="ops-system-sidebar ops:fixed ops:inset-y-0 ops:left-0 ops:z-30 ops:hidden ops:w-64 ops:flex-col ops:border-r ops:border-border ops:bg-card ops:px-4 ops:py-5 ops:lg:flex">
-        <Link href="/ops" className="ops-system-brand ops:flex ops:items-center ops:gap-3 ops:px-2 ops:no-underline">
-          <span className="ops:flex ops:size-9 ops:items-center ops:justify-center ops:rounded-lg ops:bg-primary ops:text-sm ops:font-bold ops:text-primary-foreground">P</span>
-          <span className="ops:flex ops:flex-col">
-            <strong className="ops:text-sm ops:tracking-tight">Purple Guide</strong>
-            <span className="ops:text-xs ops:text-muted-foreground">Operations</span>
-          </span>
-        </Link>
-        <div className="ops:mt-8 ops:flex-1">{navigation}</div>
-        <div className="ops-system-user ops:border-t ops:border-border ops:pt-4">
-          <div className="ops:flex ops:items-center ops:gap-3 ops:px-2">
-            <span className="ops:flex ops:size-9 ops:items-center ops:justify-center ops:rounded-full ops:bg-accent ops:text-xs ops:font-bold ops:text-accent-foreground">
-              {displayName.slice(0, 2).toUpperCase()}
+    <TooltipProvider>
+      <div
+        data-operations-shell
+        data-operations-product={isOperationsProduct ? "true" : undefined}
+        className={cn(
+          "operations-root ops:min-h-screen ops:bg-background ops:text-foreground",
+          isOperationsProduct && operationsRoboto.variable
+        )}
+      >
+        <aside className="ops-system-sidebar ops:fixed ops:inset-y-0 ops:left-0 ops:z-30 ops:hidden ops:w-64 ops:flex-col ops:border-r ops:border-border ops:bg-card ops:px-4 ops:py-5 ops:lg:flex">
+          <Link href="/ops" className="ops-system-brand ops:flex ops:items-center ops:gap-3 ops:px-2 ops:no-underline">
+            <span className="ops:flex ops:size-9 ops:items-center ops:justify-center ops:rounded-lg ops:bg-primary ops:text-sm ops:font-bold ops:text-primary-foreground">P</span>
+            <span className="ops:flex ops:flex-col">
+              <strong className="ops:text-sm ops:tracking-tight">Purple Guide</strong>
+              <span className="ops:text-xs ops:text-muted-foreground">Operations</span>
             </span>
-            <span className="ops:min-w-0 ops:flex-1">
-              <strong className="ops:block ops:truncate ops:text-sm">{displayName}</strong>
-              <span className="ops:block ops:truncate ops:text-xs ops:text-muted-foreground">{roleLabel(roles)}</span>
-            </span>
-            <Link href="/logout" aria-label="Sign out" className="ops:text-muted-foreground ops:hover:text-foreground">
-              <LogOut aria-hidden="true" className="ops:size-4" />
-            </Link>
-          </div>
-        </div>
-      </aside>
-
-      <div className="ops-system-content ops:min-w-0 ops:lg:pl-64">
-        <header className="ops-system-topbar ops:sticky ops:top-0 ops:z-20 ops:flex ops:h-16 ops:items-center ops:justify-between ops:border-b ops:border-border ops:bg-card/95 ops:px-4 ops:backdrop-blur ops:sm:px-6">
-          <div>
-            <p className="ops-system-context ops:m-0 ops:flex ops:items-center ops:gap-1.5 ops:text-[11px] ops:font-semibold ops:uppercase ops:tracking-[0.14em] ops:text-muted-foreground">
-              <ShieldCheck aria-hidden="true" className="ops:size-3.5" />
-              Internal operations
-            </p>
-            {isOperationsProduct ? (
-              <p className="ops-system-current-section ops:m-0 ops:mt-0.5 ops:text-base ops:font-semibold ops:tracking-tight">{title}</p>
-            ) : (
-              <h1 className="ops:m-0 ops:mt-0.5 ops:text-base ops:font-semibold ops:tracking-tight">{title}</h1>
-            )}
-          </div>
-          <div className="ops:flex ops:items-center ops:gap-2">
-            <Badge className="ops-system-role-badge ops:hidden ops:sm:inline-flex">{roleLabel(roles)}</Badge>
-            {allowed.has("overview.read") && (
-              <Link href="/ops/notifications" aria-label="Open notifications" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
-                <Bell aria-hidden="true" className="ops:size-4" />
+          </Link>
+          <div className="ops:mt-8 ops:flex-1">{navigation}</div>
+          <Separator className="ops:mb-4" />
+          <div className="ops-system-user">
+            <div className="ops:flex ops:items-center ops:gap-3 ops:px-2">
+              <Avatar size="lg">
+                <AvatarFallback className="ops:bg-accent ops:text-xs ops:font-bold ops:text-accent-foreground">
+                  {operationsInitials(displayName)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="ops:min-w-0 ops:flex-1">
+                <strong className="ops:block ops:truncate ops:text-sm">{displayName}</strong>
+                <span className="ops:block ops:truncate ops:text-xs ops:text-muted-foreground">{currentRole}</span>
+              </span>
+              <Link href="/logout" aria-label="Sign out" className="ops:text-muted-foreground ops:hover:text-foreground">
+                <LogOut aria-hidden="true" className="ops:size-4" />
               </Link>
-            )}
-            <Link href="/logout" aria-label="Sign out" className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ops:lg:hidden")}>
-              <LogOut aria-hidden="true" className="ops:size-4" />
-            </Link>
-            <Link href="/" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "ops:hidden ops:sm:inline-flex")}>
-              Public site
-              <ExternalLink aria-hidden="true" className="ops:size-3.5" />
-            </Link>
+            </div>
           </div>
-        </header>
+        </aside>
 
-        <div className="ops-system-mobile-nav ops:overflow-x-auto ops:border-b ops:border-border ops:bg-card ops:px-3 ops:py-2 ops:lg:hidden">
-          {navigation}
+        <div className="ops-system-content ops:min-w-0 ops:lg:pl-64">
+          <header className="ops-system-topbar ops:sticky ops:top-0 ops:z-20 ops:flex ops:h-[72px] ops:items-center ops:justify-between ops:border-b ops:border-border ops:bg-card ops:px-4 ops:sm:px-6">
+            <div className="ops:flex ops:min-w-0 ops:items-center ops:gap-3">
+              <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+                <SheetTrigger
+                  aria-label="Open operations navigation"
+                  className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ops:lg:hidden")}
+                >
+                  <Menu aria-hidden="true" className="ops:size-4" />
+                </SheetTrigger>
+                <SheetContent side="left" className="ops:w-[min(20rem,90vw)] ops:border-r ops:bg-card ops:p-0 ops:shadow-none">
+                  <SheetHeader className="ops:border-b ops:border-border ops:px-4 ops:py-5">
+                    <SheetTitle>Purple Guide</SheetTitle>
+                    <SheetDescription>Operations</SheetDescription>
+                  </SheetHeader>
+                  <div className="ops:px-3 ops:py-4">{navigation}</div>
+                </SheetContent>
+              </Sheet>
+              <div className="ops:min-w-0">
+                <p className="ops-system-context ops:m-0 ops:flex ops:items-center ops:gap-1.5 ops:text-xs ops:font-semibold ops:uppercase ops:tracking-[0.08em] ops:text-muted-foreground">
+                  <ShieldCheck aria-hidden="true" className="ops:size-3.5" />
+                  Internal operations
+                </p>
+                {isOperationsProduct ? (
+                  <p className="ops-system-current-section ops:m-0 ops:mt-0.5 ops:truncate ops:text-base ops:font-semibold ops:tracking-tight">{title}</p>
+                ) : (
+                  <h1 className="ops:m-0 ops:mt-0.5 ops:truncate ops:text-base ops:font-semibold ops:tracking-tight">{title}</h1>
+                )}
+              </div>
+            </div>
+            <div className="ops:flex ops:items-center ops:gap-1">
+              {allowed.has("overview.read") ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href="/ops/notifications"
+                      aria-label="Open notifications"
+                      className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
+                    >
+                      <Bell aria-hidden="true" className="ops:size-4" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>Notifications</TooltipContent>
+                </Tooltip>
+              ) : null}
+              <OperationsActorMenu displayName={displayName} roleLabel={currentRole} />
+            </div>
+          </header>
+
+          <main className="ops-system-main ops:mx-auto ops:w-full ops:max-w-[1440px] ops:p-4 ops:sm:p-6 ops:lg:p-8">{children}</main>
         </div>
-
-        <main className="ops-system-main ops:mx-auto ops:w-full ops:max-w-[1440px] ops:p-4 ops:sm:p-6 ops:lg:p-8">{children}</main>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

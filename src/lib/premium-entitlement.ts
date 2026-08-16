@@ -24,18 +24,26 @@ export function entitlementPlanLabel(entitlement: PremiumEntitlementRecord): str
   return relation?.label ?? entitlement.plan_code.replaceAll("_", " ");
 }
 
+/** Mirrors `private.has_active_premium`: status=active AND starts_at <= now() AND ends_at > now(). */
+export function isCanonicallyActivePremium(
+  period: Pick<PremiumEntitlementRecord, "status" | "starts_at" | "ends_at">,
+  now = new Date()
+): boolean {
+  const timestamp = now.getTime();
+  return period.status === "active"
+    && new Date(period.starts_at).getTime() <= timestamp
+    && new Date(period.ends_at).getTime() > timestamp;
+}
+
 export function resolvePremiumValidity(
   periods: PremiumEntitlementRecord[],
   now = new Date()
 ): { status: "active" | "revoked" | "expired" | "none"; entitlement: PremiumEntitlementRecord | null } {
-  const timestamp = now.getTime();
-  const active = periods.find((period) => period.status === "active"
-    && new Date(period.starts_at).getTime() <= timestamp
-    && new Date(period.ends_at).getTime() > timestamp);
+  const active = periods.find((period) => isCanonicallyActivePremium(period, now));
   if (active) return { status: "active", entitlement: active };
   const latest = [...periods].sort((a, b) => new Date(b.ends_at).getTime() - new Date(a.ends_at).getTime())[0] ?? null;
   if (!latest) return { status: "none", entitlement: null };
-  if (latest.status === "revoked" && new Date(latest.ends_at).getTime() > timestamp) return { status: "revoked", entitlement: latest };
+  if (latest.status === "revoked" && new Date(latest.ends_at).getTime() > now.getTime()) return { status: "revoked", entitlement: latest };
   return { status: "expired", entitlement: latest };
 }
 
