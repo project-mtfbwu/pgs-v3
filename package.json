@@ -9,6 +9,7 @@
   "scripts": {
     "assets:fetch": "node scripts/fetch-legacy-assets.mjs",
     "assets:verify": "node scripts/verify-legacy-assets.mjs",
+    "legacy:generate-home-states": "node scripts/generate-home-root-states.mjs",
     "fixtures:preview": "node scripts/create-preview-role-fixtures.mjs",
     "fixtures:auth-states": "node scripts/create-playwright-auth-states.mjs",
     "parity:regions": "node scripts/capture-parity-regions.mjs",

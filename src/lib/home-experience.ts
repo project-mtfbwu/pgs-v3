@@ -1,20 +1,20 @@
 import { homeHtml } from "@/legacy/generated/home";
-import { simpleHomeHtml } from "@/legacy/generated/simplehome";
-import { purplePremiumHomeHtml } from "@/legacy/generated/purplepremiumhome";
+import { homeStandardHtml } from "@/legacy/generated/home-standard";
+import { homePremiumHtml } from "@/legacy/generated/home-premium";
 import type { StudentExperienceKind } from "@/lib/student-experience";
 
-export type HomeSourceSlug = "home" | "simplehome" | "purplepremiumhome";
+export type HomeSourceSlug = "home" | "home-standard" | "home-premium";
 
 export const homeSourceSlug: Record<StudentExperienceKind, HomeSourceSlug> = {
   anonymous: "home",
-  authenticated_standard: "simplehome",
-  authenticated_premium: "purplepremiumhome"
+  authenticated_standard: "home-standard",
+  authenticated_premium: "home-premium"
 };
 
 const homeSources: Record<HomeSourceSlug, string> = {
   home: homeHtml,
-  simplehome: simpleHomeHtml,
-  purplepremiumhome: purplePremiumHomeHtml
+  "home-standard": homeStandardHtml,
+  "home-premium": homePremiumHtml
 };
 
 export function homeSourceHtml(state: StudentExperienceKind): string {

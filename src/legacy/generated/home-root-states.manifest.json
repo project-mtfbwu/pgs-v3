@@ -1,0 +1,47 @@
+{
+  "source": {
+    "path": "application/views/home.php",
+    "git_blob_sha": "6a13b841e8591ccdff214bbb24e444ef8fb41701",
+    "sha256": "1708b611e040bbc127e5f275607ca90d096b843e6abdaae546849be14c2acca0"
+  },
+  "anonymous_base": {
+    "path": "src/legacy/generated/home",
+    "sha256": "d485b32c0061ec24a1c34bea71b5b06077ebd9218ad856ec6d13d7d5d143bf93"
+  },
+  "composition": {
+    "authenticated_standard": {
+      "figma_node": "17027:17252",
+      "sections": [
+        "mobile-student-cart",
+        "Explore #PGS"
+      ],
+      "fragment_sha256": [
+        "86293061433ec998e35fe53c67866634973e47bd62df3c01ddbfc99e72d8ce0d",
+        "9e880231e26d2fefb4b123d6364689f8904b461eeb0f98f93b7f5b6e0ffed441"
+      ]
+    },
+    "authenticated_premium": {
+      "figma_node": "17098:12263",
+      "sections": [
+        "mobile-student-cart",
+        "welcome to #PGS"
+      ],
+      "fragment_sha256": [
+        "b8b7e85fb83d18d3b50812588a12ba61eac51246b6d216e05cf61359d4884f66",
+        "31011cce5c02d42056fd55e0601822d65d151b796a0868d12551a9458f3f6345"
+      ]
+    }
+  },
+  "output": {
+    "homeStandardHtml": {
+      "chunks": 13,
+      "bytes": 223821,
+      "sha256": "8d2355e856aa1daaf18fb29c363f45866f6466f7cebe0f1f961fcce7c3018b1e"
+    },
+    "homePremiumHtml": {
+      "chunks": 13,
+      "bytes": 222215,
+      "sha256": "0aad17eb1fcb973eecc6d2449121d01726b380ea78f29545a7ea766cc125cdd6"
+    }
+  }
+}
