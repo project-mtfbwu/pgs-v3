@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminApiError } from "@/lib/admin-api";
-import { recordDeniedAuditEvent, recordFailedAuditEvent, recordStaffLifecycleAuditEvent } from "@/lib/audit";
+import { recordDeniedAuditEvent, recordFailedAuditEvent } from "@/lib/audit";
 import { readJsonObject, validUuid } from "@/lib/http";
 import {
   isStaffRoleKey,
@@ -17,6 +17,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const STAFF_ROUTE = "/api/admin/staff";
 const STAFF_ACTIONS = ["resolve", "invite", "resend", "assign", "revoke"] as const;
+const STAFF_INVITE_RESEND_DEFERRED = "Invitation resend will be enabled before launch.";
 type StaffAction = (typeof STAFF_ACTIONS)[number];
 
 function asStaffAction(value: string): StaffAction | null {
@@ -85,20 +86,6 @@ async function grantStaffAccess(input: {
   return { assignmentId: data as string | null, error };
 }
 
-async function resendStaffInvitation(email: string, staffOnly: boolean) {
-  const admin = createSupabaseAdminClient();
-  const options = staffOnly ? { data: { invited_for: "pgs_staff", pgs_context: "staff" } } : undefined;
-  const invited = await admin.auth.admin.inviteUserByEmail(email, options);
-  if (!invited.error) return;
-  if (!/already|registered|exists/i.test(invited.error.message)) {
-    throw new Error("Unable to resend the invitation. Check preview SMTP and server configuration.");
-  }
-  const generated = await admin.auth.admin.generateLink({ type: "invite", email });
-  if (generated.error) {
-    throw new Error("Unable to resend the invitation. Check preview SMTP and server configuration.");
-  }
-}
-
 export async function POST(request: Request) {
   let targetUserId: string | undefined;
   let authorized = false;
@@ -137,21 +124,7 @@ export async function POST(request: Request) {
       }
       if (identity?.invite_pending) {
         targetUserId = identity.user_id;
-        await resendStaffInvitation(email, !identity.has_student_profile);
-        await recordStaffLifecycleAuditEvent(request, {
-          eventType: "staff.invite_resent",
-          sourceSubsystem: "staff",
-          targetType: "staff_user",
-          targetId: identity.user_id,
-          metadata: {
-            previous_role: identity.staff_role,
-            new_role: identity.staff_role,
-            previous_status: identity.staff_status,
-            new_status: identity.staff_status,
-            result: "resent"
-          }
-        });
-        return NextResponse.json({ ok: true, user_id: identity.user_id, resent: true });
+        return failed(request, identity.user_id, "invite_resend_deferred", STAFF_INVITE_RESEND_DEFERRED);
       }
       if (identity) {
         targetUserId = identity.user_id;
@@ -236,23 +209,11 @@ export async function POST(request: Request) {
       const supabase = await createSupabaseServerClient();
       const { data, error } = await supabase.rpc("staff_access_detail", { target_user: userId });
       if (error) throw new Error(error.message);
-      const detail = Array.isArray(data) ? data[0] as { invite_pending?: boolean; has_student_profile?: boolean } | undefined : undefined;
+      const detail = Array.isArray(data) ? data[0] as { invite_pending?: boolean } | undefined : undefined;
       if (!detail?.invite_pending) {
         throw new Error("This person does not have a pending staff invitation.");
       }
-      const admin = createSupabaseAdminClient();
-      const { data: authUser, error: authError } = await admin.auth.admin.getUserById(userId);
-      const email = authUser.user?.email;
-      if (authError || !email) throw new Error("Unable to resend the invitation.");
-      await resendStaffInvitation(normalizeStaffEmail(email), !detail.has_student_profile);
-      await recordStaffLifecycleAuditEvent(request, {
-        eventType: "staff.invite_resent",
-        sourceSubsystem: "staff",
-        targetType: "staff_user",
-        targetId: userId,
-        metadata: { result: "resent", new_status: "active" }
-      });
-      return NextResponse.json({ ok: true, user_id: userId, resent: true });
+      return failed(request, userId, "invite_resend_deferred", STAFF_INVITE_RESEND_DEFERRED);
     }
 
     const granted = await grantStaffAccess({

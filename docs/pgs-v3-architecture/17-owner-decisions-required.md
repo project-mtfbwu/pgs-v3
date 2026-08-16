@@ -33,6 +33,24 @@ Architecture decisions already frozen are not reopened here. These questions con
 | O-15 | whether Admin may receive `staff.manage`, or only Super Admin | Super Admin only |
 | O-16 | lead lifecycle definitions, assignment, duplicate matching/merge, conversion rules, retention | preserve source submissions; no automatic merges |
 
+## PRODUCTION LAUNCH BLOCKER — AUTH EMAIL DELIVERY / RESEND
+
+This is a **Production launch blocker**, not a current development blocker. OPS-04 People & Access does not implement custom SMTP, Resend SDK delivery, or invitation resend.
+
+Before Production launch:
+
+1. Verify the Purple Guide sending domain or subdomain.
+2. Configure the production transactional email provider.
+3. Preferably connect Supabase Auth → custom SMTP → Resend.
+4. Verify staff invitations, invitation resend, password reset, and email confirmation where applicable.
+5. Test sender reputation/DNS: SPF, DKIM, and DMARC as appropriate.
+6. Verify Auth redirect URLs.
+7. Run controlled real inbox tests.
+8. Enable truthful invite-resend UX.
+9. Audit `staff.invite_resent` only after actual delivery handoff succeeds.
+
+Until then, Operations shows invitation resend as **Coming before launch**. Do not fake send success.
+
 ## Analytics, search, notifications, AI
 
 | ID | Decision | Safe default |

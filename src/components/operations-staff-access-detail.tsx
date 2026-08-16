@@ -29,7 +29,7 @@ type HistoryEvent = {
   metadata: Record<string, unknown> | null;
 };
 
-type PendingAction = "role" | "suspend" | "reactivate" | "revoke" | "resend" | null;
+type PendingAction = "role" | "suspend" | "reactivate" | "revoke" | null;
 
 export function OperationsStaffAccessDetail({
   detail,
@@ -168,9 +168,14 @@ export function OperationsStaffAccessDetail({
               Change role
             </Button>
             {detail.invite_pending ? (
-              <Button disabled={pending} onClick={() => setAction("resend")} type="button" variant="outline">
-                Resend invitation
-              </Button>
+              <div className="ops-team-resend-placeholder">
+                <Button aria-describedby="staff-resend-deferred" disabled type="button" variant="outline">
+                  Resend invitation
+                </Button>
+                <p id="staff-resend-deferred" className="ops-team-status" role="status">
+                  Coming before launch
+                </p>
+              </div>
             ) : null}
             {detail.status === "active" ? (
               <Button className="ops-team-destructive" disabled={pending} onClick={() => setAction("suspend")} type="button">
@@ -197,8 +202,7 @@ export function OperationsStaffAccessDetail({
           action === "suspend" ? "Suspend staff access"
             : action === "revoke" ? "Revoke staff access"
               : action === "reactivate" ? "Reactivate staff access"
-                : action === "resend" ? "Resend invitation"
-                  : "Change role"
+                : "Change role"
         }
         currentEmail={email}
         description="Review the access change before it is applied. The server still authorizes this with roles.manage."
@@ -214,8 +218,6 @@ export function OperationsStaffAccessDetail({
             void send({ action: "assign", user_id: detail.user_id, role, status: "active", display_name: detail.display_name });
           } else if (action === "revoke") {
             void send({ action: "revoke", user_id: detail.user_id, role: detail.role_key });
-          } else if (action === "resend") {
-            void send({ action: "resend", user_id: detail.user_id, role: detail.role_key });
           }
         }}
         onOpenChange={(open) => { if (!open) setAction(null); }}

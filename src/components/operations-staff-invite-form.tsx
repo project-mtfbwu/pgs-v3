@@ -98,6 +98,10 @@ export function OperationsStaffInviteForm() {
         void (async () => {
           const resolved = identity === undefined ? await resolveIdentity() : identity;
           if (resolved === "error") return;
+          if (resolved?.invite_pending) {
+            setMessage("Invitation resend will be enabled before launch.");
+            return;
+          }
           if (resolved?.has_staff_profile && resolved.staff_status === "active" && !resolved.invite_pending) {
             setMessage("This person already has staff access.");
             return;
@@ -159,7 +163,7 @@ export function OperationsStaffInviteForm() {
         </p>
       ) : null}
       {identity?.invite_pending ? (
-        <p className="ops-team-warning" role="status">A pending invitation already exists for this email. Sending will resend it.</p>
+        <p className="ops-team-warning" role="status">A pending invitation already exists for this email. Invitation resend will be enabled before launch.</p>
       ) : null}
       {identity?.has_staff_profile && (identity.staff_status === "suspended" || identity.staff_status === "ended") ? (
         <p className="ops-team-warning" role="status">This email already has a staff identity. Sending will reuse the same login and restore access.</p>
@@ -168,11 +172,11 @@ export function OperationsStaffInviteForm() {
 
       <OperationsStaffAccessSummary access={preview} heading="Effective access summary" />
       {message ? <p className="ops-team-status" role="status">{message}</p> : null}
-      <Button disabled={pending} type="submit">Review and send invitation</Button>
+      <Button disabled={pending || Boolean(identity?.invite_pending)} type="submit">Review and send invitation</Button>
 
       <OperationsStaffConfirmDialog
         afterAccess={preview}
-        confirmLabel={identity?.invite_pending ? "Resend invitation" : "Send invitation"}
+        confirmLabel="Send invitation"
         currentEmail={normalizeStaffEmail(email)}
         description="Review the access this invitation will grant, then confirm."
         error={message}

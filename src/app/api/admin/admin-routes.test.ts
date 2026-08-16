@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { requirePermission, rpc, inviteUserByEmail, deleteUser, generateLink } = vi.hoisted(() => ({
+const { requirePermission, rpc, inviteUserByEmail, deleteUser, generateLink, recordStaffLifecycleAuditEvent } = vi.hoisted(() => ({
   requirePermission: vi.fn(),
   rpc: vi.fn(),
   inviteUserByEmail: vi.fn(),
   deleteUser: vi.fn(),
-  generateLink: vi.fn()
+  generateLink: vi.fn(),
+  recordStaffLifecycleAuditEvent: vi.fn(async () => true)
 }));
 
 vi.mock("@/lib/staff-auth", async () => {
@@ -23,7 +24,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 vi.mock("@/lib/audit", () => ({
   recordDeniedAuditEvent: vi.fn(async () => true),
   recordFailedAuditEvent: vi.fn(async () => true),
-  recordStaffLifecycleAuditEvent: vi.fn(async () => true)
+  recordStaffLifecycleAuditEvent
 }));
 
 import { POST as catalogPost } from "@/app/api/admin/catalog/[entity]/route";
@@ -138,5 +139,47 @@ describe("OPS-04 staff invite identity", () => {
     expect(body.code).toBe("already_staff");
     expect(body.user_id).toBe(studentId);
     expect(inviteUserByEmail).not.toHaveBeenCalled();
+  });
+
+  it("does not pretend a pending invitation was resent", async () => {
+    rpc.mockResolvedValue({
+      data: [{
+        user_id: newAuthId,
+        has_student_profile: false,
+        has_staff_profile: true,
+        staff_status: "active",
+        staff_role: "mentor",
+        email_confirmed: false,
+        has_signed_in: false,
+        invite_pending: true
+      }],
+      error: null
+    });
+    const response = await staffPost(new Request("http://localhost/api/admin/staff", {
+      method: "POST",
+      body: JSON.stringify({ action: "invite", email: "pending-staff@pgs.test", display_name: "Pending", role: "mentor" })
+    }));
+    const body = await response.json();
+    expect(response.status).toBe(400);
+    expect(body.message).toBe("Invitation resend will be enabled before launch.");
+    expect(body.resent).not.toBe(true);
+    expect(inviteUserByEmail).not.toHaveBeenCalled();
+    expect(generateLink).not.toHaveBeenCalled();
+    expect(deleteUser).not.toHaveBeenCalled();
+    expect(recordStaffLifecycleAuditEvent).not.toHaveBeenCalled();
+  });
+
+  it("keeps Access Detail resend as a launch placeholder", async () => {
+    rpc.mockResolvedValue({ data: [{ invite_pending: true }], error: null });
+    const response = await staffPost(new Request("http://localhost/api/admin/staff", {
+      method: "POST",
+      body: JSON.stringify({ action: "resend", user_id: newAuthId, role: "mentor" })
+    }));
+    const body = await response.json();
+    expect(response.status).toBe(400);
+    expect(body.message).toBe("Invitation resend will be enabled before launch.");
+    expect(inviteUserByEmail).not.toHaveBeenCalled();
+    expect(generateLink).not.toHaveBeenCalled();
+    expect(recordStaffLifecycleAuditEvent).not.toHaveBeenCalled();
   });
 });

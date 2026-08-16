@@ -11,6 +11,9 @@ import {
   type StaffProfileStatus
 } from "@/lib/operations-staff-access";
 
+// OPS-09: Security Advisor 0029 flags public SECURITY DEFINER RPCs executable by `authenticated`.
+// These four keep internal checks (staff.read / roles.manage). Do not treat the warning as an OPS-04 rewrite.
+
 function asDirectoryRow(row: Record<string, unknown>): StaffDirectoryRow | null {
   if (!isStaffRoleKey(String(row.role_key ?? ""))) return null;
   const status = row.status;

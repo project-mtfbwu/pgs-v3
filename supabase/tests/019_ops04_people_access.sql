@@ -1,7 +1,9 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(47);
+select plan(51);
+-- OPS-09: Advisor 0029 flags these SECURITY DEFINER RPCs as executable by authenticated.
+-- Retain the internal staff.read / roles.manage guards unless OPS-09 rewrites that surface.
 
 select has_index('public','staff_role_assignments','staff_role_assignments_one_active_role_idx','one active role remains a database invariant');
 select has_function('public','staff_people_directory');
@@ -77,6 +79,17 @@ select results_eq($$select count(*)::bigint from public.cms_pages$$, array[0::bi
 set local request.jwt.claims = '{"sub":"d0410000-0000-4000-8000-000000000011","role":"authenticated"}';
 select throws_ok($$select public.staff_people_directory()$$, 'P0001', 'forbidden', 'Mentor cannot execute the Team directory');
 select throws_ok($$select public.lookup_staff_invite_identity('ops04-student@example.test')$$, 'P0001', 'forbidden', 'Mentor cannot resolve invite identities');
+
+set local request.jwt.claims = '{"sub":"d0410000-0000-4000-8000-000000000002","role":"authenticated"}';
+select throws_ok($$select public.staff_people_directory()$$, 'P0001', 'forbidden', 'student without staff cannot execute the Team directory');
+select throws_ok($$select public.staff_access_detail('d0410000-0000-4000-8000-000000000011')$$, 'P0001', 'forbidden', 'student without staff cannot read Access Detail');
+select throws_ok($$select public.lookup_staff_invite_identity('ops04-admin@example.test')$$, 'P0001', 'forbidden', 'student without staff cannot resolve invite identities');
+select throws_ok(
+  $$select public.manage_staff_access('d0410000-0000-4000-8000-000000000011','admin',true,'active','','student mutation')$$,
+  'P0001',
+  'forbidden',
+  'student without staff cannot mutate staff access'
+);
 
 set local request.jwt.claims = '{"sub":"d0410000-0000-4000-8000-000000000010","role":"authenticated"}';
 select lives_ok($$select public.staff_people_directory()$$, 'Admin with staff.read can list People');
