@@ -390,6 +390,130 @@ li:first-child .ops-system-compact-row {
   background: var(--operations-accent-foreground);
 }
 
+.ops-registry-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ops-registry-field > span:first-child {
+  color: var(--operations-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+@media (min-width: 768px) {
+  .ops-system-filterbar > button {
+    align-self: end;
+  }
+}
+
+.ops-registry-student-name,
+.ops-registry-pgs-code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ops-registry-pgs-code {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.ops-registry-mobile {
+  display: none;
+}
+
+.ops-registry-card-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 16px;
+  list-style: none;
+}
+
+.ops-registry-card {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--operations-border);
+  border-radius: 12px;
+  background: var(--operations-card);
+}
+
+.ops-registry-card h2 {
+  margin: 0;
+  color: var(--operations-foreground);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.ops-registry-card-fields {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.ops-registry-card-fields > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ops-registry-card-fields dt {
+  color: var(--operations-muted-foreground);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.ops-registry-card-fields dd {
+  margin: 0;
+  color: var(--operations-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.ops-registry-card-open {
+  margin: 0;
+}
+
+.ops-registry-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--operations-border);
+}
+
+.ops-registry-pagination p {
+  margin: 0;
+  color: var(--operations-muted-foreground);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.ops-registry-pagination a,
+.ops-registry-pagination span {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--operations-foreground);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  text-decoration: none;
+}
+
+.ops-registry-pagination span[aria-disabled="true"] {
+  color: var(--operations-muted-foreground);
+  font-weight: 500;
+}
+
 @media (min-width: 1024px) {
   .operations-root[data-operations-product="true"] .ops-system-content {
     padding-left: 240px;
@@ -430,6 +554,14 @@ li:first-child .ops-system-compact-row {
   }
 
   .ops-system-table-hint {
+    display: block;
+  }
+
+  .ops-registry-desktop {
+    display: none;
+  }
+
+  .ops-registry-mobile {
     display: block;
   }
 }

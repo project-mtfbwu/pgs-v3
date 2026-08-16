@@ -31,8 +31,9 @@ const privilegedDeleteAuditMigration = await readFile(new URL("../supabase/migra
 const phase4eMigration = await readFile(new URL("../supabase/migrations/20260815072718_phase4e_explicit_document_sharing.sql", import.meta.url), "utf8");
 const phase4eGateMigration = await readFile(new URL("../supabase/migrations/20260815074452_phase4e_common_deliverability_gate.sql", import.meta.url), "utf8");
 const phase4eIndexMigration = await readFile(new URL("../supabase/migrations/20260815074749_phase4e_share_actor_indexes.sql", import.meta.url), "utf8");
+const ops02RegistryMigration = await readFile(new URL("../supabase/migrations/20260816152131_ops02_student_registry.sql", import.meta.url), "utf8");
 const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}\n${privilegedDeleteAuditMigration}`;
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}`;
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -132,6 +133,14 @@ const required = [
   ,"revoke_document_share"
   ,"resolve_document_share_access"
   ,"target.deletion_requested_at is null"
+  ,"pgs_code ~ '^PGS[0-9]{6}$'"
+  ,"private.student_code_counters"
+  ,"private.issue_student_pgs_code"
+  ,"staff_student_registry"
+  ,"student.pgs_code.issued"
+  ,"Asia/Kolkata"
+  ,"last_sequence < 9999"
+  ,"created_at desc, scoped.id desc"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -160,4 +169,7 @@ if (!/where r\.key in \('admin','super_admin'\)/i.test(phase4eMigration)) throw 
 if (!phase4eMigration.includes("statement_timestamp()<s.expires_at")) throw new Error("Share expiry must be evaluated live without a worker");
 if (phase4eGateMigration.includes("private.is_deliverable_student_document")) throw new Error("Share identity resolution must leave document security to the common signing-route gate");
 if (!phase4eIndexMigration.includes("document_shares_granted_by_idx") || !phase4eIndexMigration.includes("document_shares_revoked_by_idx")) throw new Error("Share actor foreign keys must remain indexed");
+if (ops02RegistryMigration.includes("^PGS[0-9]{6,}")) throw new Error("PGS codes must be exactly six digits after the prefix");
+if (/create policy[\s\S]*students\.read[\s\S]*on public\.profiles/i.test(ops02RegistryMigration)) throw new Error("OPS-02 must not restore a students.read table SELECT policy on profiles");
+if (!ops02RegistryMigration.includes("least(greatest(coalesce(page_size, 25), 1), 50)")) throw new Error("Registry RPC must clamp page size to 25 default / 50 maximum");
 console.log("RLS migration static checks passed");

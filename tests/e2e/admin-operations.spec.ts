@@ -79,7 +79,10 @@ test.describe("preview read-only staff workflow",()=>{
     await page.goto("/ops/students");
     await expect(page.getByRole("heading",{name:"Student Registry"})).toBeVisible();
     await expect(page.getByRole("link",{name:/open workspace/i})).toHaveCount(0);
-    await expect(page.locator("tbody tr").first()).toContainText("directory");
+    await expect(page.getByText("PGS ID").first()).toBeVisible();
+    await expect(page.getByText("directory",{exact:true})).toHaveCount(0);
+    await expect(page.getByLabel("Student name")).toBeVisible();
+    await expect(page.getByRole("navigation",{name:"Student registry pagination"})).toBeVisible();
     const studentId=process.env.PGS_ASSIGNED_STUDENT_ID;
     test.skip(!studentId,"Supply a Premium student fixture UUID.");
     const directApi=await request.patch(`/api/staff/students/${studentId}/workspace/tasks`,{data:{id:"00000000-0000-4000-8000-000000000000",title:"forged"}});
@@ -106,6 +109,8 @@ test.describe("preview Mentor workflow",()=>{
     await expect(page.getByRole("link",{name:"Scoreboard"}).first()).toBeVisible();
     await page.goto("/ops/students");
     await expect(page.getByRole("heading",{name:"My Students"})).toBeVisible();
+    await expect(page.getByRole("columnheader",{name:"Mentor"})).toHaveCount(0);
+    await expect(page.getByText("Mentor",{exact:true})).toHaveCount(0);
     await expect(page.getByRole("link",{name:"Catalog"})).toHaveCount(0);
     const response=await request.post("/api/admin/catalog/courses",{data:{title:"Mentor attack",slug:"mentor-attack"}});
     expect(response.status()).toBe(403);
@@ -162,6 +167,39 @@ test.describe("preview Admin workflow",()=>{
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
     const response=await request.post("/api/admin/staff",{data:{action:"assign",userId:"00000000-0000-0000-0000-000000000000",role:"super_admin"}});
     expect(response.status()).toBe(403);
+  });
+  test("Admin registry uses a semantic table, accessible cards, and canonical plan labels",async({page})=>{
+    await page.goto("/ops/students");
+    await expect(page.getByRole("heading",{name:"Student Registry"})).toBeVisible();
+    await expect(page.getByRole("columnheader",{name:"Email"})).toHaveCount(0);
+    await expect(page.getByRole("navigation",{name:"Student registry pagination"})).toBeVisible();
+    await expect(page.getByText("Previous page")).toBeVisible();
+    await expect(page.getByText("Next page")).toBeVisible();
+    const desktop= (page.viewportSize()?.width ?? 1440) >= 768;
+    if(desktop){
+      await expect(page.getByRole("columnheader",{name:"PGS ID"})).toBeVisible();
+      await expect(page.locator("table thead th[scope=col]").first()).toBeVisible();
+      await page.locator("body").press("Tab");
+      await expect(page.locator(":focus-visible")).toHaveCount(1);
+    }
+    await page.setViewportSize({width:390,height:844});
+    const card=page.locator(".ops-registry-card");
+    if(await card.count()){
+      await expect(card.first()).toBeVisible();
+    }else{
+      await expect(page.getByText("No students match this authorized view.")).toBeVisible();
+    }
+    await expect(page.locator(".ops-registry-desktop table")).toBeHidden();
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);
+    await page.evaluate(()=>{document.documentElement.style.zoom="2";});
+    const clipped=await page.evaluate(()=>{
+      const names=[...document.querySelectorAll(".ops-registry-student-name")];
+      return names.some((node)=>{
+        const style=getComputedStyle(node);
+        return style.overflow==="hidden" && (style.textOverflow==="ellipsis" || node.scrollHeight>node.clientHeight+2);
+      });
+    });
+    expect(clipped).toBe(false);
   });
 });
 
