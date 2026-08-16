@@ -742,6 +742,126 @@ li:first-child .ops-system-compact-row {
   }
 }
 
+.ops-team-desktop {
+  display: block;
+}
+
+.ops-team-mobile {
+  display: none;
+}
+
+.ops-team-name {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.ops-team-meta {
+  display: block;
+  margin-top: 4px;
+  color: var(--operations-muted-foreground);
+}
+
+.ops-team-open {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  font-weight: 600;
+  color: var(--operations-accent-foreground);
+  text-decoration: none;
+}
+
+.ops-team-panel,
+.ops-team-detail,
+.ops-team-form {
+  display: grid;
+  gap: 20px;
+  padding: 20px;
+}
+
+.ops-team-field {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.ops-team-field > span,
+.ops-team-summary dt,
+.ops-team-facts dt,
+.ops-team-summary-list dt {
+  color: var(--operations-foreground);
+}
+
+.ops-team-summary h2,
+.ops-team-detail h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.ops-team-summary dl,
+.ops-team-facts,
+.ops-team-summary-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+
+.ops-team-summary dl > div,
+.ops-team-facts > div,
+.ops-team-summary-list > div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) 1fr;
+  gap: 8px 16px;
+}
+
+.ops-team-summary dt,
+.ops-team-facts dt,
+.ops-team-summary-list dt {
+  font-weight: 600;
+}
+
+.ops-team-summary dd,
+.ops-team-facts dd,
+.ops-team-summary-list dd {
+  margin: 0;
+}
+
+.ops-team-warning,
+.ops-team-error,
+.ops-team-status {
+  margin: 0;
+  color: var(--operations-foreground);
+}
+
+.ops-team-error {
+  font-weight: 600;
+}
+
+.ops-team-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.operations-root .ops-team-destructive {
+  min-height: 44px;
+  border: 1px solid var(--operations-foreground);
+  background: var(--operations-card);
+  color: var(--operations-foreground);
+}
+
+.operations-root .ops-team-destructive:hover,
+.operations-root .ops-team-destructive:focus-visible {
+  background: var(--operations-secondary);
+  color: var(--operations-foreground);
+}
+
+.ops-team-card .ops-team-name {
+  margin: 0 0 12px;
+}
+
 @media (max-width: 767px) {
   .operations-root[data-operations-product="true"] .ops-system-topbar {
     padding-inline: 16px;
@@ -783,5 +903,19 @@ li:first-child .ops-system-compact-row {
 
   .ops-registry-filters-mobile {
     display: grid;
+  }
+
+  .ops-team-desktop {
+    display: none;
+  }
+
+  .ops-team-mobile {
+    display: block;
+  }
+
+  .ops-team-summary dl > div,
+  .ops-team-facts > div,
+  .ops-team-summary-list > div {
+    grid-template-columns: 1fr;
   }
 }

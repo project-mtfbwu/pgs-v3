@@ -36,9 +36,9 @@ select results_eq('select count(*)::bigint from public.admin_audit_logs',array[0
 select throws_ok($$insert into public.courses(title,slug) values('Student attack','student-attack')$$,'42501',null,'student-supplied role cannot mutate catalog');
 
 set local request.jwt.claims='{"sub":"62000000-0000-4000-8000-000000000002","role":"authenticated"}';
-select is(private.has_staff_permission('catalog.read'),true,'read-only staff reads catalog');
+select is(private.has_staff_permission('catalog.read'),false,'read-only staff does not receive catalog capability');
 select is(private.has_staff_permission('catalog.manage'),false,'read-only staff lacks catalog mutation');
-select is(private.has_staff_permission('cms.read'),true,'read-only staff reads CMS');
+select is(private.has_staff_permission('cms.read'),false,'read-only staff does not receive CMS capability');
 select is(private.has_staff_permission('cms.publish'),false,'read-only staff cannot publish');
 select throws_ok($$insert into public.courses(title,slug) values('Viewer attack','viewer-attack')$$,'42501',null,'read-only staff direct catalog insert denied');
 select results_eq(

@@ -33,8 +33,9 @@ const phase4eGateMigration = await readFile(new URL("../supabase/migrations/2026
 const phase4eIndexMigration = await readFile(new URL("../supabase/migrations/20260815074749_phase4e_share_actor_indexes.sql", import.meta.url), "utf8");
 const ops02RegistryMigration = await readFile(new URL("../supabase/migrations/20260816152131_ops02_student_registry.sql", import.meta.url), "utf8");
 const ops03RegistryMigration = await readFile(new URL("../supabase/migrations/20260816163133_ops03_registry_search.sql", import.meta.url), "utf8");
+const ops04PeopleMigration = await readFile(new URL("../supabase/migrations/20260816170216_ops04_people_access.sql", import.meta.url), "utf8");
 const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}\n${privilegedDeleteAuditMigration}`;
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}`;
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -147,6 +148,11 @@ const required = [
   ,"private.normalize_registry_saved_query"
   ,"saved view limit is 20"
   ,"plan_filter"
+  ,"staff_people_directory"
+  ,"lookup_staff_invite_identity"
+  ,"staff.invited"
+  ,"staff.access_revoked"
+  ,"p.key not in ('overview.read', 'students.read')"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -183,4 +189,10 @@ if (ops03RegistryMigration.includes("create table public.student_tags") || ops03
 if (!ops03RegistryMigration.includes("staff_user_id = auth.uid()")) throw new Error("Saved views must remain owner-scoped to auth.uid()");
 if (!ops03RegistryMigration.includes("private.can_use_staff_registry()")) throw new Error("Saved views must require a current active staff registry identity");
 if (ops03RegistryMigration.includes("elasticsearch") || ops03RegistryMigration.includes("meilisearch")) throw new Error("OPS-03 must remain Postgres-first");
+if (ops04PeopleMigration.includes("target_status not in ('active', 'suspended', 'ended', 'invited')") || ops04PeopleMigration.includes("status = 'invited'")) throw new Error("OPS-04 must not add invited/pending staff status");
+if (ops04PeopleMigration.includes("deleteUser") || ops04PeopleMigration.includes("auth.admin.delete")) throw new Error("OPS-04 must not delete Auth users");
+if (ops04PeopleMigration.includes("ops.access") || ops04PeopleMigration.includes("cms.access") || ops04PeopleMigration.includes("ops_users") || ops04PeopleMigration.includes("cms_users")) throw new Error("OPS-04 must not create a separate surface-access identity model");
+if (!ops04PeopleMigration.includes("staff.invited") || !ops04PeopleMigration.includes("staff.access_revoked")) throw new Error("OPS-04 must write the approved staff lifecycle audit events");
+if (!ops04PeopleMigration.includes("private.has_staff_permission('staff.read')")) throw new Error("People directory must require staff.read");
+if (!ops04PeopleMigration.includes("private.has_staff_permission('roles.manage')")) throw new Error("Invite identity lookup must require roles.manage");
 console.log("RLS migration static checks passed");

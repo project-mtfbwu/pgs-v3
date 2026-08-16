@@ -45,11 +45,11 @@ select lives_ok(
   'successful staff access mutation is transactionally audited'
 );
 select results_eq(
-  $$select count(*)::bigint from public.audit_events where event_type='staff.access_changed' and target_id='a4600000-0000-4000-8000-000000000006'$$,
+  $$select count(*)::bigint from public.audit_events where event_type='staff.invited' and target_id='a4600000-0000-4000-8000-000000000006'$$,
   array[1::bigint],'staff mutation emits exactly one canonical success event'
 );
 select results_eq(
-  $$select actor_kind from public.audit_events where event_type='staff.access_changed' and target_id='a4600000-0000-4000-8000-000000000006'$$,
+  $$select actor_kind from public.audit_events where event_type='staff.invited' and target_id='a4600000-0000-4000-8000-000000000006'$$,
   array['staff'::text],'staff success event derives canonical actor kind'
 );
 reset role;
@@ -144,11 +144,11 @@ select throws_ok(
 reset role;
 set local role service_role;
 select throws_ok(
-  $$update public.audit_events set outcome='failed' where event_type='staff.access_changed'$$,
+  $$update public.audit_events set outcome='failed' where event_type='staff.invited'$$,
   'P0001','audit history is append-only','canonical audit UPDATE is blocked'
 );
 select throws_ok(
-  $$delete from public.audit_events where event_type='staff.access_changed'$$,
+  $$delete from public.audit_events where event_type='staff.invited'$$,
   'P0001','audit history is append-only','canonical audit DELETE is blocked'
 );
 
@@ -174,7 +174,7 @@ select hasnt_table('public','domain_events','Phase 4B does not create speculativ
 create function pg_temp.reject_canonical_audit()
 returns trigger language plpgsql as $$begin raise exception 'forced canonical audit failure';end$$;
 create trigger phase4b_force_audit_failure before insert on public.audit_events
-for each row when (new.event_type='staff.access_changed')
+for each row when (new.event_type='staff.invited')
 execute function pg_temp.reject_canonical_audit();
 select pass('canonical audit failure fixture installed');
 set local role authenticated;
@@ -198,11 +198,11 @@ select pass('canonical audit failure fixture removed');
 
 set local role service_role;
 select lives_ok(
-  $$update public.audit_events set actor_user_id=null where event_type='staff.access_changed' and target_id='a4600000-0000-4000-8000-000000000006'$$,
+  $$update public.audit_events set actor_user_id=null where event_type='staff.invited' and target_id='a4600000-0000-4000-8000-000000000006'$$,
   'approved identity de-identification remains possible'
 );
 select results_eq(
-  $$select actor_user_id from public.audit_events where event_type='staff.access_changed' and target_id='a4600000-0000-4000-8000-000000000006'$$,
+  $$select actor_user_id from public.audit_events where event_type='staff.invited' and target_id='a4600000-0000-4000-8000-000000000006'$$,
   array[null::uuid],'de-identification clears only canonical actor identity'
 );
 select lives_ok(

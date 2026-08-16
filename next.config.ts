@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
       { source: "/ops", destination: "/admin" },
       { source: "/ops/students/:path*", destination: "/admin/students/:path*" },
       { source: "/ops/team", destination: "/admin/staff" },
+      { source: "/ops/team/:path*", destination: "/admin/staff/:path*" },
       { source: "/ops/notifications", destination: "/admin/notifications" },
       { source: "/ops/activity", destination: "/admin/audit" }
     ];

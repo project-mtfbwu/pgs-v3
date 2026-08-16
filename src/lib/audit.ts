@@ -25,7 +25,8 @@ export type AuditMetadata = Partial<Record<
   | "qc_decision"
   | "share_id"
   | "recipient_user_id"
-  | "expires_at",
+  | "expires_at"
+  | "result",
   SafeMetadataValue
 >>;
 
@@ -51,10 +52,18 @@ type FailedEventType =
 
 type ReadEventType = "document.accessed" | "document.share_accessed";
 
+type StaffLifecycleEventType =
+  | "staff.invited"
+  | "staff.invite_resent"
+  | "staff.role_changed"
+  | "staff.suspended"
+  | "staff.reactivated"
+  | "staff.access_revoked";
+
 const allowedMetadataKeys = new Set([
   "permission_required","reason_code","route","role","previous_role","new_role",
   "previous_status","new_status","assignment_id","mentor_id","previous_mentor_id",
-  "entitlement_id","qc_decision","share_id","recipient_user_id","expires_at"
+  "entitlement_id","qc_decision","share_id","recipient_user_id","expires_at","result"
 ]);
 
 type TrustedAuditInput<T extends string> = {
@@ -106,7 +115,7 @@ async function writeTrustedAuditEvent<T extends string>(
 
 async function writeBestEffort<T extends string>(
   request: Request | undefined,
-  outcome: "denied" | "failed",
+  outcome: "denied" | "failed" | "succeeded",
   input: TrustedAuditInput<T>
 ): Promise<boolean> {
   try {
@@ -136,6 +145,14 @@ export async function recordFailedAuditEvent(
   input: TrustedAuditInput<FailedEventType>
 ): Promise<boolean> {
   return writeBestEffort(request, "failed", input);
+}
+
+/** Staff lifecycle successes from trusted server writers. RPC-owned events stay in Postgres. */
+export async function recordStaffLifecycleAuditEvent(
+  request: Request,
+  input: TrustedAuditInput<StaffLifecycleEventType>
+): Promise<boolean> {
+  return writeBestEffort(request, "succeeded", input);
 }
 
 /** Sensitive reads fail closed if canonical access evidence cannot be persisted. */

@@ -52,6 +52,7 @@ const sectionTitles: Record<string, string> = {
   "/ops": "Operations Scoreboard",
   "/ops/students": "Students",
   "/ops/team": "Team",
+  "/ops/team/invite": "Invite staff",
   "/ops/notifications": "Notifications",
   "/ops/activity": "Activity"
 };
@@ -73,7 +74,9 @@ export function AdminShell({
   const allowed = new Set(permissions);
   const canViewScoreboard = canViewOperationsScoreboard({ roles, permissions: allowed });
   const visibleItems = items.filter((item) => allowed.has(item.permission) && (!item.scoreboard || canViewScoreboard));
-  const title = sectionTitles[pathname] ?? "Operations";
+  const title = pathname.startsWith("/ops/team/") && pathname !== "/ops/team/invite"
+    ? "Staff access"
+    : (sectionTitles[pathname] ?? "Operations");
   const currentRole = operationsRoleLabel(roles);
 
   useEffect(() => {
@@ -149,42 +152,42 @@ export function AdminShell({
 
         <div className="ops-system-content ops:min-w-0 ops:lg:pl-64">
           <header className="ops-system-topbar ops:sticky ops:top-0 ops:z-20 ops:flex ops:h-[72px] ops:items-center ops:justify-between ops:border-b ops:border-border ops:bg-card ops:px-4 ops:sm:px-6">
-            <div className="ops:flex ops:min-w-0 ops:items-center ops:gap-3">
-              <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-                <SheetTrigger
-                  aria-label="Open operations navigation"
-                  className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ops:lg:hidden")}
-                >
-                  <Menu aria-hidden="true" className="ops:size-4" />
-                </SheetTrigger>
-                <SheetContent side="left" className="ops:w-[min(20rem,90vw)] ops:border-r ops:bg-card ops:p-0 ops:shadow-none">
-                  <SheetHeader className="ops:border-b ops:border-border ops:px-4 ops:py-5">
-                    <SheetTitle>Purple Guide</SheetTitle>
-                    <SheetDescription>Operations</SheetDescription>
-                  </SheetHeader>
-                  <div className="ops:px-3 ops:py-4">{navigation}</div>
-                </SheetContent>
-              </Sheet>
-              <div className="ops:min-w-0">
-                <p className="ops-system-context ops:m-0 ops:flex ops:items-center ops:gap-1.5 ops:text-xs ops:font-semibold ops:uppercase ops:tracking-[0.08em] ops:text-muted-foreground">
-                  <ShieldCheck aria-hidden="true" className="ops:size-3.5" />
-                  Internal operations
-                </p>
+            <div className="ops:flex ops:min-w-0 ops:flex-col ops:justify-center">
+              <p className="ops-system-context ops:m-0 ops:flex ops:items-center ops:gap-1.5 ops:text-xs ops:font-semibold ops:uppercase ops:tracking-[0.08em] ops:text-muted-foreground">
+                <ShieldCheck aria-hidden="true" className="ops:size-3.5" />
+                Internal operations
+              </p>
+              <div className="ops:flex ops:min-w-0 ops:items-center ops:gap-3">
+                <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+                  <SheetTrigger
+                    aria-label="Open operations navigation"
+                    className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ops-system-topbar-menu ops:lg:hidden")}
+                  >
+                    <Menu aria-hidden="true" className="ops:size-4" />
+                  </SheetTrigger>
+                  <SheetContent side="left" className="ops:w-[min(20rem,90vw)] ops:border-r ops:bg-card ops:p-0 ops:shadow-none">
+                    <SheetHeader className="ops:border-b ops:border-border ops:px-4 ops:py-5">
+                      <SheetTitle className="ops-system-nav-sheet-title">Purple Guide</SheetTitle>
+                      <SheetDescription className="ops-system-nav-sheet-description">Operations</SheetDescription>
+                    </SheetHeader>
+                    <div className="ops:px-3 ops:py-4">{navigation}</div>
+                  </SheetContent>
+                </Sheet>
                 {isOperationsProduct ? (
-                  <p className="ops-system-current-section ops:m-0 ops:mt-0.5 ops:truncate ops:text-base ops:font-semibold ops:tracking-tight">{title}</p>
+                  <p className="ops-system-current-section ops:m-0 ops:truncate ops:tracking-tight">{title}</p>
                 ) : (
-                  <h1 className="ops:m-0 ops:mt-0.5 ops:truncate ops:text-base ops:font-semibold ops:tracking-tight">{title}</h1>
+                  <h1 className="ops:m-0 ops:truncate ops:text-base ops:font-semibold ops:tracking-tight">{title}</h1>
                 )}
               </div>
             </div>
-            <div className="ops:flex ops:items-center ops:gap-1">
+            <div className="ops:flex ops:items-center ops:gap-2">
               {allowed.has("overview.read") ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link
                       href="/ops/notifications"
                       aria-label="Open notifications"
-                      className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
+                      className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ops-system-topbar-notify")}
                     >
                       <Bell aria-hidden="true" className="ops:size-4" />
                     </Link>

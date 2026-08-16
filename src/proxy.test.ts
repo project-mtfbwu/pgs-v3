@@ -36,6 +36,8 @@ describe("canonical Operations product routing", () => {
     ["/admin/students?premium=active", "/ops/students?premium=active"],
     ["/admin/students/student-1", "/ops/students/student-1"],
     ["/admin/staff", "/ops/team"],
+    ["/admin/staff/invite", "/ops/team/invite"],
+    ["/admin/staff/staff-1", "/ops/team/staff-1"],
     ["/admin/notifications", "/ops/notifications"],
     ["/admin/audit", "/ops/activity"]
   ])("redirects mapped compatibility route %s to %s", async (legacy, canonical) => {
@@ -67,6 +69,7 @@ describe("canonical Operations product routing", () => {
       { source: "/ops", destination: "/admin" },
       { source: "/ops/students/:path*", destination: "/admin/students/:path*" },
       { source: "/ops/team", destination: "/admin/staff" },
+      { source: "/ops/team/:path*", destination: "/admin/staff/:path*" },
       { source: "/ops/notifications", destination: "/admin/notifications" },
       { source: "/ops/activity", destination: "/admin/audit" }
     ]);

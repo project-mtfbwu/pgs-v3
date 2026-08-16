@@ -26,7 +26,7 @@ select results_eq($$select count(*)::bigint from public.profiles where id='96000
 
 select results_eq($$select count(*)::bigint from public.staff_roles where key='read_only_staff'$$,array[1::bigint],'canonical read_only_staff role exists');
 select results_eq($$select count(*)::bigint from public.staff_roles where key='viewer'$$,array[0::bigint],'legacy viewer role is no longer assignable');
-select results_eq($$select count(*)::bigint from public.staff_role_permissions rp join public.staff_roles r on r.id=rp.role_id where r.key='read_only_staff'$$,array[8::bigint],'read_only_staff retains the eight approved explicit reads');
+select results_eq($$select count(*)::bigint from public.staff_role_permissions rp join public.staff_roles r on r.id=rp.role_id where r.key='read_only_staff'$$,array[2::bigint],'read_only_staff retains the two approved Operations reads');
 select results_eq($$select count(*)::bigint from public.staff_role_permissions rp join public.staff_roles r on r.id=rp.role_id join public.staff_permissions p on p.id=rp.permission_id where r.key='read_only_staff' and p.key not like '%.read'$$,array[0::bigint],'read_only_staff has no mutation grants');
 
 insert into public.staff_profiles(user_id,role,display_name) values
@@ -48,11 +48,11 @@ reset role;
 grant usage on schema private to authenticated;
 set local role authenticated;
 set local request.jwt.claims='{"sub":"92000000-0000-4000-8000-000000000002","role":"authenticated"}';
-select is(private.has_staff_permission('catalog.read'),true,'read_only_staff permitted DB-backed read resolves');
+select is(private.has_staff_permission('catalog.read'),false,'read_only_staff no longer receives CMS/catalog capability');
 select is(private.has_staff_permission('catalog.manage'),false,'read_only_staff catalog mutation is denied');
 select is(private.has_staff_permission('premium.manage'),false,'read_only_staff Premium mutation is denied');
 select is(private.has_staff_permission('roles.manage'),false,'read_only_staff role mutation is denied');
-select results_eq($$select count(*)::bigint from public.staff_role_permissions rp join public.staff_permissions p on p.id=rp.permission_id$$,array[8::bigint],'read_only_staff can resolve only its own effective DB grants');
+select results_eq($$select count(*)::bigint from public.staff_role_permissions rp join public.staff_permissions p on p.id=rp.permission_id$$,array[2::bigint],'read_only_staff can resolve only its own effective DB grants');
 select throws_ok($$insert into public.courses(title,slug) values('Phase 4A attack','phase4a-attack')$$,'42501',null,'read_only_staff cannot mutate catalog data');
 select results_eq($$select count(*)::bigint from public.premium_entitlements where student_id='92000000-0000-4000-8000-000000000002'$$,array[0::bigint],'staff context does not create or grant Premium');
 

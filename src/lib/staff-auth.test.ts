@@ -10,9 +10,11 @@ function assignment(role:string,permissions:string[]){return {staff_roles:{key:r
 describe("database-backed staff authorization",()=>{
   it("uses only permission rows returned by the database",()=>{
     const context=buildStaffContext(user,{display_name:"Read-only",status:"active"},[
-      assignment("read_only_staff",["overview.read","catalog.read","cms.read"])
+      assignment("read_only_staff",["overview.read","students.read"])
     ]);
-    expect([...context!.permissions]).toEqual(["overview.read","catalog.read","cms.read"]);
+    expect([...context!.permissions]).toEqual(["overview.read","students.read"]);
+    expect(context!.permissions.has("catalog.read")).toBe(false);
+    expect(context!.permissions.has("cms.read")).toBe(false);
     expect(context!.permissions.has("catalog.manage")).toBe(false);
     expect(context!.permissions.has("premium.manage")).toBe(false);
     expect(context!.permissions.has("roles.manage")).toBe(false);

@@ -1,5 +1,35 @@
-import { AdminStaffManager } from "@/components/admin-staff-manager";
+import Link from "next/link";
 import { OperationsPageHeader } from "@/components/operations-page-header";
-import { can,requireStaffPermission } from "@/lib/staff-auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-export default async function StaffPage(){const context=await requireStaffPermission("staff.read");const supabase=await createSupabaseServerClient();const {data}=await supabase.from("staff_profiles").select("user_id,display_name,role,status,created_at,updated_at,staff_role_assignments(revoked_at,assigned_at,staff_roles(key))").order("created_at",{ascending:false});const staff=(data??[]).map((row)=>{const assignments=row.staff_role_assignments as unknown as Array<{revoked_at:string|null;assigned_at:string;staff_roles:{key:string}|Array<{key:string}>|null}>;const history=(assignments??[]).map((assignment)=>{const relation=Array.isArray(assignment.staff_roles)?assignment.staff_roles[0]:assignment.staff_roles;return `${relation?.key??"role"}${assignment.revoked_at?" (revoked)":" (active)"}`}).join(", ");return {...row,role_history:history}});return <div className="ops:flex ops:flex-col ops:gap-6"><OperationsPageHeader eyebrow="Team" title="Staff identities and access" description="Roles remain relational staff assignments. Premium is an entitlement and never a staff role."/><AdminStaffManager staff={staff as Array<Record<string,unknown>>} canManage={can(context,"roles.manage")}/></div>}
+import { OperationsStaffDirectory } from "@/components/operations-staff-directory";
+import { loadStaffPeopleDirectory } from "@/lib/operations-staff-access-server";
+import { can, requireStaffPermission } from "@/lib/staff-auth";
+
+export default async function StaffPage() {
+  const context = await requireStaffPermission("staff.read");
+  const rows = await loadStaffPeopleDirectory();
+  const canManage = can(context, "roles.manage");
+
+  return (
+    <div className="ops:flex ops:flex-col ops:gap-6">
+      <OperationsPageHeader
+        actions={
+          canManage ? (
+            <Link className="ops-system-primary-action" href="/ops/team/invite">
+              Invite staff
+            </Link>
+          ) : undefined
+        }
+        description={
+          canManage
+            ? "Invite staff, inspect effective access, and change roles. Student assignment remains a later Operations workflow."
+            : "Inspect staff identities and effective access. Role changes require Super Admin."
+        }
+        eyebrow="Team"
+        title="People & Access"
+      />
+      <section aria-label="People and access directory" className="ops-system-data-panel">
+        <OperationsStaffDirectory canManage={canManage} rows={rows} />
+      </section>
+    </div>
+  );
+}

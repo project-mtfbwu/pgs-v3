@@ -26,12 +26,14 @@ describe("canonical audit helper", () => {
       route:"x".repeat(300),
       authorization:"Bearer secret",
       document_body:"private content",
+      previous_role: "mentor",
       nested:{password:"secret"}
     } as never);
     expect(metadata).toEqual({
       permission_required:"roles.manage",
       reason_code:"permission_denied",
-      route:"x".repeat(255)
+      route:"x".repeat(255),
+      previous_role:"mentor"
     });
     expect(JSON.stringify(metadata)).not.toMatch(/secret|password|document_body|authorization/);
   });

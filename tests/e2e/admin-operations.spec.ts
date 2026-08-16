@@ -43,6 +43,7 @@ test("only mapped core /admin routes redirect to canonical /ops URLs",async({req
     ["/admin/students?premium=active","/ops/students?premium=active"],
     ["/admin/students/student-1","/ops/students/student-1"],
     ["/admin/staff","/ops/team"],
+    ["/admin/staff/invite","/ops/team/invite"],
     ["/admin/notifications","/ops/notifications"],
     ["/admin/audit","/ops/activity"]
   ] as const;
@@ -57,14 +58,16 @@ test.describe("preview read-only staff workflow",()=>{
   const readOnlyState=process.env.PLAYWRIGHT_READ_ONLY_STAFF_STORAGE_STATE??process.env.PLAYWRIGHT_VIEWER_STORAGE_STATE;
   test.use({storageState:readOnlyState??emptyState});
   test.skip(!readOnlyState,"Supply an isolated preview read-only staff storage state.");
-  test("Read-only staff has catalog access without mutation authority",async({page,request})=>{
+  test("Read-only staff cannot enter CMS or catalog from the restricted role",async({page,request})=>{
     await page.goto("/admin/catalog/courses");
-    await expect(page).toHaveURL(/\/admin\/catalog\/courses$/);
-    await expect(page.getByRole("heading",{name:"Courses"})).toBeVisible();
-    await expect(page.locator("[data-operations-product]")).toHaveCount(0);
-    await expect(page.getByRole("button",{name:/add/i})).toHaveCount(0);
-    const response=await request.post("/api/admin/catalog/courses",{data:{title:"Viewer attack",slug:"viewer-attack"}});
-    expect(response.status()).toBe(403);
+    await expect(page.getByRole("heading",{name:"Courses"})).toHaveCount(0);
+    const catalog=await request.post("/api/admin/catalog/courses",{data:{title:"Viewer attack",slug:"viewer-attack"}});
+    expect(catalog.status()).toBe(403);
+    const cms=await request.post("/api/admin/cms",{data:{slug:"home"}});
+    expect(cms.status()).toBe(403);
+    await page.goto("/ops/team");
+    await expect(page.getByRole("heading",{name:"People & Access"})).toHaveCount(0);
+    await expect(page.getByRole("link",{name:"Team"})).toHaveCount(0);
   });
   test("Read-only staff sees the minimal directory but no private workspace",async({page,request})=>{
     await page.goto("/ops");
@@ -113,6 +116,9 @@ test.describe("preview Mentor workflow",()=>{
     await expect(page.getByLabel("Mentor")).toHaveCount(0);
     await expect(page.getByLabel("Joined")).toHaveCount(0);
     await expect(page.getByRole("link",{name:"Catalog"})).toHaveCount(0);
+    await expect(page.getByRole("link",{name:"Team"})).toHaveCount(0);
+    await page.goto("/ops/team");
+    await expect(page.getByRole("heading",{name:"People & Access"})).toHaveCount(0);
     const response=await request.post("/api/admin/catalog/courses",{data:{title:"Mentor attack",slug:"mentor-attack"}});
     expect(response.status()).toBe(403);
   });
@@ -168,6 +174,11 @@ test.describe("preview Admin workflow",()=>{
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
     const response=await request.post("/api/admin/staff",{data:{action:"assign",userId:"00000000-0000-0000-0000-000000000000",role:"super_admin"}});
     expect(response.status()).toBe(403);
+    await page.goto("/ops/team");
+    await expect(page.getByRole("heading",{name:"People & Access"})).toBeVisible();
+    await expect(page.getByRole("link",{name:"Invite staff"})).toHaveCount(0);
+    await expect(page.getByRole("link",{name:"View"}).first()).toBeVisible();
+    await expect(page.getByRole("button",{name:/suspend|revoke|change role/i})).toHaveCount(0);
   });
   test("Admin registry uses a semantic table, accessible cards, and canonical plan labels",async({page})=>{
     await page.goto("/ops/students");
@@ -211,9 +222,14 @@ test.describe("preview Super Admin workflow",()=>{
   test.skip(!process.env.PLAYWRIGHT_SUPER_ADMIN_STORAGE_STATE,"Supply an isolated preview Super Admin storage state.");
   test("Super Admin sees staff role governance",async({page})=>{
     await page.goto("/ops/team");
-    await expect(page.getByRole("heading",{name:/staff access/i})).toBeVisible();
-    await expect(page.getByRole("heading",{name:"Invite or assign staff access"})).toBeVisible();
-    await expect(page.getByRole("button",{name:"Save access"})).toBeVisible();
+    await expect(page.getByRole("heading",{name:"People & Access"})).toBeVisible();
+    await expect(page.getByRole("link",{name:"Invite staff"})).toBeVisible();
+    await expect(page.getByRole("columnheader",{name:"Person"})).toBeVisible();
+    await page.goto("/ops/team/invite");
+    await expect(page.getByRole("heading",{name:"Invite staff"})).toBeVisible();
+    await expect(page.getByLabel("Email")).toBeVisible();
+    await expect(page.getByLabel("Display name")).toBeVisible();
+    await expect(page.getByLabel("Role")).toBeVisible();
   });
   test("Super Admin sees the canonical audit read path",async({page,request})=>{
     const selfId=process.env.PGS_SUPER_ADMIN_USER_ID;
@@ -229,7 +245,7 @@ test.describe("preview Super Admin workflow",()=>{
     const routes=[
       ["/ops","Your Operations pulse."],
       ["/ops/students","Student Registry"],
-      ["/ops/team","Staff identities and access"],
+      ["/ops/team","People & Access"],
       ["/ops/notifications","Staff notifications"],
       ["/ops/activity","Operations activity"]
     ] as const;
