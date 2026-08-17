@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { AdminCatalogRelationships } from "@/components/admin-catalog-relationships";
-import { AdminCrudManager, type MediaOption, type RelationOptions } from "@/components/admin-crud-manager";
+import { AdminCrudManager, type MediaOption, type RelationOptions, type TagOption } from "@/components/admin-crud-manager";
 import { AdminPageHeader } from "@/components/admin-page-header";
 import { getAdminEntity, type AdminRelation } from "@/lib/admin-registry";
 import { can, requireStaffPermission } from "@/lib/staff-auth";
@@ -8,6 +8,13 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type Option = { id: number; label: string };
 const taggable: Record<string, string> = { programs: "program", courses: "course", events: "event", universities: "university" };
+const draftable = new Set(["programs", "courses", "events", "universities"]);
+const tagJoinTables: Record<string, { table: string; key: string }> = {
+  programs: { table: "program_tags", key: "program_id" },
+  courses: { table: "course_tags", key: "course_id" },
+  events: { table: "event_tags", key: "event_id" },
+  universities: { table: "university_tags", key: "university_id" }
+};
 const relationTables: Record<AdminRelation, { table: string; label: string }> = {
   countries: { table: "countries", label: "name" },
   universities: { table: "universities", label: "name" },
@@ -28,6 +35,41 @@ export default async function CatalogEntityPage({ params, searchParams }: { para
   if (filters.q && searchField) query = query.ilike(searchField, `%${filters.q.slice(0, 100)}%`);
   if (filters.state && entity.fields.some((field) => field.key === "published")) query = query.eq("published", filters.state === "published");
   const { data } = await query.order(entity.idKey, { ascending: false });
+  let displayRows = (data ?? []) as Array<Record<string, unknown>>;
+  let tagOptions: TagOption[] = [];
+  if (draftable.has(key)) {
+    const join = tagJoinTables[key];
+    const [{ data: drafts }, { data: tags }, { data: liveLinks }] = await Promise.all([
+      supabase.from("catalog_draft_revisions").select("id,entity_id,values,tag_ids,created_at").eq("entity_type", key).order("created_at", { ascending: false }).limit(500),
+      supabase.from("catalog_tags").select("id,name").order("name"),
+      supabase.from(join.table).select(`${join.key},tag_id`)
+    ]);
+    tagOptions = (tags ?? []).map((tag) => ({ id: Number(tag.id), label: String(tag.name) }));
+    const latestDraft = new Map<number, { id: string; values: Record<string, unknown>; tag_ids: number[] }>();
+    for (const draft of drafts ?? []) {
+      const id = Number(draft.entity_id);
+      if (!latestDraft.has(id) && draft.values && typeof draft.values === "object" && !Array.isArray(draft.values)) {
+        latestDraft.set(id, { id: draft.id, values: draft.values as Record<string, unknown>, tag_ids: (draft.tag_ids ?? []).map(Number) });
+      }
+    }
+    const liveTags = new Map<number, number[]>();
+    for (const link of liveLinks ?? []) {
+      const record = link as unknown as Record<string, unknown>;
+      const id = Number(record[join.key]);
+      liveTags.set(id, [...(liveTags.get(id) ?? []), Number(record.tag_id)]);
+    }
+    displayRows = displayRows.map((row) => {
+      const id = Number(row[entity.idKey]);
+      const draft = latestDraft.get(id);
+      return {
+        ...row,
+        ...(draft?.values ?? {}),
+        _draft_id: draft?.id,
+        _tag_ids: draft?.tag_ids ?? liveTags.get(id) ?? [],
+        _live_published: row.published === true
+      };
+    });
+  }
 
   const relationOptions: RelationOptions = {};
   for (const field of entity.fields) {
@@ -48,25 +90,25 @@ export default async function CatalogEntityPage({ params, searchParams }: { para
   }
 
   let relationships: null | { kind: "tag" | "filter"; entities: Record<string, Option[]>; values: Option[] } = null;
-  if (key === "tags" || key === "filter_options") {
+  if (key === "filter_options") {
     const [{ data: programs }, { data: courses }, { data: events }, { data: universities }, { data: values }] = await Promise.all([
       supabase.from("programs").select("id,title").order("title").limit(300),
       supabase.from("courses").select("id,title").order("title").limit(300),
       supabase.from("events").select("id,title").order("title").limit(300),
       supabase.from("universities").select("id,name").order("name").limit(300),
-      key === "tags" ? supabase.from("catalog_tags").select("id,name").order("name") : supabase.from("catalog_filter_options").select("id,label").order("label")
+      supabase.from("catalog_filter_options").select("id,label").order("label")
     ]);
     relationships = {
-      kind: key === "tags" ? "tag" : "filter",
+      kind: "filter",
       entities: {
         program: (programs ?? []).map((row) => ({ id: row.id, label: row.title })),
         course: (courses ?? []).map((row) => ({ id: row.id, label: row.title })),
         event: (events ?? []).map((row) => ({ id: row.id, label: row.title })),
         university: (universities ?? []).map((row) => ({ id: row.id, label: row.name }))
       },
-      values: (values ?? []).map((row) => ({ id: row.id, label: "name" in row ? String(row.name) : String(row.label) }))
+      values: (values ?? []).map((row) => ({ id: row.id, label: String(row.label) }))
     };
-  } else if (taggable[key]) {
+  } else if (taggable[key] && !draftable.has(key)) {
     const { data: tags } = await supabase.from("catalog_tags").select("id,name").order("name");
     const entityOptions = (data ?? []).map((row) => ({
       id: Number(row.id),
@@ -84,11 +126,13 @@ export default async function CatalogEntityPage({ params, searchParams }: { para
       <AdminPageHeader eyebrow="Catalog" title={entity.label} description={entity.description} />
       <AdminCrudManager
         entity={entity}
-        rows={(data ?? []) as Array<Record<string, unknown>>}
+        rows={displayRows}
         canManage={can(context, "catalog.manage")}
         canPublish={can(context, "catalog.publish")}
         mediaAssets={mediaAssets}
         relationOptions={relationOptions}
+        draftEnabled={draftable.has(key)}
+        tagOptions={tagOptions}
       />
       {relationships && <AdminCatalogRelationships {...relationships} canManage={can(context, "catalog.manage")} />}
     </main>

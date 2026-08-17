@@ -1,6 +1,7 @@
 import {describe,expect,it,vi} from "vitest";
 vi.mock("server-only",()=>({}));
 vi.mock("@/lib/staff-preview-server",()=>({getActiveStudentPreviewTargetId:async()=>null}));
+vi.mock("@/lib/content-preview",()=>({getCatalogPreviewDraft:async()=>null}));
 import {applyFeaturedCatalogCards,applyPublishedCatalogCards,applyPublishedCatalogDetail,applyPublishedEventDetail,applyPublishedEvents} from "@/lib/public-catalog";
 
 describe("published relational catalog parity",()=>{
@@ -18,6 +19,11 @@ describe("published relational catalog parity",()=>{
     const html='<div class="sop-image-wrapper-1 w-100"><h1>Program details</h1><div class="mt-2 mobile-w-70 mobile-m-auto mobile-pb-4 mobile-pt-2"><span class="copy"></span></div><div class="sop-heart-icon bg-purple text-white px-1 fs-16 border-radius-6px"></div>';
     const result=applyPublishedCatalogDetail(html,{kind:"courses",id:9,title:"Live course",summary:"Published summary",description:"",saved:true});
     expect(result).toContain('data-course-id="9"');expect(result).toContain("Live course");expect(result).toContain("Published summary");expect(result).toContain("save-course is-saved");
+  });
+  it("hydrates program and course detail tags for preview QC",()=>{
+    const html='<div class="sop-image-wrapper-1 w-100"><h1>Program details</h1><div class="mt-2 mobile-w-70 mobile-m-auto mobile-pb-4 mobile-pt-2"><span class="copy"></span></div><div class="sop-heart-icon bg-purple text-white px-1 fs-16 border-radius-6px"></div>';
+    const result=applyPublishedCatalogDetail(html,{kind:"programs",id:4,title:"Live program",summary:"Published summary",description:"",saved:false,tags:["Visa","Medicine"]});
+    expect(result).toContain("#Visa");expect(result).toContain("#Medicine");
   });
   it("replaces static Upcoming Sessions cards instead of injecting beside them",()=>{
     const html='<section class="pt-3 mobile-event-program desktop-none"><div class="container"><div class="d-flex"><div class="w-30"><h1><span class="mobile-fs-24">Upcoming Sessions</span></h1></div><div class="overflow-hidden border-radius-16px w-383px">old static</div></div></div></section><div class="swiper-wrapper purple-teams" id="wrap"><div class="swiper-slide">old desktop</div></div><span class="swiper-notification"></span>';

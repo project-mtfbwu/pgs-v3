@@ -57,6 +57,14 @@ export async function assertCatalogRecordRemovable(table: string, id: string | n
   if (await loadCatalogPublished(table, id)) {
     throw new Error("Unpublish this record before deleting it.");
   }
+  if (["programs", "courses", "events", "universities"].includes(table)) {
+    const { count } = await supabase
+      .from("catalog_draft_revisions")
+      .select("id", { count: "exact", head: true })
+      .eq("entity_type", table)
+      .eq("entity_id", id);
+    if (count) throw new Error("This record has draft history. Keep it unpublished instead of deleting its approval history.");
+  }
   if (table === "programs") {
     const { count } = await supabase.from("saved_programs").select("program_id", { count: "exact", head: true }).eq("program_id", id);
     if (count) throw new Error("This program is saved by students. Unpublish it instead of deleting.");

@@ -1,8 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCmsPreviewRevision } from "@/lib/content-preview";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
-import { validUuid } from "@/lib/http";
 
 export type SeoSlots = {
   seoTitle: string;
@@ -162,15 +160,8 @@ function mergeKnownStringSlots<T extends Record<string, string>>(fallback: T, va
 
 export async function getPublicContent<TSlug extends PublicContentSlug>(slug: TSlug): Promise<PublicContentMap[TSlug]> {
   const fallback = defaultPublicContent[slug];
-  const preview = (await cookies()).get("pgs_cms_preview")?.value;
-  if (preview?.startsWith(`${slug}:`)) {
-    const revisionId = preview.slice(slug.length + 1);
-    if (validUuid(revisionId)) {
-      const server = await createSupabaseServerClient();
-      const { data: revision } = await server.from("cms_page_revisions").select("content,cms_pages!inner(slug)").eq("id", revisionId).eq("cms_pages.slug", slug).maybeSingle();
-      if (revision?.content) return mergeKnownStringSlots(fallback, revision.content) as PublicContentMap[TSlug];
-    }
-  }
+  const preview = await getCmsPreviewRevision(slug);
+  if (preview?.content) return mergeKnownStringSlots(fallback, preview.content) as PublicContentMap[TSlug];
   const config=getSupabasePublicConfig();
   if(!config)return fallback;
 

@@ -1,9 +1,6 @@
-import { NextResponse } from "next/server";
 import { adminApiError } from "@/lib/admin-api";
-import { requireCatalogPublishForParent } from "@/lib/catalog-publish";
 import { readJsonObject } from "@/lib/http";
 import { requireStaffPermission } from "@/lib/staff-auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const links = {
   program: ["program_tags", "program_id"],
@@ -26,13 +23,8 @@ async function values(request: Request) {
 export async function POST(request: Request) {
   try {
     await requireStaffPermission("catalog.manage");
-    const { type, entityId, tagId } = await values(request);
-    await requireCatalogPublishForParent(type, entityId);
-    const [table, key] = links[type];
-    const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.from(table).upsert({ [key]: entityId, tag_id: tagId });
-    if (error) throw new Error("Unable to attach the tag.");
-    return NextResponse.json({ ok: true });
+    await values(request);
+    throw new Error("Attach tags in the catalog record draft so they can be previewed before publication.");
   } catch (error) {
     return adminApiError(error);
   }
@@ -41,13 +33,8 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     await requireStaffPermission("catalog.manage");
-    const { type, entityId, tagId } = await values(request);
-    await requireCatalogPublishForParent(type, entityId);
-    const [table, key] = links[type];
-    const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.from(table).delete().eq(key, entityId).eq("tag_id", tagId);
-    if (error) throw new Error("Unable to remove the tag.");
-    return NextResponse.json({ ok: true });
+    await values(request);
+    throw new Error("Remove tags in the catalog record draft so they can be previewed before publication.");
   } catch (error) {
     return adminApiError(error);
   }

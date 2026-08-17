@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fallbackSeo, mergeCmsSeo } from "@/lib/cms-metadata";
+import { cmsPreviewRouteForSlug, cmsRouteForSlug, fallbackSeo, mergeCmsSeo } from "@/lib/cms-metadata";
 
 describe("CMS route metadata", () => {
   it("falls back to the approved public SEO slots", () => {
@@ -16,5 +16,12 @@ describe("CMS route metadata", () => {
     expect(merged.description).toBe("Fallback description");
     expect(merged.openGraph?.title).toBe("OG Title");
     expect(merged.openGraph?.description).toBe("Fallback description");
+  });
+  it("keeps public Open Graph on real routes and isolates CMS preview placeholders", () => {
+    expect(cmsRouteForSlug("home")).toBe("/");
+    expect(cmsRouteForSlug("program-detail")).toBe("/programsfull/program");
+    expect(cmsRouteForSlug("purpleevents-session")).toBe("/purpleevents/session");
+    expect(cmsPreviewRouteForSlug("program-detail")).toBe("/programsfull/program/preview");
+    expect(cmsPreviewRouteForSlug("purpleevents-session")).toBe("/purpleevents/session/preview");
   });
 });

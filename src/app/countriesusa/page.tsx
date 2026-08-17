@@ -1,4 +1,5 @@
 import { cmsMetadata } from "@/lib/cms-metadata";
+import { ContentPreviewBanner } from "@/components/content-preview-banner";
 import { LegacyPage } from "@/components/legacy-page";
 import { countriesUsaHtml } from "@/legacy/generated/countriesusa";
 import { applyUsaContent, getPageContent } from "@/lib/content";
@@ -14,5 +15,5 @@ export default async function CountriesUsaPage() {
   const studentState=state?.kind??"anonymous";
   let html = applyPremiumBusinessRule(applyUsaContent(countriesUsaHtml, content));
   if (state&&state.kind !== "anonymous") html = applyAuthenticatedShell(html, { name: state.name, unreadCount: state.unreadCount, premium: state.kind === "authenticated_premium" });
-  return <LegacyPage page="countriesusa" html={html} studentState={studentState} />;
+  return <><ContentPreviewBanner /><LegacyPage page="countriesusa" html={html} studentState={studentState} /></>;
 }

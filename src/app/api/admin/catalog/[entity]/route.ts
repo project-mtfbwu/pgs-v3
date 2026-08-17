@@ -7,6 +7,7 @@ import { requireStaffPermission } from "@/lib/staff-auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type Context = { params: Promise<{ entity: string }> };
+const revisionedCatalog = new Set(["events", "courses", "programs", "universities"]);
 async function definition(params: Context["params"]) {
   const { entity } = await params;
   const result = getAdminEntity("catalog", entity);
@@ -18,6 +19,7 @@ export async function POST(request: Request, { params }: Context) {
   try {
     await requireStaffPermission("catalog.manage");
     const entity = await definition(params);
+    if (revisionedCatalog.has(entity.key)) throw new Error("Save this content as a draft, preview it, then publish the approved revision.");
     const values = sanitizeAdminValues(entity, await readJsonObject(request));
     await requireCatalogEntityMutation(entity, null, values);
     const supabase = await createSupabaseServerClient();
@@ -33,6 +35,7 @@ export async function PATCH(request: Request, { params }: Context) {
   try {
     await requireStaffPermission("catalog.manage");
     const entity = await definition(params);
+    if (revisionedCatalog.has(entity.key)) throw new Error("Direct live edits are disabled. Save and publish a catalog draft.");
     const input = await readJsonObject(request);
     const id = recordIdentifier(input.id);
     const values = sanitizeAdminValues(entity, input, true);

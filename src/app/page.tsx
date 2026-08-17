@@ -1,4 +1,5 @@
 import { cmsMetadata } from "@/lib/cms-metadata";
+import { ContentPreviewBanner } from "@/components/content-preview-banner";
 import { RecoveredStudentLegacyPage } from "@/components/recovered-student-legacy-page";
 import { applyHomeContent, getPageContent } from "@/lib/content";
 import { homeSourceHtml } from "@/lib/home-experience";
@@ -21,5 +22,5 @@ export default async function HomePage() {
   } satisfies AnonymousStudentExperience);
   const html = applyHomeContent(homeSourceHtml(state.kind), content);
   const avatarUrl = state.kind === "anonymous" ? undefined : await getOwnAvatarUrl(state.profile.avatar_path);
-  return <RecoveredStudentLegacyPage page="home" html={html} state={state} avatarUrl={avatarUrl} />;
+  return <><ContentPreviewBanner /><RecoveredStudentLegacyPage page="home" html={html} state={state} avatarUrl={avatarUrl} /></>;
 }

@@ -5,6 +5,7 @@ import type { AdminEntity, AdminField, AdminRelation } from "@/lib/admin-registr
 type Row = Record<string, unknown>;
 export type MediaOption = { id: string; path: string; alt_text: string | null; mime_type: string; bucket: string };
 export type RelationOptions = Partial<Record<AdminRelation, Array<{ id: number; label: string }>>>;
+export type TagOption = { id: number; label: string };
 
 function shown(key: string, value: unknown): string {
   if (typeof value === "boolean") {
@@ -114,7 +115,9 @@ export function AdminCrudManager({
   canManage,
   canPublish = true,
   mediaAssets = [],
-  relationOptions = {}
+  relationOptions = {},
+  draftEnabled = false,
+  tagOptions = []
 }: {
   entity: AdminEntity;
   rows: Row[];
@@ -122,12 +125,14 @@ export function AdminCrudManager({
   canPublish?: boolean;
   mediaAssets?: MediaOption[];
   relationOptions?: RelationOptions;
+  draftEnabled?: boolean;
+  tagOptions?: TagOption[];
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [editing, setEditing] = useState<Row | null>(null);
   const [message, setMessage] = useState("");
   const endpoint = `/api/admin/${entity.permissionDomain}/${entity.key}`;
-  const publishedLock = entity.permissionDomain === "catalog" && Boolean(editing && editing.published === true && !canPublish);
+  const publishedLock = !draftEnabled && entity.permissionDomain === "catalog" && Boolean(editing && editing.published === true && !canPublish);
   const publishLabel = `${entity.permissionDomain}.publish`;
   function open(row: Row | null) {
     setEditing(row);
@@ -141,6 +146,7 @@ export function AdminCrudManager({
     const data = new FormData(event.currentTarget);
     const values: Row = {};
     for (const field of entity.fields) {
+      if (draftEnabled && field.key === "published") continue;
       const lockField = publishedLock || (field.key === "published" && !canPublish);
       if (lockField && field.type === "boolean") {
         values[field.key] = editing?.[field.key] === true;
@@ -149,10 +155,28 @@ export function AdminCrudManager({
       if (field.type === "boolean") values[field.key] = data.get(field.key) === "on";
       else values[field.key] = data.get(field.key) ?? "";
     }
+    if (draftEnabled) {
+      values.action = "save-draft";
+      values.tag_ids = data.getAll("tag_ids").map(Number);
+      values.revision_note = data.get("revision_note") ?? "";
+    }
     if (editing) values.id = editing[entity.idKey];
-    const response = await fetch(endpoint, { method: editing ? "PATCH" : "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(values) });
+    const response = await fetch(draftEnabled ? `${endpoint}/drafts` : endpoint, { method: draftEnabled ? "POST" : editing ? "PATCH" : "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(values) });
     const result = await response.json() as { message?: string };
     if (!response.ok) return setMessage(result.message ?? "Unable to save.");
+    window.location.reload();
+  }
+  async function publication(row: Row, action: "publish" | "unpublish") {
+    setMessage(action === "publish" ? "Publishing approved draft…" : "Hiding public content…");
+    const response = await fetch(`${endpoint}/drafts`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(action === "publish"
+        ? { action, revision_id: row._draft_id }
+        : { action, id: row[entity.idKey] })
+    });
+    const result = await response.json() as { message?: string };
+    if (!response.ok) return setMessage(result.message ?? "Unable to change publication.");
     window.location.reload();
   }
   async function remove(row: Row) {
@@ -199,6 +223,23 @@ export function AdminCrudManager({
                   <td>
                     <div className="ops-row-actions">
                       <button onClick={() => open(row)}>Edit</button>
+                      {draftEnabled && row._draft_id ? (
+                        <>
+                          {entity.key !== "universities" ? (
+                            <>
+                              <a href={`/api/admin/catalog/preview?entity=${entity.key}&id=${row[entity.idKey]}&revision=${row._draft_id}`} target="_blank" rel="noreferrer">Preview page ↗</a>
+                              {entity.key === "courses" ? (
+                                <a href={`/api/admin/catalog/preview?entity=${entity.key}&id=${row[entity.idKey]}&revision=${row._draft_id}&surface=featured`} target="_blank" rel="noreferrer">Preview featured ↗</a>
+                              ) : null}
+                              <a href={`/api/admin/catalog/preview?entity=${entity.key}&id=${row[entity.idKey]}&revision=${row._draft_id}&surface=detail`} target="_blank" rel="noreferrer">Preview detail ↗</a>
+                            </>
+                          ) : null}
+                          {canPublish && <button className="ops-primary" onClick={() => void publication(row, "publish")}>Approve &amp; publish</button>}
+                        </>
+                      ) : null}
+                      {draftEnabled && canPublish && row._live_published === true && (
+                        <button onClick={() => void publication(row, "unpublish")}>Hide from public</button>
+                      )}
                       <button className="is-danger" onClick={() => void remove(row)}>Delete</button>
                     </div>
                   </td>
@@ -224,10 +265,11 @@ export function AdminCrudManager({
             </div>
             <button type="button" aria-label="Close dialog" onClick={() => dialog.current?.close()}>×</button>
           </header>
+          {draftEnabled && <p className="ops-form-note" role="note">Saving creates a private revision. Preview it on the real PGS page, then use Approve &amp; publish from the list.</p>}
           {publishedLock && <p className="ops-form-note" role="status">This record is published. {publishLabel} is required to change public catalog content.</p>}
           {!canPublish && !editing && <p className="ops-form-note">You can create drafts. Publishing requires {publishLabel}.</p>}
           <div className="ops-form-grid">
-            {entity.fields.map((field) => {
+            {entity.fields.filter((field) => !(draftEnabled && field.key === "published")).map((field) => {
               const lockField = publishedLock || (field.key === "published" && !canPublish);
               return (
                 <label key={`${String(editing?.[entity.idKey] ?? "new")}-${field.key}`} className={field.type === "textarea" || field.media ? "is-wide" : ""}>
@@ -236,11 +278,23 @@ export function AdminCrudManager({
                 </label>
               );
             })}
+            {draftEnabled && tagOptions.length ? (
+              <fieldset className="is-wide ops-tag-picker">
+                <legend>Tags</legend>
+                {tagOptions.map((tag) => (
+                  <label key={tag.id}>
+                    <input name="tag_ids" type="checkbox" value={tag.id} defaultChecked={Array.isArray(editing?._tag_ids) && editing._tag_ids.includes(tag.id)} />
+                    <span>{tag.label}</span>
+                  </label>
+                ))}
+              </fieldset>
+            ) : null}
+            {draftEnabled ? <label className="is-wide"><span>Revision note</span><input name="revision_note" maxLength={500} /></label> : null}
           </div>
           <p role="status">{message}</p>
           <footer>
             <button type="button" onClick={() => dialog.current?.close()}>Cancel</button>
-            <button className="ops-primary" disabled={publishedLock}>{editing ? "Save changes" : "Create record"}</button>
+            <button className="ops-primary" disabled={publishedLock}>{draftEnabled ? "Save draft" : editing ? "Save changes" : "Create record"}</button>
           </footer>
         </form>
       </dialog>

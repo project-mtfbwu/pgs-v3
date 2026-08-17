@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
+import { getCatalogPreviewDraft, type CatalogPreviewEntity } from "@/lib/content-preview";
 import { marketingMediaAlt, marketingMediaUrl, type MarketingMedia } from "@/lib/media-url";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -53,16 +54,37 @@ async function savedLookupClient() {
   return (await getActiveStudentPreviewTargetId()) ? createSupabaseAdminClient() : await createSupabaseServerClient();
 }
 
+async function catalogPreviewRow(entity: CatalogPreviewEntity): Promise<Record<string, unknown> | null> {
+  const draft = await getCatalogPreviewDraft(entity);
+  if (!draft) return null;
+  const server = await createSupabaseServerClient();
+  const { data: live } = await server.from(entity).select("*").eq("id", draft.entityId).maybeSingle();
+  const row: Record<string, unknown> = { ...(live ?? {}), ...draft.values, id: draft.entityId };
+  const mediaId = typeof row.image_asset_id === "string" ? row.image_asset_id : null;
+  if (mediaId) {
+    const { data: media } = await server.from("media_assets").select("bucket,path,alt_text").eq("id", mediaId).maybeSingle();
+    if (media) row.media_assets = media;
+  }
+  const tagKey = entity === "events" ? "event_tags" : entity === "courses" ? "course_tags" : entity === "programs" ? "program_tags" : "university_tags";
+  if (draft.tagIds.length) {
+    const { data: tags } = await server.from("catalog_tags").select("name").in("id", draft.tagIds);
+    row[tagKey] = (tags ?? []).map((tag) => ({ catalog_tags: tag }));
+  } else {
+    row[tagKey] = [];
+  }
+  return row;
+}
+
 export async function getPublicCatalogCards(kind: "programs" | "courses", studentId?: string, featuredOnly = false): Promise<PublicCatalogCard[]> {
   const config = getSupabasePublicConfig();
   if (!config) return [];
   const client = createClient(config.url, config.key, { auth: { persistSession: false, autoRefreshToken: false } });
   const mediaKey = kind === "programs" ? "media_assets!programs_image_asset_id_fkey" : "media_assets!courses_image_asset_id_fkey";
   const tagKey = kind === "programs" ? "program_tags" : "course_tags";
-  let query = client.from(kind).select(`id,title,short_description,image_asset_id,${mediaKey}(bucket,path,alt_text),${tagKey}(catalog_tags(name))`).eq("published", true);
+  let query = client.from(kind).select(`id,title,short_description,image_asset_id,featured,display_order,${mediaKey}(bucket,path,alt_text),${tagKey}(catalog_tags(name))`).eq("published", true);
   if (featuredOnly) query = query.eq("featured", true);
   const { data, error } = await query.order(kind === "programs" || featuredOnly ? "display_order" : "title").limit(60);
-  if (error || !data?.length) return [];
+  if (error) return [];
   let savedIds = new Set<number>();
   if (studentId) {
     const server = await savedLookupClient();
@@ -71,7 +93,20 @@ export async function getPublicCatalogCards(kind: "programs" | "courses", studen
     const saved = await server.from(savedTable).select(idColumn).eq("student_id", studentId);
     if (!saved.error) savedIds = new Set((saved.data ?? []).map((row) => Number(kind === "programs" ? (row as { program_id: unknown }).program_id : (row as { course_id: unknown }).course_id)));
   }
-  return data.map((row) => {
+  const preview = await catalogPreviewRow(kind);
+  const rows = [...(data ?? [])] as Array<Record<string, unknown>>;
+  if (preview) {
+    const index = rows.findIndex((row) => Number(row.id) === Number(preview.id));
+    if (featuredOnly && preview.featured !== true) {
+      if (index >= 0) rows.splice(index, 1);
+    } else if (index >= 0) rows[index] = preview;
+    else rows.push(preview);
+  }
+  rows.sort((left, right) => {
+    if (kind === "programs" || featuredOnly) return Number(left.display_order ?? 0) - Number(right.display_order ?? 0);
+    return String(left.title ?? "").localeCompare(String(right.title ?? ""));
+  });
+  return rows.map((row) => {
     const media = (row as { media_assets?: MarketingMedia }).media_assets;
     return {
       id: Number(row.id),
@@ -90,8 +125,12 @@ export async function getPublicCatalogDetail(kind: "programs" | "courses", id: n
   if (!config) return null;
   const client = createClient(config.url, config.key, { auth: { persistSession: false, autoRefreshToken: false } });
   const mediaKey = kind === "programs" ? "media_assets!programs_image_asset_id_fkey" : "media_assets!courses_image_asset_id_fkey";
-  const { data, error } = await client.from(kind).select(`id,title,short_description,description,${mediaKey}(bucket,path,alt_text)`).eq("id", id).eq("published", true).maybeSingle();
-  if (error || !data) return null;
+  const tagKey = kind === "programs" ? "program_tags" : "course_tags";
+  const { data, error } = await client.from(kind).select(`id,title,short_description,description,${mediaKey}(bucket,path,alt_text),${tagKey}(catalog_tags(name))`).eq("id", id).eq("published", true).maybeSingle();
+  if (error) return null;
+  const preview = await catalogPreviewRow(kind);
+  const row = preview && Number(preview.id) === id ? preview : data as Record<string, unknown> | null;
+  if (!row) return null;
   let saved = false;
   if (studentId) {
     const server = await savedLookupClient();
@@ -100,16 +139,17 @@ export async function getPublicCatalogDetail(kind: "programs" | "courses", id: n
     const result = await server.from(table).select(column, { count: "exact", head: true }).eq("student_id", studentId).eq(column, id);
     saved = !result.error && Boolean(result.count);
   }
-  const media = (data as { media_assets?: MarketingMedia }).media_assets;
+  const media = row.media_assets as MarketingMedia;
   return {
     kind,
-    id: Number(data.id),
-    title: String(data.title),
-    summary: typeof data.short_description === "string" ? data.short_description : "",
-    description: typeof data.description === "string" ? data.description : "",
+    id: Number(row.id),
+    title: String(row.title),
+    summary: typeof row.short_description === "string" ? row.short_description : "",
+    description: typeof row.description === "string" ? row.description : "",
     saved,
     imageUrl: marketingMediaUrl(media),
-    imageAlt: marketingMediaAlt(media, String(data.title))
+    imageAlt: marketingMediaAlt(media, String(row.title)),
+    tags: tagNames(row[kind === "programs" ? "program_tags" : "course_tags"])
   };
 }
 
@@ -135,7 +175,7 @@ function mapEvent(row: Record<string, unknown>): PublicEvent {
   };
 }
 
-const eventSelect = "id,title,summary,description,starts_at,ends_at,booking_url,host,location_note,mode,who_is_it_for,session_topics,what_we_cover,media_assets!events_image_asset_id_fkey(bucket,path,alt_text),event_tags(catalog_tags(name))";
+const eventSelect = "id,title,summary,description,starts_at,ends_at,booking_url,host,location_note,mode,who_is_it_for,session_topics,what_we_cover,display_order,media_assets!events_image_asset_id_fkey(bucket,path,alt_text),event_tags(catalog_tags(name))";
 
 export async function getPublicEvents(): Promise<PublicEvent[]> {
   const config = getSupabasePublicConfig();
@@ -143,7 +183,18 @@ export async function getPublicEvents(): Promise<PublicEvent[]> {
   const client = createClient(config.url, config.key, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data, error } = await client.from("events").select(eventSelect).eq("published", true).order("starts_at").limit(60);
   if (error) return [];
-  return (data ?? []).map((row) => mapEvent(row as Record<string, unknown>));
+  const rows = (data ?? []).map((row) => row as Record<string, unknown>);
+  const preview = await catalogPreviewRow("events");
+  if (preview) {
+    const index = rows.findIndex((row) => Number(row.id) === Number(preview.id));
+    if (index >= 0) rows[index] = preview;
+    else rows.push(preview);
+  }
+  rows.sort((left, right) => {
+    const order = Number(left.display_order ?? 0) - Number(right.display_order ?? 0);
+    return order || String(left.starts_at ?? "").localeCompare(String(right.starts_at ?? ""));
+  });
+  return rows.map(mapEvent);
 }
 
 export async function getPublicEvent(id: number): Promise<PublicEvent | null> {
@@ -152,8 +203,11 @@ export async function getPublicEvent(id: number): Promise<PublicEvent | null> {
   if (!config) return null;
   const client = createClient(config.url, config.key, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data, error } = await client.from("events").select(eventSelect).eq("id", id).eq("published", true).maybeSingle();
-  if (error || !data) return null;
-  const event = mapEvent(data as Record<string, unknown>);
+  if (error) return null;
+  const preview = await catalogPreviewRow("events");
+  const row = preview && Number(preview.id) === id ? preview : data as Record<string, unknown> | null;
+  if (!row) return null;
+  const event = mapEvent(row);
   const { data: facilitators } = await client.from("event_facilitators").select("name,role,biography,media_assets!event_facilitators_image_asset_id_fkey(bucket,path,alt_text)").eq("event_id", id).order("display_order");
   event.facilitators = (facilitators ?? []).map((row) => {
     const media = (row as { media_assets?: MarketingMedia }).media_assets;
@@ -203,6 +257,14 @@ export function applyPublishedCatalogDetail(html: string, detail: PublicCatalogD
     .replace(/<div class="sop-heart-icon bg-purple text-white px-1 fs-16 border-radius-6px">\s*<\/div>/i, `<button type="button" class="sop-heart-icon bg-purple text-white px-1 fs-16 border-radius-6px save-${singular}${detail.saved ? " is-saved" : ""}" data-save-id="${detail.id}" aria-label="${detail.saved ? "Remove from saved" : "Save"}">${detail.saved ? "♥" : "♡"}</button>`);
   if (detail.imageUrl) {
     result = result.replace(/(<div class="sop-image-wrapper-1 w-100">[\s\S]*?<img )src="[^"]*"/i, `$1src="${escapeHtml(detail.imageUrl)}" alt="${escapeHtml(detail.imageAlt || detail.title)}"`);
+  }
+  if (detail.tags?.length) {
+    const tagsHtml = `<div class="sop-tags px-2 py-2 mb-0 mt-3">${detail.tags.map((tag) => `<span class="sop-tag">#${escapeHtml(tag)}</span>`).join("")}</div>`;
+    if (/<div class="sop-tags[\s\S]*?<\/div>/i.test(result)) {
+      result = result.replace(/<div class="sop-tags[\s\S]*?<\/div>/i, tagsHtml);
+    } else {
+      result = result.replace(/(<button type="button" class="sop-heart-icon[\s\S]*?<\/button>)/i, `$1${tagsHtml}`);
+    }
   }
   return result;
 }

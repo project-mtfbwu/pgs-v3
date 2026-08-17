@@ -40,8 +40,9 @@ const ops06ScoreboardMigration = await readFile(new URL("../supabase/migrations/
 const ops07TargetsMigration = await readFile(new URL("../supabase/migrations/20260817072342_ops07_staff_targets.sql", import.meta.url), "utf8");
 const phase6StudentOperationsMigration = await readFile(new URL("../supabase/migrations/20260817110000_phase6_student_operations.sql", import.meta.url), "utf8");
 const phase7CmsCatalogMigration = await readFile(new URL("../supabase/migrations/20260817120345_phase7_cms_catalog.sql", import.meta.url), "utf8");
+const phase7aDraftPreviewMigration = await readFile(new URL("../supabase/migrations/20260817125959_phase7a_cms_draft_preview.sql", import.meta.url), "utf8");
 const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}\n${privilegedDeleteAuditMigration}`;
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}\n${ops07TargetsMigration}\n${phase6StudentOperationsMigration}\n${phase7CmsCatalogMigration}`;
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}\n${ops07TargetsMigration}\n${phase6StudentOperationsMigration}\n${phase7CmsCatalogMigration}\n${phase7aDraftPreviewMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -183,6 +184,11 @@ const required = [
   ,"private.enforce_catalog_public_mutation"
   ,"private.enforce_catalog_child_publish"
   ,"add column if not exists location text not null default ''"
+  ,"create table public.catalog_draft_revisions"
+  ,"staff read catalog draft revisions"
+  ,"staff create catalog draft revisions"
+  ,"add column if not exists seo_title text"
+  ,"public.publish_catalog_draft"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -253,4 +259,8 @@ if (phase7CmsCatalogMigration.includes("create or replace function private.enfor
 if (phase7CmsCatalogMigration.includes("tags_text") || phase7CmsCatalogMigration.includes("ops_users") || phase7CmsCatalogMigration.includes("cms_users")) throw new Error("Phase 7 must not create duplicate tag text columns or a second identity model");
 if (!phase7CmsCatalogMigration.includes("alter table public.university_tags enable row level security")) throw new Error("university_tags must enable RLS");
 if (!phase7CmsCatalogMigration.includes("private.has_staff_permission('catalog.publish')")) throw new Error("Phase 7 catalog public mutations must require catalog.publish");
+if (!phase7aDraftPreviewMigration.includes("alter table public.catalog_draft_revisions enable row level security")) throw new Error("Phase 7A catalog drafts must enable RLS");
+if (!phase7aDraftPreviewMigration.includes("created_by = (select auth.uid())")) throw new Error("Phase 7A draft creation must bind the actor");
+if (!phase7aDraftPreviewMigration.includes("private.has_staff_permission('catalog.publish')")) throw new Error("Phase 7A publication must require catalog.publish in the database");
+if (phase7aDraftPreviewMigration.includes("update public.cms_pages set seo_title=target_seo_title")) throw new Error("Saving a CMS draft must not change public SEO");
 console.log("RLS migration static checks passed");

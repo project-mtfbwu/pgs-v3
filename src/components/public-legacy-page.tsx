@@ -1,4 +1,5 @@
 import { LegacyPage } from "@/components/legacy-page";
+import { ContentPreviewBanner } from "@/components/content-preview-banner";
 import { StaffPreviewBanner } from "@/components/staff-preview-banner";
 import { applyPublicContent, getPublicContent, type PublicContentSlug } from "@/lib/public-content";
 import { applyPremiumBusinessRule } from "@/lib/premium-business-rule";
@@ -55,6 +56,7 @@ export async function PublicLegacyPage<TSlug extends PublicContentSlug>({ slug, 
   rendered = applyPremiumBusinessRule(rendered);
   return (
     <>
+      <ContentPreviewBanner />
       {state && state.kind !== "anonymous" && state.preview ? (
         <StaffPreviewBanner actorName={state.preview.actorName} mode="student" targetName={state.preview.targetName} />
       ) : null}

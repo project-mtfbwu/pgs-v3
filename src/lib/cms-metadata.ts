@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { getCmsPreviewRevision } from "@/lib/content-preview";
 import { defaultPageContent } from "@/lib/content";
 import { defaultPublicContent, type PublicContentSlug } from "@/lib/public-content";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
@@ -43,6 +44,16 @@ const slugRoutes: Record<string, string> = {
   "error-404": "/error_404"
 };
 
+export function cmsRouteForSlug(slug: string): string {
+  return slugRoutes[slug] ?? `/${slug}`;
+}
+
+export function cmsPreviewRouteForSlug(slug: string): string {
+  if (slug === "program-detail") return "/programsfull/program/preview";
+  if (slug === "purpleevents-session") return "/purpleevents/session/preview";
+  return cmsRouteForSlug(slug);
+}
+
 export function fallbackSeo(slug: string): { title: string; description: string } {
   if (slug in defaultPublicContent) {
     const content = defaultPublicContent[slug as PublicContentSlug];
@@ -79,13 +90,15 @@ export async function cmsMetadata(slug: string): Promise<Metadata> {
   const fallback = fallbackSeo(slug);
   const config = getSupabasePublicConfig();
   let page: { seo_title?: string | null; seo_description?: string | null; open_graph?: unknown } | null = null;
-  if (config) {
+  const preview = await getCmsPreviewRevision(slug);
+  if (preview) page = preview;
+  if (!page && config) {
     const client = createClient(config.url, config.key, { auth: { persistSession: false, autoRefreshToken: false } });
     const { data } = await client.from("cms_pages").select("seo_title,seo_description,open_graph,status").eq("slug", slug).eq("status", "published").maybeSingle();
     page = data;
   }
   const metadata = mergeCmsSeo(fallback, page);
-  const path = slugRoutes[slug] ?? `/${slug}`;
+  const path = cmsRouteForSlug(slug);
   return {
     ...metadata,
     openGraph: { ...metadata.openGraph, url: path }

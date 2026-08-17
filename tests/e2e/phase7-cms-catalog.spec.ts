@@ -48,11 +48,13 @@ test.describe("Admin catalog workflow", () => {
     await expect(dialog.getByRole("heading", { name: "Events / Webinars" })).toBeVisible();
     await expect(dialog.getByLabel(/Title/)).toBeVisible();
     await expect(dialog.getByLabel(/^Image$/)).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Save draft" })).toBeVisible();
+    await expect(dialog.getByLabel("Revision note")).toBeVisible();
     await page.keyboard.press("Escape");
     await expectNoAxeViolations(page);
     await page.goto("/admin/catalog/tags");
     await expect(page.getByRole("heading", { name: "Tags", exact: true })).toBeVisible();
-    await expect(page.getByLabel("Entity type")).toContainText("university");
+    await expect(page.getByRole("heading", { name: "Attach shared tags" })).toHaveCount(0);
   });
 });
 
