@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function POST(request: Request) {
   try {
     const actor = await requirePremiumActor();
+    if (actor.kind !== "student") return jsonError("Only the student may post from this page. Exit preview to reply in Operations.", 403);
     const input = await readJsonObject(request);
     const body = cleanWorkspaceText(input.body, 4000);
     if(input.parent_id!=null&&!validUuid(input.parent_id))return jsonError("Invalid parent comment.",400);

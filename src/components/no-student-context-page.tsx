@@ -39,7 +39,7 @@ export async function NoStudentContextPage() {
               Back to PGS home
             </Link>
           )}
-          <Link className="no-student-context-secondary" href="/logout">
+          <Link className="no-student-context-secondary" href="/logout?next=/ops">
             <LogOut aria-hidden="true" />
             Sign out
           </Link>

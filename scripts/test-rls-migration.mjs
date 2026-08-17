@@ -41,8 +41,9 @@ const ops07TargetsMigration = await readFile(new URL("../supabase/migrations/202
 const phase6StudentOperationsMigration = await readFile(new URL("../supabase/migrations/20260817110000_phase6_student_operations.sql", import.meta.url), "utf8");
 const phase7CmsCatalogMigration = await readFile(new URL("../supabase/migrations/20260817120345_phase7_cms_catalog.sql", import.meta.url), "utf8");
 const phase7aDraftPreviewMigration = await readFile(new URL("../supabase/migrations/20260817125959_phase7a_cms_draft_preview.sql", import.meta.url), "utf8");
+const phase8IntegrationMigration = await readFile(new URL("../supabase/migrations/20260817185841_phase8_integration_connections.sql", import.meta.url), "utf8");
 const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}\n${privilegedDeleteAuditMigration}`;
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}\n${ops07TargetsMigration}\n${phase6StudentOperationsMigration}\n${phase7CmsCatalogMigration}\n${phase7aDraftPreviewMigration}`;
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}\n${ops07TargetsMigration}\n${phase6StudentOperationsMigration}\n${phase7CmsCatalogMigration}\n${phase7aDraftPreviewMigration}\n${phase8IntegrationMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -189,6 +190,9 @@ const required = [
   ,"staff create catalog draft revisions"
   ,"add column if not exists seo_title text"
   ,"public.publish_catalog_draft"
+  ,"perform private.ensure_default_board_columns"
+  ,"/dashboard#comments"
+  ,"/dashboard#where-you-stand"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -263,4 +267,8 @@ if (!phase7aDraftPreviewMigration.includes("alter table public.catalog_draft_rev
 if (!phase7aDraftPreviewMigration.includes("created_by = (select auth.uid())")) throw new Error("Phase 7A draft creation must bind the actor");
 if (!phase7aDraftPreviewMigration.includes("private.has_staff_permission('catalog.publish')")) throw new Error("Phase 7A publication must require catalog.publish in the database");
 if (phase7aDraftPreviewMigration.includes("update public.cms_pages set seo_title=target_seo_title")) throw new Error("Saving a CMS draft must not change public SEO");
+if (/create table public\./i.test(phase8IntegrationMigration)) throw new Error("Phase 8 must not create a new domain table");
+if (!phase8IntegrationMigration.includes("perform private.ensure_default_board_columns(target_student, actor)")) throw new Error("Phase 8 must seed the recovered 4-column Loopboard on Premium grant");
+if (!phase8IntegrationMigration.includes("'/dashboard#comments'")) throw new Error("Phase 8 mentor comments must deep-link to the dashboard comments section");
+if (!phase8IntegrationMigration.includes("coalesce((payload->>'student_visible')::boolean,true) is not true")) throw new Error("Phase 8 must keep staff-only reviews silent");
 console.log("RLS migration static checks passed");

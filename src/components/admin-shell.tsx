@@ -156,7 +156,7 @@ export function AdminShell({
                 <strong className="ops:block ops:truncate ops:text-sm">{displayName}</strong>
                 <span className="ops:block ops:truncate ops:text-xs ops:text-muted-foreground">{currentRole}</span>
               </span>
-              <Link href="/logout" aria-label="Sign out" className="ops:text-muted-foreground ops:hover:text-foreground">
+              <Link href="/logout?next=/ops" aria-label="Sign out" className="ops:text-muted-foreground ops:hover:text-foreground">
                 <LogOut aria-hidden="true" className="ops:size-4" />
               </Link>
             </div>

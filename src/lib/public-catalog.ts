@@ -252,7 +252,7 @@ export function applyPublishedCatalogDetail(html: string, detail: PublicCatalogD
   const singular = detail.kind === "programs" ? "program" : "course";
   let result = html
     .replace(/(<div class="sop-image-wrapper-1 w-100">)/i, `$1<div data-${singular}-id="${detail.id}" hidden></div>`)
-    .replace(/>Program details<\/h1>/i, `>${escapeHtml(detail.title)}</h1>`)
+    .replace(/>\s*Program details\s*<\/h1>/i, `>${escapeHtml(detail.title)}</h1>`)
     .replace(/(<div class="mt-2 mobile-w-70 mobile-m-auto mobile-pb-4 mobile-pt-2">\s*<span[^>]*>)\s*(<\/span>)/i, `$1${escapeHtml(detail.summary || detail.description)}$2`)
     .replace(/<div class="sop-heart-icon bg-purple text-white px-1 fs-16 border-radius-6px">\s*<\/div>/i, `<button type="button" class="sop-heart-icon bg-purple text-white px-1 fs-16 border-radius-6px save-${singular}${detail.saved ? " is-saved" : ""}" data-save-id="${detail.id}" aria-label="${detail.saved ? "Remove from saved" : "Save"}">${detail.saved ? "♥" : "♡"}</button>`);
   if (detail.imageUrl) {
@@ -330,7 +330,7 @@ export function applyPublishedEvents(html: string, events: PublicEvent[]): strin
 }
 
 export function applyPublishedEventDetail(html: string, event: PublicEvent): string {
-  const booking = event.bookingUrl && /^https?:\/\//i.test(event.bookingUrl) ? event.bookingUrl : "/contactus";
+  const booking = event.bookingUrl && /^https?:\/\//i.test(event.bookingUrl) ? event.bookingUrl : "/contact";
   let result = html
     .replace(/(<div class="w-70">\s*<h1[^>]*>)[\s\S]*?(<\/h1>)/i, `$1${escapeHtml(event.title)}$2`)
     .replace(/<button type="button" class="sop-learn-btn bg-blue-500 mt-2 fs-17 w-100 fw-600 text-black border-radius-4px py-2 ht-48">[\s\S]*?<\/button>/i, `<a href="${escapeHtml(booking)}" class="sop-learn-btn bg-blue-500 mt-2 fs-17 w-100 fw-600 text-black border-radius-4px py-2 ht-48 d-inline-flex align-items-center justify-content-center">Book Your Seat</a>`);

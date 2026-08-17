@@ -4,15 +4,17 @@ const mocks = vi.hoisted(() => ({
   adminFrom: vi.fn(),
   sessionFrom: vi.fn(),
   previewTarget: null as string | null,
-  log: [] as Array<{ client: "admin" | "session"; table: string; studentId?: string }>
+  log: [] as Array<{ client: "admin" | "session"; table: string; studentId?: string }>,
+  filters: [] as Array<{ table: string; column: string; value: unknown }>
 }));
 
 function query(client: "admin" | "session", table: string) {
   let studentId: string | undefined;
   const api = {
     select() { return api; },
-    eq(column: string, value: string) {
-      if (column === "student_id" || column === "id") studentId = value;
+    eq(column: string, value: string | boolean) {
+      mocks.filters.push({ table, column, value });
+      if (column === "student_id" || column === "id") studentId = String(value);
       return api;
     },
     order() { return api; },
@@ -63,6 +65,7 @@ const studentB = "c4200000-0000-4000-8000-000000000002";
 describe("Premium workspace subject loaders", () => {
   beforeEach(() => {
     mocks.log.length = 0;
+    mocks.filters.length = 0;
     mocks.previewTarget = null;
     mocks.adminFrom.mockClear();
     mocks.sessionFrom.mockClear();
@@ -79,6 +82,11 @@ describe("Premium workspace subject loaders", () => {
     expect(mocks.log.some((entry) => entry.table === "mentor_assignments" && entry.studentId === studentA)).toBe(true);
     expect(mocks.log.some((entry) => entry.table === "student_document_requirements" && entry.studentId === studentA)).toBe(true);
     expect(mocks.log.every((entry) => entry.studentId === studentA)).toBe(true);
+    expect(mocks.filters).toEqual(expect.arrayContaining([
+      expect.objectContaining({ table: "workspace_comments", column: "visibility", value: "student_visible" }),
+      expect.objectContaining({ table: "review_queue_items", column: "student_visible", value: true }),
+      expect.objectContaining({ table: "counselor_notes", column: "visibility", value: "student_visible" })
+    ]));
   });
 
   it("keeps ordinary Premium and Standard workspace loads on the session client", async () => {

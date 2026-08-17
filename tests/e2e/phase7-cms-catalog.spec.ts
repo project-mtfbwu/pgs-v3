@@ -20,6 +20,13 @@ test("public event listing does not keep competing static snapshot cards", async
   await expect(page.locator("section.mobile-event-program [data-relational-events]")).toHaveCount(1);
 });
 
+test("event session pages replace snapshot listing cards with the live event list", async ({ page }) => {
+  await page.goto("/purpleevents/session/1", { waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-legacy-page="purpleevents-session"]')).toBeVisible();
+  await expect(page.locator("[data-relational-events]").first()).toBeAttached();
+  await expect(page.locator(".swiper-wrapper.purple-teams .swiper-slide:not([data-relational-events])")).toHaveCount(0);
+});
+
 test("CV Ready keeps explicit course discrimination and featured-course slot", async ({ page }) => {
   await page.goto("/cvreadyprogram", { waitUntil: "domcontentloaded" });
   await expect(page.getByText("Most Wanted Course", { exact: false })).toBeVisible();

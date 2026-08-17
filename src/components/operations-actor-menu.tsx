@@ -43,7 +43,7 @@ export function OperationsActorMenu({
           <Link href="/">Public site</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/logout">Sign out</Link>
+          <Link href="/logout?next=/ops">Sign out</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -20,6 +20,10 @@ describe("published relational catalog parity",()=>{
     const result=applyPublishedCatalogDetail(html,{kind:"courses",id:9,title:"Live course",summary:"Published summary",description:"",saved:true});
     expect(result).toContain('data-course-id="9"');expect(result).toContain("Live course");expect(result).toContain("Published summary");expect(result).toContain("save-course is-saved");
   });
+  it("replaces the recovered program-detail heading when the snapshot wraps the title",()=>{
+    const html='<h1 class="title">\n                                        Program details\n                                    </h1>';
+    expect(applyPublishedCatalogDetail(html,{kind:"programs",id:4,title:"Live program",summary:"",description:"",saved:false})).toContain("Live program");
+  });
   it("hydrates program and course detail tags for preview QC",()=>{
     const html='<div class="sop-image-wrapper-1 w-100"><h1>Program details</h1><div class="mt-2 mobile-w-70 mobile-m-auto mobile-pb-4 mobile-pt-2"><span class="copy"></span></div><div class="sop-heart-icon bg-purple text-white px-1 fs-16 border-radius-6px"></div>';
     const result=applyPublishedCatalogDetail(html,{kind:"programs",id:4,title:"Live program",summary:"Published summary",description:"",saved:false,tags:["Visa","Medicine"]});
@@ -38,6 +42,10 @@ describe("published relational catalog parity",()=>{
     const html='<div class="w-70"><h1 class="hero">Old event</h1></div><button type="button" class="sop-learn-btn bg-blue-500 mt-2 fs-17 w-100 fw-600 text-black border-radius-4px py-2 ht-48">Book Your Seat</button>';
     const result=applyPublishedEventDetail(html,{id:9,title:"New <Event>",summary:"",description:"",startsAt:null,endsAt:null,bookingUrl:"https://example.com/book"});
     expect(result).toContain("New &lt;Event&gt;");expect(result).toContain('href="https://example.com/book"');
+  });
+  it("falls back to the real contact page when an event has no booking URL",()=>{
+    const html='<button type="button" class="sop-learn-btn bg-blue-500 mt-2 fs-17 w-100 fw-600 text-black border-radius-4px py-2 ht-48">Book Your Seat</button>';
+    expect(applyPublishedEventDetail(html,{id:2,title:"Event",summary:"",description:"",startsAt:null,endsAt:null,bookingUrl:null})).toContain('href="/contact"');
   });
   it("connects featured courses into the retained CV Ready Most Wanted slot",()=>{
     const html='<div class="box-style-45 d-flex align-items-stretch gap-3 justify-content-center flex-wrap"><p class="text-muted">No featured courses yet. Mark courses as "show in picks" in admin.</p></div>';

@@ -36,7 +36,7 @@ export async function PublicLegacyPage<TSlug extends PublicContentSlug>({ slug, 
     }
   }
   if(catalogDetail){const detail=await getPublicCatalogDetail(catalogDetail.kind,catalogDetail.id,state&&state.kind!=="anonymous"?state.user.id:undefined);if(detail)rendered=applyPublishedCatalogDetail(rendered,detail);}
-  if(slug==="purpleevents"){rendered=applyPublishedEvents(rendered,await getPublicEvents());}
+  if(slug==="purpleevents"||slug==="purpleevents-session"){rendered=applyPublishedEvents(rendered,await getPublicEvents());}
   if(slug==="purpleevents-session"&&eventId){const event=await getPublicEvent(eventId);if(event)rendered=applyPublishedEventDetail(rendered,event);}
   if (state&&state.kind!=="anonymous") {
     rendered = applyAuthenticatedShell(rendered, { name:state.name, unreadCount:state.unreadCount, premium:state.kind==="authenticated_premium" });

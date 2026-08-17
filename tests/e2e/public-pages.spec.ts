@@ -94,7 +94,6 @@ test("retained legacy aliases resolve to canonical V3 routes", async ({ request 
   test.skip(testInfo.project.name === "mobile", "route aliases are viewport independent");
   const cases = [
     ["/Home/defaultdashboard", "/student/dashboard"],
-    ["/home/purplepremium_overview", "/purplepremiumhome"],
     ["/Purplepremiumhome/purplepremiumhome", "/purplepremiumhome"],
     ["/Preview/event/10", "/purpleevents/session/10"]
   ] as const;
@@ -103,6 +102,8 @@ test("retained legacy aliases resolve to canonical V3 routes", async ({ request 
     expect(response.status(), legacy).toBeGreaterThanOrEqual(300);
     expect(response.headers().location, legacy).toContain(expected);
   }
+  const overview = await request.get("/home/purplepremium_overview", { maxRedirects: 0 });
+  expect(overview.status()).toBe(200);
 });
 
 test("search endpoint enforces minimum query length and returns a stable shape", async ({ request }) => {

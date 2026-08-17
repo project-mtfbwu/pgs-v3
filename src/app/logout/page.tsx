@@ -1,21 +1,13 @@
-"use client";
+import { LogoutConfirm } from "@/components/logout-confirm";
 
-import Link from "next/link";
-import { useState } from "react";
-import { signOutAndNavigate } from "@/lib/logout-navigation";
+function logoutReturnPath(value: string | undefined): { href: string; label: string } {
+  if (value === "/ops") return { href: "/ops", label: "Return to Operations" };
+  if (value === "/") return { href: "/", label: "Return to PGS home" };
+  return { href: "/student/dashboard", label: "Return to dashboard" };
+}
 
-export default function LogoutPage() {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  async function logout() {
-    setBusy(true);
-    setError("");
-    try {
-      await signOutAndNavigate();
-    } catch {
-      setBusy(false);
-      setError("Unable to log out. Please try again.");
-    }
-  }
-  return <main className="pgs-logout-page"><section><p>#PGS ACCOUNT</p><h1>Log out?</h1><p>You can securely end this browser session now.</p><button className="btn btn-purple" onClick={logout} disabled={busy}>{busy ? "Logging out…" : "Logout"}</button>{error && <p role="status">{error}</p>}<Link href="/student/dashboard">Return to dashboard</Link></section></main>;
+export default async function LogoutPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const { next } = await searchParams;
+  const home = logoutReturnPath(next);
+  return <LogoutConfirm homeHref={home.href} homeLabel={home.label} />;
 }

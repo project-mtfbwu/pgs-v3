@@ -77,8 +77,18 @@ export async function requirePremiumActor(studentId?: string, access: "read"|"ma
 
 export async function loadPremiumWorkspaceWithClient(
   client: Pick<SupabaseClient, "from">,
-  studentId: string
+  studentId: string,
+  options: { studentVisibleOnly?: boolean } = {}
 ): Promise<PremiumWorkspace> {
+  const studentVisible = options.studentVisibleOnly === true;
+  let commentsQuery = client.from("workspace_comments").select("id,parent_id,author_id,body,created_at").eq("student_id", studentId);
+  let reviewsQuery = client.from("review_queue_items").select("id,title,details,status,sort_order,student_visible").eq("student_id", studentId);
+  let notesQuery = client.from("counselor_notes").select("id,body,visibility,created_at").eq("student_id", studentId);
+  if (studentVisible) {
+    commentsQuery = commentsQuery.eq("visibility", "student_visible");
+    reviewsQuery = reviewsQuery.eq("student_visible", true);
+    notesQuery = notesQuery.eq("visibility", "student_visible");
+  }
   const [profile, premiumProfile, assignment, alerts, columns, tasks, comments, reviews, notes, requirements, universities] = await Promise.all([
     client.from("profiles").select("full_name,avatar_path,study_level").eq("id", studentId).maybeSingle(),
     client.from("premium_workspace_profiles").select("pathway_label,intake_label,universities_applied,offers_received,visa_status,tuition_receipt_uploaded,onboarding_percentage,onboarding_checklist,feedback_session_title,feedback_session_items,documents_tracker,currently_working_on,future_tasks").eq("student_id", studentId).maybeSingle(),
@@ -86,9 +96,9 @@ export async function loadPremiumWorkspaceWithClient(
     client.from("student_alerts").select("id,alert_text,severity").eq("student_id", studentId).eq("active", true).order("sort_order").limit(3),
     client.from("student_board_columns").select("id,key,title,sort_order").eq("student_id", studentId).order("sort_order"),
     client.from("student_tasks").select("id,column_id,title,details,sort_order,due_at,created_at,updated_at").eq("student_id", studentId).order("sort_order"),
-    client.from("workspace_comments").select("id,parent_id,author_id,body,created_at").eq("student_id", studentId).order("created_at"),
-    client.from("review_queue_items").select("id,title,details,status,sort_order,student_visible").eq("student_id", studentId).order("sort_order"),
-    client.from("counselor_notes").select("id,body,visibility,created_at").eq("student_id", studentId).order("created_at", { ascending: false }),
+    commentsQuery.order("created_at"),
+    reviewsQuery.order("sort_order"),
+    notesQuery.order("created_at", { ascending: false }),
     client.from("student_document_requirements").select("id,document_type,requirement_kind,status,instructions,sort_order,student_documents(id,requirement_id,original_filename,mime_type,byte_size,version,qc_status,scan_status,uploaded_at,superseded_at,archived_at,purged_at)").eq("student_id", studentId).order("sort_order"),
     client.from("student_university_selections").select("id,stage,sort_order,universities(id,name,slug)").eq("student_id", studentId).order("sort_order")
   ]);
@@ -110,10 +120,11 @@ export async function loadPremiumWorkspaceWithClient(
 
 export async function loadPremiumWorkspace(studentId: string): Promise<PremiumWorkspace> {
   const previewTarget = await getActiveStudentPreviewTargetId();
-  const client = previewTarget === studentId
+  const previewing = previewTarget === studentId;
+  const client = previewing
     ? createSupabaseAdminClient()
     : await createSupabaseServerClient();
-  return loadPremiumWorkspaceWithClient(client, studentId);
+  return loadPremiumWorkspaceWithClient(client, studentId, { studentVisibleOnly: previewing });
 }
 
 export async function loadPremiumDashboardCatalog(): Promise<PremiumDashboardCatalog> {
