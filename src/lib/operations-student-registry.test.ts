@@ -108,6 +108,13 @@ describe("Registry query contract", () => {
     );
   });
 
+  it("accepts the organization-only assigned drill-down", () => {
+    expect(registryHref(parseRegistryQuery({ mentor: "assigned" }, admin))).toBe(
+      "/ops/students?mentor=assigned"
+    );
+    expect(parseRegistryQuery({ mentor: "assigned" }, scoped).mentor).toBeNull();
+  });
+
   it("builds IST join-year options from 2026 through the current year", () => {
     expect(registryJoinYearOptions(new Date("2026-08-16T12:00:00+05:30"))[0]).toBe(2026);
   });

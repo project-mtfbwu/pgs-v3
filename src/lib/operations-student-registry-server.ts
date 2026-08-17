@@ -68,7 +68,7 @@ export async function loadStaffStudentRegistry(
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("staff_student_registry", {
+  const { data, error } = await supabase.rpc("staff_student_registry_v2", {
     search_text: query.q,
     plan_filter: query.plan,
     mentor_filter: query.mentor,

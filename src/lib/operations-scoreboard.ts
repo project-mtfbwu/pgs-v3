@@ -4,10 +4,23 @@ import { can, type StaffContext } from "@/lib/staff-auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type ScoreboardMetric = {
-  key: "visible" | "premium" | "standard" | "team" | "assigned";
+  key:
+    | "total"
+    | "premium"
+    | "standard"
+    | "assigned"
+    | "unassigned"
+    | "premium_awaiting_mentor"
+    | "joined_month"
+    | "joined_year"
+    | "my_students"
+    | "my_premium"
+    | "my_standard";
   label: string;
   value: number | null;
   href: string;
+  description: string;
+  attention?: boolean;
 };
 
 export type ScoreboardActivityItem = {
@@ -31,12 +44,26 @@ export type ScoreboardOperateLink = {
   label: string;
 };
 
+export type ScoreboardComposition = {
+  first: { label: string; value: number; href: string };
+  second: { label: string; value: number; href: string };
+  total: number;
+};
+
+export type ScoreboardJoinTrendPoint = {
+  month: string;
+  monthStart: string;
+  count: number;
+};
+
 export type OperationsScoreboardModel = {
   scope: OperationsScoreboardScope;
   title: string;
   description: string;
   metrics: ScoreboardMetric[];
-  mix: { premium: number; standard: number; total: number } | null;
+  premiumMix: ScoreboardComposition | null;
+  assignmentMix: ScoreboardComposition | null;
+  joinTrend: ScoreboardJoinTrendPoint[] | null;
   activity: ScoreboardActivityItem[] | null;
   roster: ScoreboardRosterItem[] | null;
   rosterTotal: number | null;
@@ -64,8 +91,45 @@ type AssignedProfile = {
 const ROSTER_LIMIT = 8;
 const ACTIVITY_LIMIT = 8;
 
-function countOrNull(result: { count: number | null; error: { message: string } | null }): number | null {
-  return result.error ? null : result.count;
+type ScoreboardRpcRow = {
+  scope: OperationsScoreboardScope;
+  total_students: number | string;
+  premium_students: number | string;
+  standard_students: number | string;
+  assigned_students: number | string;
+  unassigned_students: number | string;
+  premium_awaiting_mentor: number | string;
+  joined_this_month: number | string;
+  joined_this_year: number | string;
+  join_trend: unknown;
+};
+
+function count(value: number | string): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+}
+
+function joinTrend(value: unknown): ScoreboardJoinTrendPoint[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((point) => {
+    if (!point || typeof point !== "object") return [];
+    const row = point as Record<string, unknown>;
+    if (typeof row.month !== "string" || typeof row.monthStart !== "string") return [];
+    return [{ month: row.month, monthStart: row.monthStart, count: count(Number(row.count)) }];
+  });
+}
+
+async function loadScoreboardAggregate(
+  targetMentor: string | null,
+  expectedScope: Exclude<OperationsScoreboardScope, "restricted">
+): Promise<ScoreboardRpcRow | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("staff_operations_scoreboard", {
+    target_mentor: targetMentor
+  });
+  if (error || !data?.length) return null;
+  const row = data[0] as ScoreboardRpcRow;
+  return row.scope === expectedScope ? row : null;
 }
 
 function operateLinks(context: StaffContext, mentorPreview = false): ScoreboardOperateLink[] {
@@ -109,39 +173,68 @@ async function loadRecentActivity(context: StaffContext): Promise<ScoreboardActi
 }
 
 async function loadOrganizationBoard(context: StaffContext): Promise<OperationsScoreboardModel> {
-  const supabase = await createSupabaseServerClient();
-  const nowIso = new Date().toISOString();
-  const [profiles, premium, staff, activity] = await Promise.all([
-    supabase.from("profiles").select("id", { count: "exact", head: true }),
-    supabase
-      .from("premium_entitlements")
-      .select("student_id", { count: "exact", head: true })
-      .eq("status", "active")
-      .lte("starts_at", nowIso)
-      .gt("ends_at", nowIso),
-    supabase.from("staff_profiles").select("user_id", { count: "exact", head: true }).eq("status", "active"),
+  const [aggregate, activity] = await Promise.all([
+    loadScoreboardAggregate(null, "organization"),
     loadRecentActivity(context)
   ]);
-  const totalStudents = countOrNull(profiles);
-  const premiumStudents = countOrNull(premium);
-  const standardStudents =
-    totalStudents === null || premiumStudents === null ? null : Math.max(totalStudents - premiumStudents, 0);
+  const totalStudents = aggregate ? count(aggregate.total_students) : null;
+  const premiumStudents = aggregate ? count(aggregate.premium_students) : null;
+  const standardStudents = aggregate ? count(aggregate.standard_students) : null;
+  const assignedStudents = aggregate ? count(aggregate.assigned_students) : null;
+  const unassignedStudents = aggregate ? count(aggregate.unassigned_students) : null;
   const metrics: ScoreboardMetric[] = [
-    { key: "visible", label: "Visible students", value: totalStudents, href: "/ops/students" },
-    { key: "premium", label: "Premium students", value: premiumStudents, href: "/ops/students?plan=premium" },
-    { key: "standard", label: "Standard students", value: standardStudents, href: "/ops/students?plan=standard" },
-    { key: "team", label: "Active team members", value: countOrNull(staff), href: "/ops/team" }
+    { key: "total", label: "Total students", value: totalStudents, href: "/ops/students", description: "Canonical student identities" },
+    { key: "premium", label: "Premium students", value: premiumStudents, href: "/ops/students?plan=premium", description: "Active entitlement now" },
+    { key: "standard", label: "Standard students", value: standardStudents, href: "/ops/students?plan=standard", description: "No active Premium" },
+    { key: "assigned", label: "Assigned students", value: assignedStudents, href: "/ops/students?mentor=assigned", description: "Active mentor assignment" },
+    { key: "unassigned", label: "Unassigned students", value: unassignedStudents, href: "/ops/students?mentor=unassigned", description: "No active assignment" },
+    {
+      key: "premium_awaiting_mentor",
+      label: "Premium awaiting mentor",
+      value: aggregate ? count(aggregate.premium_awaiting_mentor) : null,
+      href: "/ops/students?plan=premium&mentor=unassigned",
+      description: "Active Premium with no active assignment",
+      attention: true
+    },
+    {
+      key: "joined_month",
+      label: "Joined this month",
+      value: aggregate ? count(aggregate.joined_this_month) : null,
+      href: "/ops/students?joined=this_month",
+      description: "India-time calendar month"
+    },
+    {
+      key: "joined_year",
+      label: "Joined this year",
+      value: aggregate ? count(aggregate.joined_this_year) : null,
+      href: `/ops/students?joined=${new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric" }).format(new Date())}`,
+      description: "India-time calendar year"
+    }
   ];
-  const mix =
+  const premiumMix =
     totalStudents !== null && premiumStudents !== null && standardStudents !== null
-      ? { premium: premiumStudents, standard: standardStudents, total: totalStudents }
+      ? {
+          first: { label: "Premium", value: premiumStudents, href: "/ops/students?plan=premium" },
+          second: { label: "Standard", value: standardStudents, href: "/ops/students?plan=standard" },
+          total: totalStudents
+        }
+      : null;
+  const assignmentMix =
+    totalStudents !== null && assignedStudents !== null && unassignedStudents !== null
+      ? {
+          first: { label: "Assigned", value: assignedStudents, href: "/ops/students?mentor=assigned" },
+          second: { label: "Unassigned", value: unassignedStudents, href: "/ops/students?mentor=unassigned" },
+          total: totalStudents
+        }
       : null;
   return {
     scope: "organization",
-    title: "Your Operations pulse.",
-    description: "Live organization counts allowed by your current permissions. No sample data is shown.",
+    title: "Operations Scoreboard",
+    description: "Current organization truth from canonical student, Premium, and assignment records.",
     metrics,
-    mix,
+    premiumMix,
+    assignmentMix,
+    joinTrend: aggregate ? joinTrend(aggregate.join_trend) : null,
     activity,
     roster: null,
     rosterTotal: null,
@@ -151,11 +244,6 @@ async function loadOrganizationBoard(context: StaffContext): Promise<OperationsS
 
 async function loadAssignedBoard(context: StaffContext, mentorId = context.user.id, mentorPreview = false): Promise<OperationsScoreboardModel> {
   const supabase = await createSupabaseServerClient();
-  const assigned = supabase
-    .from("mentor_assignments")
-    .select("id", { count: "exact", head: true })
-    .eq("mentor_id", mentorId)
-    .eq("status", "active");
   const rosterQuery = supabase
     .from("mentor_assignments")
     .select("student_id,profiles!mentor_assignments_student_id_fkey(id,full_name,profile_completed_at,study_level)")
@@ -163,7 +251,13 @@ async function loadAssignedBoard(context: StaffContext, mentorId = context.user.
     .eq("status", "active")
     .order("assigned_at", { ascending: false })
     .limit(ROSTER_LIMIT);
-  const [countResult, rosterResult] = await Promise.all([assigned, rosterQuery]);
+  const [aggregate, rosterResult] = await Promise.all([
+    loadScoreboardAggregate(mentorPreview ? mentorId : null, "assigned_students"),
+    rosterQuery
+  ]);
+  const totalStudents = aggregate ? count(aggregate.total_students) : null;
+  const premiumStudents = aggregate ? count(aggregate.premium_students) : null;
+  const standardStudents = aggregate ? count(aggregate.standard_students) : null;
   const roster: ScoreboardRosterItem[] = (rosterResult.data ?? []).flatMap((assignment) => {
     const relation = assignment.profiles as AssignedProfile | AssignedProfile[] | null;
     const profile = Array.isArray(relation) ? relation[0] : relation;
@@ -178,18 +272,25 @@ async function loadAssignedBoard(context: StaffContext, mentorId = context.user.
   });
   return {
     scope: "assigned_students",
-    title: "My Operations pulse.",
-    description: "A scoped Operations foundation using only your active student assignments. Company-wide counts are never queried for this view.",
-    metrics: [{
-      key: "assigned",
-      label: "Assigned students",
-      value: countOrNull(countResult),
-      href: "/ops/students"
-    }],
-    mix: null,
+    title: "My Scoreboard",
+    description: "Only students currently assigned to this mentor. Organization totals are never queried.",
+    metrics: [
+      { key: "my_students", label: "My students", value: totalStudents, href: "/ops/students", description: "Active assignments" },
+      { key: "my_premium", label: "My Premium students", value: premiumStudents, href: "/ops/students?plan=premium", description: "Assigned and active Premium" },
+      { key: "my_standard", label: "My Standard students", value: standardStudents, href: "/ops/students?plan=standard", description: "Assigned without active Premium" }
+    ],
+    premiumMix: totalStudents !== null && premiumStudents !== null && standardStudents !== null
+      ? {
+          first: { label: "Premium", value: premiumStudents, href: "/ops/students?plan=premium" },
+          second: { label: "Standard", value: standardStudents, href: "/ops/students?plan=standard" },
+          total: totalStudents
+        }
+      : null,
+    assignmentMix: null,
+    joinTrend: null,
     activity: null,
     roster,
-    rosterTotal: countOrNull(countResult),
+    rosterTotal: totalStudents,
     operate: operateLinks(context, mentorPreview)
   };
 }
@@ -200,7 +301,9 @@ function loadRestrictedBoard(context: StaffContext): OperationsScoreboardModel {
     title: "Authorized Operations views",
     description: "Only the Operations modules your current permissions allow. Organization totals and audit activity are not queried.",
     metrics: [],
-    mix: null,
+    premiumMix: null,
+    assignmentMix: null,
+    joinTrend: null,
     activity: null,
     roster: null,
     rosterTotal: null,

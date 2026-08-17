@@ -1,9 +1,13 @@
 import Link from "next/link";
 import {
   ArrowUpRight,
+  CalendarDays,
   CircleGauge,
   GraduationCap,
   Sparkles,
+  TriangleAlert,
+  UserCheck,
+  UserMinus,
   UsersRound
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,18 +16,26 @@ import { buttonVariants } from "@/components/ui/button";
 import type {
   OperationsScoreboardModel,
   ScoreboardActivityItem,
+  ScoreboardComposition,
   ScoreboardMetric,
   ScoreboardOperateLink,
   ScoreboardRosterItem
 } from "@/lib/operations-scoreboard";
+import { OperationsJoinTrendChart } from "@/components/operations-scoreboard-chart";
 import { cn } from "@/lib/utils";
 
 const metricIcons = {
-  visible: GraduationCap,
+  total: GraduationCap,
   premium: Sparkles,
   standard: CircleGauge,
-  team: UsersRound,
-  assigned: GraduationCap
+  assigned: UserCheck,
+  unassigned: UserMinus,
+  premium_awaiting_mentor: TriangleAlert,
+  joined_month: CalendarDays,
+  joined_year: CalendarDays,
+  my_students: UsersRound,
+  my_premium: Sparkles,
+  my_standard: CircleGauge
 } as const;
 
 function metricValue(value: number | null): string {
@@ -37,7 +49,7 @@ function ScoreboardMetrics({ metrics }: { metrics: ScoreboardMetric[] }) {
       {metrics.map((metric) => {
         const Icon = metricIcons[metric.key];
         return (
-          <Link href={metric.href} key={metric.key} className="ops:no-underline">
+          <Link href={metric.href} key={metric.key} data-scoreboard-metric={metric.key} className="ops:no-underline">
             <Card className="ops-system-card ops-system-metric-card ops:h-full ops:transition-colors">
               <CardContent className="ops:flex ops:h-full ops:flex-col ops:gap-4 ops:p-4">
                 <span className="ops:flex ops:size-9 ops:items-center ops:justify-center ops:rounded-md ops:bg-accent ops:text-accent-foreground">
@@ -46,6 +58,7 @@ function ScoreboardMetrics({ metrics }: { metrics: ScoreboardMetric[] }) {
                 <div>
                   <p className="ops:m-0 ops:text-sm ops:text-muted-foreground">{metric.label}</p>
                   <strong className="ops:mt-1 ops:block ops:tracking-tight">{metricValue(metric.value)}</strong>
+                  <span className="ops:mt-1 ops:block ops:text-xs ops:text-muted-foreground">{metric.description}</span>
                 </div>
                 <span className="ops:mt-auto ops:flex ops:items-center ops:gap-1 ops:text-xs ops:font-semibold ops:text-accent-foreground">
                   Open view <ArrowUpRight aria-hidden="true" className="ops:size-3.5" />
@@ -59,46 +72,88 @@ function ScoreboardMetrics({ metrics }: { metrics: ScoreboardMetric[] }) {
   );
 }
 
-function StudentStatusPanel({ mix }: { mix: NonNullable<OperationsScoreboardModel["mix"]> }) {
-  const premiumShare = mix.total > 0 ? Math.round((mix.premium / mix.total) * 100) : 0;
+function AttentionMetric({ metric }: { metric: ScoreboardMetric }) {
+  return (
+    <section aria-label="Operational attention">
+      <Link href={metric.href} data-scoreboard-metric={metric.key} className="ops:no-underline">
+        <Card className="ops-system-card ops-system-metric-card ops:border-accent-foreground/40 ops:bg-accent/30">
+          <CardContent className="ops:flex ops:flex-col ops:gap-4 ops:p-5 ops:sm:flex-row ops:sm:items-center">
+            <span className="ops:flex ops:size-11 ops:shrink-0 ops:items-center ops:justify-center ops:rounded-md ops:bg-accent ops:text-accent-foreground">
+              <TriangleAlert aria-hidden="true" className="ops:size-5" />
+            </span>
+            <span className="ops:min-w-0 ops:flex-1">
+              <strong className="ops:block ops:text-base">{metric.label}</strong>
+              <span className="ops:block ops:text-sm ops:text-muted-foreground">{metric.description}</span>
+            </span>
+            <strong className="ops:text-[2rem] ops:leading-9 ops:tracking-tight">{metricValue(metric.value)}</strong>
+            <span className="ops:flex ops:items-center ops:gap-1 ops:text-sm ops:font-semibold ops:text-accent-foreground">
+              Open Premium + Unassigned <ArrowUpRight aria-hidden="true" className="ops:size-4" />
+            </span>
+          </CardContent>
+        </Card>
+      </Link>
+    </section>
+  );
+}
+
+function CompositionPanel({
+  title,
+  description,
+  mix
+}: {
+  title: string;
+  description: string;
+  mix: ScoreboardComposition;
+}) {
+  const firstShare = mix.total > 0 ? Math.round((mix.first.value / mix.total) * 100) : 0;
   return (
     <Card className="ops-system-card ops:h-full">
       <CardHeader className="ops:p-5">
-        <CardTitle className="ops-system-card-title">Student status</CardTitle>
-        <CardDescription>Canonical Premium versus Standard among currently visible students.</CardDescription>
+        <CardTitle className="ops-system-card-title">{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="ops:flex ops:flex-col ops:gap-4 ops:p-5 ops:pt-0">
         <Progress
-          value={mix.total > 0 ? premiumShare : 0}
-          aria-label={`${mix.premium} Premium, ${mix.standard} Standard`}
+          value={mix.total > 0 ? firstShare : 0}
+          aria-label={`${mix.first.value} ${mix.first.label}, ${mix.second.value} ${mix.second.label}`}
           className="ops-system-mix-progress ops:h-2 ops:bg-secondary"
         />
         <ul className="ops:m-0 ops:flex ops:flex-col ops:gap-3 ops:p-0 ops:list-none">
-          <li>
-            <Link href="/ops/students?plan=premium" className="ops-system-compact-row ops:no-underline">
-              <span>
-                <strong>Premium</strong>
-                <span className="ops:block ops:text-xs ops:text-muted-foreground">Currently valid entitlement</span>
-              </span>
-              <span className="ops:flex ops:items-center ops:gap-2">
-                <strong>{mix.premium}</strong>
-                <ArrowUpRight aria-hidden="true" className="ops:size-3.5 ops:text-accent-foreground" />
-              </span>
-            </Link>
-          </li>
-          <li>
-            <Link href="/ops/students?plan=standard" className="ops-system-compact-row ops:no-underline">
-              <span>
-                <strong>Standard</strong>
-                <span className="ops:block ops:text-xs ops:text-muted-foreground">No currently valid Premium</span>
-              </span>
-              <span className="ops:flex ops:items-center ops:gap-2">
-                <strong>{mix.standard}</strong>
-                <ArrowUpRight aria-hidden="true" className="ops:size-3.5 ops:text-accent-foreground" />
-              </span>
-            </Link>
-          </li>
+          {[mix.first, mix.second].map((item) => (
+            <li key={item.label}>
+              <Link href={item.href} className="ops-system-compact-row ops:no-underline">
+                <span>
+                  <strong>{item.label}</strong>
+                  <span className="ops:block ops:text-xs ops:text-muted-foreground">
+                    {mix.total > 0 ? `${Math.round((item.value / mix.total) * 100)}% of ${mix.total}` : "No students in scope"}
+                  </span>
+                </span>
+                <span className="ops:flex ops:items-center ops:gap-2">
+                  <strong>{item.value}</strong>
+                  <ArrowUpRight aria-hidden="true" className="ops:size-3.5 ops:text-accent-foreground" />
+                </span>
+              </Link>
+            </li>
+          ))}
         </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+function JoinTrendPanel({
+  points
+}: {
+  points: NonNullable<OperationsScoreboardModel["joinTrend"]>;
+}) {
+  return (
+    <Card className="ops-system-card ops:h-full">
+      <CardHeader className="ops:p-5">
+        <CardTitle className="ops-system-card-title">Student join trend</CardTitle>
+        <CardDescription>Canonical student joins across the last six India-time calendar months.</CardDescription>
+      </CardHeader>
+      <CardContent className="ops:p-5 ops:pt-0">
+        <OperationsJoinTrendChart points={points} />
       </CardContent>
     </Card>
   );
@@ -231,13 +286,42 @@ export function OperationsScoreboardView({ model }: { model: OperationsScoreboar
     return <OperatePanel links={model.operate} title="Authorized Operations views" />;
   }
 
+  const attention = model.metrics.find((metric) => metric.attention);
+  const primaryMetrics = model.metrics.filter((metric) => !metric.attention);
+
   return (
     <>
-      <ScoreboardMetrics metrics={model.metrics} />
-      {model.scope === "organization" && (model.mix || model.activity) ? (
-        <section aria-label="Scoreboard detail" className="ops:grid ops:gap-4 ops:xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-          {model.mix ? <StudentStatusPanel mix={model.mix} /> : null}
-          {model.activity ? <RecentActivityPanel activity={model.activity} /> : null}
+      <ScoreboardMetrics metrics={primaryMetrics} />
+      {attention ? <AttentionMetric metric={attention} /> : null}
+      {model.scope === "organization" && (model.joinTrend || model.premiumMix || model.assignmentMix) ? (
+        <section aria-label="Scoreboard reporting" className="ops:grid ops:gap-4 ops:xl:grid-cols-[minmax(0,1.4fr)_minmax(20rem,0.8fr)]">
+          {model.joinTrend ? <JoinTrendPanel points={model.joinTrend} /> : null}
+          <div className="ops:grid ops:gap-4">
+            {model.premiumMix ? (
+              <CompositionPanel
+                title="Premium composition"
+                description="Active Premium versus Standard."
+                mix={model.premiumMix}
+              />
+            ) : null}
+            {model.assignmentMix ? (
+              <CompositionPanel
+                title="Assignment coverage"
+                description="Active assignment versus Unassigned."
+                mix={model.assignmentMix}
+              />
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+      {model.scope === "organization" && model.activity ? <RecentActivityPanel activity={model.activity} /> : null}
+      {model.scope === "assigned_students" && model.premiumMix ? (
+        <section aria-label="Assigned student composition" className="ops:max-w-xl">
+          <CompositionPanel
+            title="My student composition"
+            description="Premium versus Standard within active assignments only."
+            mix={model.premiumMix}
+          />
         </section>
       ) : null}
       {model.roster ? <AssignedRosterPanel roster={model.roster} rosterTotal={model.rosterTotal} /> : null}

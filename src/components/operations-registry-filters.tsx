@@ -44,6 +44,7 @@ function FilterFields({
           <span>Mentor</span>
           <select className={selectClassName} id={`${idPrefix}-mentor`} name="mentor" defaultValue={query.mentor ?? ""}>
             <option value="">All mentors</option>
+            <option value="assigned">Assigned</option>
             <option value="unassigned">Unassigned</option>
             {mentors.map((mentor) => (
               <option key={mentor.id} value={mentor.id}>{mentor.displayName}</option>
@@ -192,9 +193,11 @@ export function OperationsRegistryActiveFilters({
   if (query.q) chips.push({ key: "q", label: `Search: ${query.q}`, remove: `Remove search filter ${query.q}` });
   if (query.plan) chips.push({ key: "plan", label: query.plan === "premium" ? "Premium" : "Standard", remove: `Remove ${query.plan === "premium" ? "Premium" : "Standard"} filter` });
   if (query.mentor) {
-    const mentorName = query.mentor === "unassigned"
-      ? "Unassigned"
-      : mentors.find((mentor) => mentor.id === query.mentor)?.displayName || "Mentor";
+    const mentorName = query.mentor === "assigned"
+      ? "Assigned"
+      : query.mentor === "unassigned"
+        ? "Unassigned"
+        : mentors.find((mentor) => mentor.id === query.mentor)?.displayName || "Mentor";
     chips.push({ key: "mentor", label: `Mentor: ${mentorName}`, remove: `Remove Mentor filter ${mentorName}` });
   }
   if (query.studyLevel) chips.push({ key: "studyLevel", label: `Study level: ${query.studyLevel}`, remove: `Remove Study level filter ${query.studyLevel}` });

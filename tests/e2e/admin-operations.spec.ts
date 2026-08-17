@@ -102,12 +102,14 @@ test.describe("preview Mentor workflow",()=>{
     await page.goto("/ops");
     await expect(page).toHaveURL(/\/ops$/);
     await expect(page.locator('[data-scoreboard-scope="assigned_students"]')).toBeVisible();
-    await expect(page.getByRole("heading",{name:"My Operations pulse."})).toBeVisible();
-    await expect(page.getByText("Assigned students",{exact:true})).toBeVisible();
+    await expect(page.getByRole("heading",{name:"My Scoreboard"})).toBeVisible();
+    await expect(page.locator('[data-scoreboard-metric="my_students"]')).toBeVisible();
+    await expect(page.getByText("My Premium students",{exact:true})).toBeVisible();
+    await expect(page.getByText("My Standard students",{exact:true})).toBeVisible();
     await expect(page.getByRole("heading",{name:"My students"})).toBeVisible();
-    await expect(page.getByText("Visible students",{exact:true})).toHaveCount(0);
-    await expect(page.getByText("Premium students",{exact:true})).toHaveCount(0);
-    await expect(page.getByText("Active team members",{exact:true})).toHaveCount(0);
+    await expect(page.getByText("Total students",{exact:true})).toHaveCount(0);
+    await expect(page.getByText("Premium awaiting mentor",{exact:true})).toHaveCount(0);
+    await expect(page.getByText("Unassigned students",{exact:true})).toHaveCount(0);
     await expect(page.getByRole("heading",{name:"Recent activity"})).toHaveCount(0);
     await expect(page.getByRole("link",{name:"Scoreboard"}).first()).toBeVisible();
     await page.goto("/ops/students");
@@ -148,7 +150,7 @@ test.describe("preview Admin workflow",()=>{
     await expect(page.getByRole("navigation",{name:"Operations navigation"}).first()).toBeVisible();
     await expect(page.locator('[data-operations-product="true"]')).toBeVisible();
     await expect(page.locator('[data-scoreboard-scope="organization"]')).toBeVisible();
-    const heading=page.getByRole("heading",{name:"Your Operations pulse."});
+    const heading=page.getByRole("heading",{name:"Operations Scoreboard"});
     await expect(heading).toBeVisible();
     const visualContract=await heading.evaluate((element)=>{
       const title=getComputedStyle(element);
@@ -158,8 +160,13 @@ test.describe("preview Admin workflow",()=>{
     expect(visualContract.fontFamily).toContain("Roboto");
     expect(visualContract.fontSize).toBe("28px");
     expect(visualContract.lineHeight).toBe("32px");
-    await expect(page.getByText("Visible students",{exact:true})).toBeVisible();
-    await expect(page.getByRole("heading",{name:"Student status"})).toBeVisible();
+    await expect(page.getByText("Total students",{exact:true})).toBeVisible();
+    await expect(page.getByText("Premium awaiting mentor",{exact:true})).toBeVisible();
+    await expect(page.getByRole("heading",{name:"Premium composition"})).toBeVisible();
+    await expect(page.getByRole("heading",{name:"Assignment coverage"})).toBeVisible();
+    await expect(page.getByRole("heading",{name:"Student join trend"})).toBeVisible();
+    await expect(page.getByRole("link",{name:/Premium awaiting mentor/})).toHaveAttribute("href","/ops/students?plan=premium&mentor=unassigned");
+    await expect(page.getByRole("link",{name:/Assigned students/}).first()).toHaveAttribute("href","/ops/students?mentor=assigned");
     await expect(page.getByRole("heading",{name:"Recent activity"})).toBeVisible();
     await expect(page.locator("[data-operations-shell] input[type=search]")).toHaveCount(0);
     await expect(page.getByRole("link",{name:"Scoreboard"}).first()).toBeVisible();
@@ -207,7 +214,7 @@ test.describe("preview Admin workflow",()=>{
     if(await card.count()){
       await expect(card.first()).toBeVisible();
     }else{
-      await expect(page.getByText(/No students in the registry yet\.|No students match|No Premium students are currently Unassigned|0 students/)).toBeVisible();
+      await expect(page.getByText(/No students in the registry yet\.|No students match|No Premium students are currently Unassigned|0 students/).first()).toBeVisible();
     }
     await expect(page.locator(".ops-registry-desktop table")).toBeHidden();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);
@@ -236,11 +243,11 @@ test.describe("preview Admin workflow",()=>{
     await expect(page.getByRole("heading", { name: "Premium plans and mentor assignments" })).toBeVisible();
     const studentSelect = page.locator('select[name="student_id"]');
     if (await studentSelect.count()) {
-      expect(await studentSelect.innerText()).not.toMatch(uuid);
+      expect((await studentSelect.allInnerTexts()).join("\n")).not.toMatch(uuid);
     }
     const mentorSelect = page.locator('select[name="mentor_id"]');
     if (await mentorSelect.count()) {
-      expect(await mentorSelect.innerText()).not.toMatch(uuid);
+      expect((await mentorSelect.allInnerTexts()).join("\n")).not.toMatch(uuid);
     }
     await expect(page.locator("code")).toHaveCount(0);
   });
@@ -274,7 +281,7 @@ test.describe("preview Super Admin workflow",()=>{
   });
   test("Super Admin can open every OPS-01 checkpoint route",async({page})=>{
     const routes=[
-      ["/ops","Your Operations pulse."],
+      ["/ops","Operations Scoreboard"],
       ["/ops/students","Student Registry"],
       ["/ops/team","People & Access"],
       ["/ops/notifications","Staff notifications"],

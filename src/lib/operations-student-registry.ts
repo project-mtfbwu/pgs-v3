@@ -148,7 +148,7 @@ export function parseRegistryQuery(
 
   const mentorValue = raw.mentor?.trim().toLowerCase() ?? "";
   const mentor = capabilities.allowOrgFilters
-    ? mentorValue === "unassigned" || UUID_PATTERN.test(mentorValue)
+    ? mentorValue === "assigned" || mentorValue === "unassigned" || UUID_PATTERN.test(mentorValue)
       ? mentorValue
       : null
     : null;
