@@ -63,6 +63,9 @@ async function catalogPreviewClick(page: Page, entity: "events" | "courses", pub
 }
 
 test.describe("Phase 7A draft preview click", () => {
+  // Each case saves a draft, opens a second tab, and loads the public page in a
+  // third anonymous context, so cold serverless routes need more than the default.
+  test.describe.configure({ timeout: 120_000 });
   test.use({ storageState: process.env.PLAYWRIGHT_SUPER_ADMIN_STORAGE_STATE ?? emptyState });
   test.skip(!process.env.PLAYWRIGHT_SUPER_ADMIN_STORAGE_STATE, "Supply an isolated preview Super Admin storage state.");
 
