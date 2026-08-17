@@ -11,7 +11,7 @@ import type { StaffContext } from "@/lib/staff-auth";
 import type { StudentProfile } from "@/lib/student-data";
 
 const user={id:"10000000-0000-4000-8000-000000000001",email:"dual@example.test"} as User;
-const profile={id:user.id,full_name:"Dual",dial_code:null,phone:null,whatsapp:null,citizenship_country:null,preferred_study_country:null,study_level:null,field_interest:null,work_experience:null,referral_code:null,avatar_path:null,profile_completed_at:null} satisfies StudentProfile;
+const profile={id:user.id,full_name:"Dual",dial_code:null,phone:null,whatsapp:null,citizenship_country:null,preferred_study_country:null,study_level:null,crm_stream:null,crm_target_year:null,field_interest:null,work_experience:null,referral_code:null,avatar_path:null,profile_completed_at:null} satisfies StudentProfile;
 const staff={user,displayName:"Dual staff",status:"active",roles:["admin"],permissions:new Set(["catalog.manage"])} satisfies StaffContext;
 
 describe("actor context boundary",()=>{

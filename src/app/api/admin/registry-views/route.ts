@@ -31,6 +31,10 @@ function readQuery(source: URLSearchParams | FormData, capabilities: ReturnType<
     plan: read("plan"),
     mentor: read("mentor"),
     study_level: read("study_level"),
+    stream: read("stream"),
+    target_year: read("target_year"),
+    stage: read("stage"),
+    tag: read("tag"),
     completion: read("completion"),
     joined: read("joined"),
     sort: read("sort")

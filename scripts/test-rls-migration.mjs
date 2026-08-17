@@ -42,8 +42,9 @@ const phase6StudentOperationsMigration = await readFile(new URL("../supabase/mig
 const phase7CmsCatalogMigration = await readFile(new URL("../supabase/migrations/20260817120345_phase7_cms_catalog.sql", import.meta.url), "utf8");
 const phase7aDraftPreviewMigration = await readFile(new URL("../supabase/migrations/20260817125959_phase7a_cms_draft_preview.sql", import.meta.url), "utf8");
 const phase8IntegrationMigration = await readFile(new URL("../supabase/migrations/20260817185841_phase8_integration_connections.sql", import.meta.url), "utf8");
+const miniCrmMigration = await readFile(new URL("../supabase/migrations/20260817192231_mini_crm_v1.sql", import.meta.url), "utf8");
 const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}\n${privilegedDeleteAuditMigration}`;
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}\n${ops07TargetsMigration}\n${phase6StudentOperationsMigration}\n${phase7CmsCatalogMigration}\n${phase7aDraftPreviewMigration}\n${phase8IntegrationMigration}`;
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}\n${ops07TargetsMigration}\n${phase6StudentOperationsMigration}\n${phase7CmsCatalogMigration}\n${phase7aDraftPreviewMigration}\n${phase8IntegrationMigration}\n${miniCrmMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -193,6 +194,15 @@ const required = [
   ,"perform private.ensure_default_board_columns"
   ,"/dashboard#comments"
   ,"/dashboard#where-you-stand"
+  ,"create table if not exists public.student_crm_tags"
+  ,"create table if not exists public.student_crm_tag_links"
+  ,"private.student_crm_slug_is_reserved"
+  ,"private.can_mutate_student_crm"
+  ,"student.crm_stage_changed"
+  ,"student.tag_added"
+  ,"student.tag_removed"
+  ,"stream_filter"
+  ,"staff_student_crm_profile"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -271,4 +281,12 @@ if (/create table public\./i.test(phase8IntegrationMigration)) throw new Error("
 if (!phase8IntegrationMigration.includes("perform private.ensure_default_board_columns(target_student, actor)")) throw new Error("Phase 8 must seed the recovered 4-column Loopboard on Premium grant");
 if (!phase8IntegrationMigration.includes("'/dashboard#comments'")) throw new Error("Phase 8 mentor comments must deep-link to the dashboard comments section");
 if (!phase8IntegrationMigration.includes("coalesce((payload->>'student_visible')::boolean,true) is not true")) throw new Error("Phase 8 must keep staff-only reviews silent");
+if (/create policy[\s\S]*on public\.student_crm_tags/i.test(miniCrmMigration)) throw new Error("Mini CRM must not expose student tags through direct table policies");
+if (/grant (?:select|insert|update|delete|all).*public\.student_crm_tags.*authenticated/i.test(miniCrmMigration)) throw new Error("Authenticated clients must not receive direct student CRM tag CRUD");
+if (/grant (?:select|insert|update|delete|all).*public\.student_crm_tag_links.*authenticated/i.test(miniCrmMigration)) throw new Error("Authenticated clients must not receive direct student CRM tag-link CRUD");
+if (miniCrmMigration.includes("owner_id") || miniCrmMigration.includes("crm_owner") || miniCrmMigration.includes("assigned_to")) throw new Error("Mini CRM must not create a competing assignment owner");
+if (/join public\.catalog_tags|from public\.catalog_tags/i.test(miniCrmMigration)) throw new Error("Mini CRM must not attach students to catalog_tags");
+if (/create policy[\s\S]*students\.read[\s\S]*on public\.profiles/i.test(miniCrmMigration)) throw new Error("Mini CRM must not restore a students.read table SELECT policy on profiles");
+if (!miniCrmMigration.includes("private.has_active_premium(p.id)")) throw new Error("Mini CRM Premium must stay derived from canonical entitlement");
+if (!miniCrmMigration.includes("ma.status = 'active'")) throw new Error("Mini CRM assignment must stay derived from active mentor_assignments");
 console.log("RLS migration static checks passed");

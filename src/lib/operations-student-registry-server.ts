@@ -1,4 +1,5 @@
 import "server-only";
+import { isCrmStage, isCrmStream, parseCrmTargetYear } from "@/lib/operations-student-crm";
 import { can, type StaffContext } from "@/lib/staff-auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
@@ -22,6 +23,9 @@ type RegistryRpcRow = {
   pgs_code: string;
   full_name: string;
   study_level: string | null;
+  crm_stream: string | null;
+  crm_target_year: number | null;
+  crm_stage: string;
   profile_completed_at: string | null;
   created_at: string;
   plan: RegistryPlan;
@@ -77,7 +81,11 @@ export async function loadStaffStudentRegistry(
     joined_filter: query.joined,
     sort_key: query.sort,
     page_offset: (query.page - 1) * REGISTRY_PAGE_SIZE,
-    page_size: REGISTRY_PAGE_SIZE
+    page_size: REGISTRY_PAGE_SIZE,
+    stream_filter: query.stream,
+    target_year_filter: query.targetYear ? String(query.targetYear) : null,
+    stage_filter: query.stage,
+    tag_filter: query.tag
   });
 
   if (error || !data) {
@@ -89,6 +97,9 @@ export async function loadStaffStudentRegistry(
     pgsCode: row.pgs_code,
     fullName: row.full_name || "Student",
     studyLevel: row.study_level,
+    stream: isCrmStream(row.crm_stream) ? row.crm_stream : null,
+    targetYear: parseCrmTargetYear(row.crm_target_year),
+    stage: isCrmStage(row.crm_stage) ? row.crm_stage : "new",
     plan: row.plan === "Premium" ? "Premium" : "Standard",
     mentorName: row.mentor_name || "Unassigned",
     mentorId: row.mentor_id || null,

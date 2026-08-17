@@ -11,6 +11,8 @@ export type StudentProfile = {
   citizenship_country: string | null;
   preferred_study_country: string | null;
   study_level: string | null;
+  crm_stream: string | null;
+  crm_target_year: number | null;
   field_interest: string | null;
   work_experience: string | null;
   referral_code: string | null;
@@ -20,7 +22,7 @@ export type StudentProfile = {
 
 export async function getOwnProfile(user: User): Promise<StudentProfile | null> {
   const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.from("profiles").select("id,full_name,dial_code,phone,whatsapp,citizenship_country,preferred_study_country,study_level,field_interest,work_experience,referral_code,avatar_path,profile_completed_at").eq("id", user.id).maybeSingle();
+  const { data } = await supabase.from("profiles").select("id,full_name,dial_code,phone,whatsapp,citizenship_country,preferred_study_country,study_level,crm_stream,crm_target_year,field_interest,work_experience,referral_code,avatar_path,profile_completed_at").eq("id", user.id).maybeSingle();
   return data as StudentProfile | null;
 }
 

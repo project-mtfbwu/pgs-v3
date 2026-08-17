@@ -924,3 +924,73 @@ li:first-child .ops-system-compact-row {
     grid-template-columns: 1fr;
   }
 }
+
+.ops-crm-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.ops-crm-facts {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.ops-crm-facts > div {
+  display: grid;
+  gap: 4px;
+}
+
+.ops-crm-facts dt,
+.ops-crm-groups h3 {
+  margin: 0;
+  color: var(--operations-foreground);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.ops-crm-facts dd {
+  margin: 0;
+  color: var(--operations-foreground);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.ops-crm-groups {
+  display: grid;
+  gap: 8px;
+}
+
+.ops-crm-groups ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ops-crm-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.ops-crm-note,
+.ops-crm-status {
+  margin: 0;
+  color: var(--operations-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.ops-crm-form {
+  display: grid;
+  gap: 12px;
+  align-items: end;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}

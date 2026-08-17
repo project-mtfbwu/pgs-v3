@@ -14,9 +14,17 @@ import {
   SheetTrigger
 } from "@/components/ui/sheet";
 import {
+  CRM_STAGES,
+  CRM_STAGE_LABELS,
+  CRM_STREAMS,
+  crmTargetYearOptions,
+  type StudentCrmTag
+} from "@/lib/operations-student-crm";
+import {
   REGISTRY_STUDY_LEVELS,
   omitRegistryFilter,
   registryHref,
+  registryQueryHasSearchOrFilters,
   type NormalizedRegistryQuery,
   type RegistryMentorOption
 } from "@/lib/operations-student-registry";
@@ -26,6 +34,7 @@ const selectClassName = "ops-system-control ops:h-10 ops:w-full ops:rounded-md o
 type FilterBarProps = {
   query: NormalizedRegistryQuery;
   mentors: RegistryMentorOption[];
+  tags: StudentCrmTag[];
   joinYears: number[];
   allowOrgFilters: boolean;
 };
@@ -33,6 +42,7 @@ type FilterBarProps = {
 function FilterFields({
   query,
   mentors,
+  tags,
   joinYears,
   allowOrgFilters,
   idPrefix
@@ -58,6 +68,42 @@ function FilterFields({
           <option value="">All study levels</option>
           {REGISTRY_STUDY_LEVELS.map((level) => (
             <option key={level} value={level}>{level}</option>
+          ))}
+        </select>
+      </label>
+      <label className="ops-registry-field" htmlFor={`${idPrefix}-stream`}>
+        <span>Stream</span>
+        <select className={selectClassName} id={`${idPrefix}-stream`} name="stream" defaultValue={query.stream ?? ""}>
+          <option value="">All streams</option>
+          {CRM_STREAMS.map((stream) => (
+            <option key={stream} value={stream}>{stream}</option>
+          ))}
+        </select>
+      </label>
+      <label className="ops-registry-field" htmlFor={`${idPrefix}-target-year`}>
+        <span>Target year</span>
+        <select className={selectClassName} id={`${idPrefix}-target-year`} name="target_year" defaultValue={query.targetYear ? String(query.targetYear) : ""}>
+          <option value="">All target years</option>
+          {crmTargetYearOptions(undefined, query.targetYear).map((year) => (
+            <option key={year} value={String(year)}>{year}</option>
+          ))}
+        </select>
+      </label>
+      <label className="ops-registry-field" htmlFor={`${idPrefix}-stage`}>
+        <span>CRM stage</span>
+        <select className={selectClassName} id={`${idPrefix}-stage`} name="stage" defaultValue={query.stage ?? ""}>
+          <option value="">All stages</option>
+          {CRM_STAGES.map((stage) => (
+            <option key={stage} value={stage}>{CRM_STAGE_LABELS[stage]}</option>
+          ))}
+        </select>
+      </label>
+      <label className="ops-registry-field" htmlFor={`${idPrefix}-tag`}>
+        <span>Tag</span>
+        <select className={selectClassName} id={`${idPrefix}-tag`} name="tag" defaultValue={query.tag ?? ""}>
+          <option value="">All manual tags</option>
+          {tags.map((tag) => (
+            <option key={tag.id} value={tag.id}>{tag.name}</option>
           ))}
         </select>
       </label>
@@ -142,7 +188,7 @@ export function OperationsRegistryFilterBar(props: FilterBarProps) {
         <FilterFields {...props} idPrefix={desktopId} />
         <div className="ops-registry-filter-actions">
           <Button type="submit">Apply filters</Button>
-          {query.q || query.plan || query.mentor || query.studyLevel || query.completion || query.joined || query.sort ? (
+          {registryQueryHasSearchOrFilters(query) ? (
             <a className="ops-registry-clear" href="/ops/students">Clear</a>
           ) : null}
         </div>
@@ -184,12 +230,14 @@ function buttonClass() {
 
 export function OperationsRegistryActiveFilters({
   query,
-  mentors
+  mentors,
+  tags
 }: {
   query: NormalizedRegistryQuery;
   mentors: RegistryMentorOption[];
+  tags: StudentCrmTag[];
 }) {
-  const chips: Array<{ key: "q" | "plan" | "mentor" | "studyLevel" | "completion" | "joined" | "sort"; label: string; remove: string }> = [];
+  const chips: Array<{ key: "q" | "plan" | "mentor" | "studyLevel" | "stream" | "targetYear" | "stage" | "tag" | "completion" | "joined" | "sort"; label: string; remove: string }> = [];
   if (query.q) chips.push({ key: "q", label: `Search: ${query.q}`, remove: `Remove search filter ${query.q}` });
   if (query.plan) chips.push({ key: "plan", label: query.plan === "premium" ? "Premium" : "Standard", remove: `Remove ${query.plan === "premium" ? "Premium" : "Standard"} filter` });
   if (query.mentor) {
@@ -201,6 +249,13 @@ export function OperationsRegistryActiveFilters({
     chips.push({ key: "mentor", label: `Mentor: ${mentorName}`, remove: `Remove Mentor filter ${mentorName}` });
   }
   if (query.studyLevel) chips.push({ key: "studyLevel", label: `Study level: ${query.studyLevel}`, remove: `Remove Study level filter ${query.studyLevel}` });
+  if (query.stream) chips.push({ key: "stream", label: `Stream: ${query.stream}`, remove: `Remove Stream filter ${query.stream}` });
+  if (query.targetYear) chips.push({ key: "targetYear", label: `Target year: ${query.targetYear}`, remove: `Remove Target year filter ${query.targetYear}` });
+  if (query.stage) chips.push({ key: "stage", label: `Stage: ${CRM_STAGE_LABELS[query.stage]}`, remove: `Remove Stage filter ${CRM_STAGE_LABELS[query.stage]}` });
+  if (query.tag) {
+    const tagName = tags.find((tag) => tag.id === query.tag)?.name || "Tag";
+    chips.push({ key: "tag", label: `Tag: ${tagName}`, remove: `Remove Tag filter ${tagName}` });
+  }
   if (query.completion) chips.push({ key: "completion", label: query.completion === "complete" ? "Complete" : "Incomplete", remove: `Remove ${query.completion === "complete" ? "Complete" : "Incomplete"} filter` });
   if (query.joined) chips.push({ key: "joined", label: query.joined === "this_month" ? "Joined this month" : `Joined ${query.joined}`, remove: "Remove Joined filter" });
   if (query.sort) chips.push({ key: "sort", label: sortChipLabel(query.sort), remove: `Remove ${sortChipLabel(query.sort)} sort` });

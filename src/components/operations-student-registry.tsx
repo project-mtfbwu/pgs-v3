@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { OperationsRegistryAssignmentActions } from "@/components/operations-registry-assignment-actions";
 import { OperationsTableFrame } from "@/components/operations-table-frame";
+import { crmStageLabel } from "@/lib/operations-student-crm";
 import {
   registryEmptyCopy,
   registryEmptyState,
@@ -18,6 +19,8 @@ const COLUMN_LABELS: Record<StudentRegistryColumnKey, string> = {
   pgsCode: "PGS ID",
   student: "Student",
   studyLevel: "Study level",
+  stream: "Stream",
+  stage: "Stage",
   plan: "Plan",
   mentor: "Mentor",
   joined: "Joined",
@@ -30,12 +33,14 @@ function cellValue(row: StudentRegistryRow, column: StudentRegistryColumnKey): s
   if (column === "pgsCode") return row.pgsCode;
   if (column === "student") return row.fullName;
   if (column === "studyLevel") return row.studyLevel || "—";
+  if (column === "stream") return row.stream || "—";
+  if (column === "stage") return crmStageLabel(row.stage);
   if (column === "plan") return row.plan;
   if (column === "mentor") return row.mentorName;
   if (column === "joined") return row.joinedAt;
   if (column === "completion") return row.completion;
   if (column === "actions") return "";
-  return row.canOpenWorkspace ? "Open workspace" : "Workspace not available";
+  return row.canOpenWorkspace ? "Open workspace" : "Open student";
 }
 
 function StatusBadge({
@@ -53,14 +58,11 @@ function StatusBadge({
 }
 
 function OpenCell({ row }: { row: StudentRegistryRow }) {
-  if (row.canOpenWorkspace) {
-    return (
-      <Link className="ops:font-medium ops:text-accent-foreground ops:no-underline" href={`/ops/students/${row.id}`}>
-        Open workspace
-      </Link>
-    );
-  }
-  return <span className="ops:text-muted-foreground">Workspace not available</span>;
+  return (
+    <Link className="ops:font-medium ops:text-accent-foreground ops:no-underline" href={`/ops/students/${row.id}`}>
+      {row.canOpenWorkspace ? "Open workspace" : "Open student"}
+    </Link>
+  );
 }
 
 function TableCell({
@@ -69,7 +71,8 @@ function TableCell({
   handlers,
   canManage,
   canPreviewStudent,
-  previewConfigured
+  previewConfigured,
+  linkName
 }: {
   row: StudentRegistryRow;
   column: StudentRegistryColumnKey;
@@ -77,8 +80,16 @@ function TableCell({
   canManage: boolean;
   canPreviewStudent: boolean;
   previewConfigured: boolean;
+  linkName: boolean;
 }) {
   if (column === "student") {
+    if (linkName) {
+      return (
+        <Link className="ops-registry-student-name ops:no-underline" href={`/ops/students/${row.id}`}>
+          {row.fullName}
+        </Link>
+      );
+    }
     return (
       <strong className="ops-registry-student-name">{row.fullName}</strong>
     );
@@ -88,6 +99,9 @@ function TableCell({
   }
   if (column === "plan") {
     return <StatusBadge label={row.plan} tone={registryPlanTone(row.plan)} />;
+  }
+  if (column === "stage") {
+    return <StatusBadge label={crmStageLabel(row.stage)} tone="default" />;
   }
   if (column === "completion") {
     return <StatusBadge label={row.completion} tone="default" />;
@@ -170,7 +184,7 @@ export function OperationsStudentRegistry({
         </p>
       ) : null}
       <div className="ops-registry-desktop">
-        <OperationsTableFrame minimumWidth={920} ariaLabel="Scrollable student registry">
+        <OperationsTableFrame minimumWidth={1120} ariaLabel="Scrollable student registry">
           <caption className="ops:sr-only">Authorized student registry</caption>
           <thead>
             <tr>
@@ -191,6 +205,7 @@ export function OperationsStudentRegistry({
                       canManage={canManageAssignments}
                       canPreviewStudent={canPreviewStudent}
                       previewConfigured={previewConfigured}
+                      linkName={showOpen}
                     />
                   </td>
                 ))}
@@ -213,13 +228,19 @@ export function OperationsStudentRegistry({
             {result.rows.map((row) => (
               <li key={row.id}>
                 <article className="ops-registry-card" aria-labelledby={`registry-student-${row.id}`}>
-                  <h2 className="ops-registry-student-name" id={`registry-student-${row.id}`}>{row.fullName}</h2>
+                  {showOpen ? (
+                    <h2 className="ops-registry-student-name" id={`registry-student-${row.id}`}>
+                      <Link className="ops:no-underline" href={`/ops/students/${row.id}`}>{row.fullName}</Link>
+                    </h2>
+                  ) : (
+                    <h2 className="ops-registry-student-name" id={`registry-student-${row.id}`}>{row.fullName}</h2>
+                  )}
                   <dl className="ops-registry-card-fields">
                     {columns.filter((column) => column !== "student" && column !== "open" && column !== "actions").map((column) => (
                       <div key={column}>
                         <dt>{COLUMN_LABELS[column]}</dt>
                         <dd>
-                          {column === "plan" || column === "completion" || column === "pgsCode"
+                          {column === "plan" || column === "completion" || column === "stage" || column === "pgsCode"
                             ? (
                               <TableCell
                                 row={row}
@@ -228,6 +249,7 @@ export function OperationsStudentRegistry({
                                 canManage={canManageAssignments}
                                 canPreviewStudent={canPreviewStudent}
                                 previewConfigured={previewConfigured}
+                                linkName={showOpen}
                               />
                             )
                             : cellValue(row, column)}

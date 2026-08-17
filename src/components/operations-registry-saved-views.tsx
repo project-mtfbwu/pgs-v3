@@ -5,6 +5,7 @@ import {
   registryHref,
   registryPremiumUnassignedQuery,
   registryQueriesEqual,
+  registryQueryHasSearchOrFilters,
   registrySavedQueryFromNormalized,
   type NormalizedRegistryQuery,
   type RegistrySavedView
@@ -33,14 +34,40 @@ export function OperationsRegistrySavedViews({
   const atLimit = views.length >= REGISTRY_SAVED_VIEW_MAX;
   const active = query.view ? views.find((view) => view.id === query.view) : views.find((view) => registryQueriesEqual({ ...query, page: 1, view: null }, { ...view.query, page: 1, view: null }));
   const allHref = "/ops/students";
-  const premiumHref = registryHref({ ...query, q: null, plan: "premium", mentor: null, studyLevel: null, completion: null, joined: null, sort: null, page: 1, view: null });
+  const premiumHref = registryHref({
+    ...query,
+    q: null,
+    plan: "premium",
+    mentor: null,
+    studyLevel: null,
+    stream: null,
+    targetYear: null,
+    stage: null,
+    tag: null,
+    completion: null,
+    joined: null,
+    sort: null,
+    page: 1,
+    view: null
+  });
   const premiumUnassignedHref = registryHref(registryPremiumUnassignedQuery());
-  const premiumOnly = query.plan === "premium" && !query.q && !query.mentor && !query.studyLevel && !query.completion && !query.joined && !query.sort && !query.view;
+  const premiumOnly = query.plan === "premium"
+    && !query.q
+    && !query.mentor
+    && !query.studyLevel
+    && !query.stream
+    && !query.targetYear
+    && !query.stage
+    && !query.tag
+    && !query.completion
+    && !query.joined
+    && !query.sort
+    && !query.view;
 
   return (
     <div className="ops-registry-views">
       <nav aria-label="Registry views" className="ops-registry-view-tabs">
-        <a aria-current={!query.q && !query.plan && !query.mentor && !query.studyLevel && !query.completion && !query.joined && !query.sort && !query.view ? "page" : undefined} href={allHref}>
+        <a aria-current={!registryQueryHasSearchOrFilters(query) && !query.view ? "page" : undefined} href={allHref}>
           All Students
         </a>
         <a aria-current={premiumOnly ? "page" : undefined} href={premiumHref}>

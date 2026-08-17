@@ -51,6 +51,8 @@ function profile(id: string, fullName: string): StudentProfile {
     citizenship_country: null,
     preferred_study_country: null,
     study_level: "Medicine",
+    crm_stream: null,
+    crm_target_year: null,
     field_interest: null,
     work_experience: null,
     referral_code: null,

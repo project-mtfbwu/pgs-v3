@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState, type FormEvent, type ReactNode } from "react";
+import { CRM_STREAMS, crmTargetYearOptions } from "@/lib/operations-student-crm";
 import type { StudentProfile } from "@/lib/student-data";
 
 type Props = { profile: StudentProfile; email: string; avatarUrl: string; completion?: boolean; readOnly?: boolean };
@@ -50,6 +51,8 @@ export function ProfileForm({ profile, email, avatarUrl, completion = false, rea
     <ProfileRow label="Country of Citizenship"><input name="country_code" defaultValue={profile.citizenship_country ?? ""} required={completion} maxLength={120} /></ProfileRow>
     <ProfileRow label="Preferred Study Country"><input name="preferred_country_code" defaultValue={profile.preferred_study_country ?? ""} required={completion} maxLength={120} /></ProfileRow>
     <ProfileRow label="Study Level"><select name="study_level" defaultValue={profile.study_level ?? ""} required={completion}><option value="">-- Study Level --</option>{studyLevels.map((level) => <option key={level}>{level}</option>)}</select></ProfileRow>
+    <ProfileRow htmlFor="pgs-crm-stream" label="Stream / Pathway"><select id="pgs-crm-stream" name="crm_stream" defaultValue={profile.crm_stream ?? ""}><option value="">-- Stream --</option>{CRM_STREAMS.map((stream) => <option key={stream} value={stream}>{stream}</option>)}</select></ProfileRow>
+    <ProfileRow htmlFor="pgs-crm-target-year" label="Target Year"><select id="pgs-crm-target-year" name="target_year" defaultValue={profile.crm_target_year ? String(profile.crm_target_year) : ""}><option value="">-- Target Year --</option>{crmTargetYearOptions(undefined, profile.crm_target_year).map((year) => <option key={year} value={String(year)}>{year}</option>)}</select></ProfileRow>
     <ProfileRow label="Course or Field of Interest"><textarea name="field_interest" defaultValue={profile.field_interest ?? ""} rows={3} /></ProfileRow>
     <ProfileRow label="Work Experience (If Any)"><textarea name="work_experience" defaultValue={profile.work_experience ?? ""} rows={3} /></ProfileRow>
     <ProfileRow label="Referral Code"><input name="referral_code" defaultValue={profile.referral_code ?? ""} maxLength={80} /></ProfileRow>
@@ -60,6 +63,6 @@ export function ProfileForm({ profile, email, avatarUrl, completion = false, rea
   </form>;
 }
 
-function ProfileRow({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="pgs-profile-row d-flex align-items-center"><label>{label}</label><div>{children}</div></div>;
+function ProfileRow({ label, htmlFor, children }: { label: string; htmlFor?: string; children: ReactNode }) {
+  return <div className="pgs-profile-row d-flex align-items-center"><label htmlFor={htmlFor}>{label}</label><div>{children}</div></div>;
 }

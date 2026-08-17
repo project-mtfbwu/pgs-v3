@@ -116,7 +116,7 @@ export async function loadPreviewStudentProfile(studentId: string) {
   const admin = createSupabaseAdminClient();
   const { data: profile } = await admin
     .from("profiles")
-    .select("id,full_name,dial_code,phone,whatsapp,citizenship_country,preferred_study_country,study_level,field_interest,work_experience,referral_code,avatar_path,profile_completed_at")
+    .select("id,full_name,dial_code,phone,whatsapp,citizenship_country,preferred_study_country,study_level,crm_stream,crm_target_year,field_interest,work_experience,referral_code,avatar_path,profile_completed_at")
     .eq("id", studentId)
     .maybeSingle();
   if (!profile) return null;

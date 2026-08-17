@@ -1,3 +1,5 @@
+import { isCrmStream, parseCrmTargetYear, type CrmStream } from "@/lib/operations-student-crm";
+
 export type StudentProfileInput = {
   fullName: string;
   dialCode: string | null;
@@ -6,6 +8,8 @@ export type StudentProfileInput = {
   citizenshipCountry: string | null;
   preferredStudyCountry: string | null;
   studyLevel: string | null;
+  crmStream?: CrmStream | null;
+  crmTargetYear?: number | null;
   fieldInterest: string | null;
   workExperience: string | null;
   referralCode: string | null;
@@ -25,6 +29,10 @@ export function parseStudentProfile(value: unknown): StudentProfileInput {
   const phone = clean(input.number ?? input.phone, 20);
   if (phone && !/^[0-9+()\- ]{7,20}$/.test(phone)) throw new Error("Please enter a valid phone number.");
   const whatsappValue = clean(input.whatsapp, 8)?.toLowerCase();
+  const hasStream = "crm_stream" in input || "stream" in input;
+  const streamRaw = clean(input.crm_stream ?? input.stream, 20);
+  const hasTargetYear = "crm_target_year" in input || "target_year" in input;
+  const targetRaw = input.crm_target_year ?? input.target_year;
   return {
     fullName,
     dialCode: clean(input.dial_code, 8),
@@ -33,6 +41,10 @@ export function parseStudentProfile(value: unknown): StudentProfileInput {
     citizenshipCountry: clean(input.country_code ?? input.citizenship_country, 120),
     preferredStudyCountry: clean(input.preferred_country_code ?? input.preferred_study_country, 120),
     studyLevel: clean(input.study_level, 80),
+    crmStream: hasStream ? (streamRaw ? (isCrmStream(streamRaw) ? streamRaw : null) : null) : undefined,
+    crmTargetYear: hasTargetYear
+      ? parseCrmTargetYear(typeof targetRaw === "number" || typeof targetRaw === "string" ? targetRaw : null)
+      : undefined,
     fieldInterest: clean(input.field_interest, 1000),
     workExperience: clean(input.work_experience, 1000),
     referralCode: clean(input.referral_code, 80)

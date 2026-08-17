@@ -3,6 +3,7 @@ import { OperationsRegistryActiveFilters, OperationsRegistryFilterBar } from "@/
 import { OperationsRegistrySavedViews } from "@/components/operations-registry-saved-views";
 import { OperationsStudentRegistry } from "@/components/operations-student-registry";
 import { OperationsPageHeader } from "@/components/operations-page-header";
+import { loadStudentCrmTags } from "@/lib/operations-student-crm-server";
 import {
   canQueryStudentRegistry,
   isMentorScopedRegistry,
@@ -37,9 +38,10 @@ export default async function StudentsPage({
     ? { allowOrgFilters: false }
     : registryQueryCapabilities(context);
   const allowOrgFilters = capabilities.allowOrgFilters;
-  const [savedViews, mentors] = await Promise.all([
+  const [savedViews, mentors, tags] = await Promise.all([
     loadRegistrySavedViews(context),
-    loadRegistryMentorOptions(context)
+    loadRegistryMentorOptions(context),
+    loadStudentCrmTags()
   ]);
   let query = resolveRegistryQueryFromRequest(raw, capabilities, savedViews);
   if (mentorPreview && preview) {
@@ -74,8 +76,9 @@ export default async function StudentsPage({
           joinYears={registryJoinYearOptions()}
           mentors={mentors}
           query={query}
+          tags={tags}
         />
-        <OperationsRegistryActiveFilters mentors={mentors} query={query} />
+        <OperationsRegistryActiveFilters mentors={mentors} query={query} tags={tags} />
         <OperationsRegistrySavedViews allowOrgFilters={allowOrgFilters} query={query} views={savedViews} />
         <OperationsStudentRegistry
           canManageAssignments={canAssignStudents(context, preview)}

@@ -1,3 +1,11 @@
+import {
+  isCrmStage,
+  isCrmStream,
+  parseCrmTargetYear,
+  type CrmStage,
+  type CrmStream
+} from "@/lib/operations-student-crm";
+
 export const PGS_CODE_PATTERN = /^PGS[0-9]{6}$/;
 export const PGS_JOIN_TIMEZONE = "Asia/Kolkata";
 export const REGISTRY_PAGE_SIZE = 25;
@@ -35,6 +43,9 @@ export type StudentRegistryRow = {
   pgsCode: string;
   fullName: string;
   studyLevel: string | null;
+  stream: CrmStream | null;
+  targetYear: number | null;
+  stage: CrmStage;
   plan: RegistryPlan;
   mentorName: string;
   mentorId: string | null;
@@ -55,6 +66,8 @@ export type StudentRegistryColumnKey =
   | "pgsCode"
   | "student"
   | "studyLevel"
+  | "stream"
+  | "stage"
   | "plan"
   | "mentor"
   | "joined"
@@ -68,6 +81,10 @@ export type RegistryQueryParams = {
   premium?: string;
   mentor?: string;
   study_level?: string;
+  stream?: string;
+  target_year?: string;
+  stage?: string;
+  tag?: string;
   completion?: string;
   joined?: string;
   sort?: string;
@@ -80,6 +97,10 @@ export type NormalizedRegistryQuery = {
   plan: RegistryPlanFilter | null;
   mentor: string | null;
   studyLevel: RegistryStudyLevel | null;
+  stream: CrmStream | null;
+  targetYear: number | null;
+  stage: CrmStage | null;
+  tag: string | null;
   completion: RegistryCompletionFilter | null;
   joined: string | null;
   sort: RegistrySortKey | null;
@@ -133,6 +154,10 @@ export function parseRegistryQuery(
     premium: firstParam(input.premium),
     mentor: firstParam(input.mentor),
     study_level: firstParam(input.study_level),
+    stream: firstParam(input.stream),
+    target_year: firstParam(input.target_year),
+    stage: firstParam(input.stage),
+    tag: firstParam(input.tag),
     completion: firstParam(input.completion),
     joined: firstParam(input.joined),
     sort: firstParam(input.sort),
@@ -156,6 +181,10 @@ export function parseRegistryQuery(
   const studyLevel = REGISTRY_STUDY_LEVELS.includes(raw.study_level as RegistryStudyLevel)
     ? raw.study_level as RegistryStudyLevel
     : null;
+  const stream = isCrmStream(raw.stream) ? raw.stream : null;
+  const targetYear = parseCrmTargetYear(raw.target_year);
+  const stage = isCrmStage(raw.stage) ? raw.stage : null;
+  const tag = raw.tag && UUID_PATTERN.test(raw.tag) ? raw.tag.toLowerCase() : null;
 
   const completion = raw.completion === "complete" || raw.completion === "incomplete"
     ? raw.completion
@@ -178,6 +207,10 @@ export function parseRegistryQuery(
     plan,
     mentor,
     studyLevel,
+    stream,
+    targetYear,
+    stage,
+    tag,
     completion,
     joined,
     sort,
@@ -187,7 +220,7 @@ export function parseRegistryQuery(
 }
 
 export function registryQueryHasFilters(query: NormalizedRegistryQuery): boolean {
-  return Boolean(query.plan || query.mentor || query.studyLevel || query.completion || query.joined);
+  return Boolean(query.plan || query.mentor || query.studyLevel || query.stream || query.targetYear || query.stage || query.tag || query.completion || query.joined);
 }
 
 export function registryQueryHasSearchOrFilters(query: NormalizedRegistryQuery): boolean {
@@ -200,6 +233,10 @@ export function registrySavedQueryFromNormalized(query: NormalizedRegistryQuery)
   if (query.plan) saved.plan = query.plan;
   if (query.mentor) saved.mentor = query.mentor;
   if (query.studyLevel) saved.study_level = query.studyLevel;
+  if (query.stream) saved.stream = query.stream;
+  if (query.targetYear) saved.target_year = String(query.targetYear);
+  if (query.stage) saved.stage = query.stage;
+  if (query.tag) saved.tag = query.tag;
   if (query.completion) saved.completion = query.completion;
   if (query.joined) saved.joined = query.joined;
   if (query.sort) saved.sort = query.sort;
@@ -219,6 +256,10 @@ export function parseSavedRegistryQuery(
     plan: asString("plan"),
     mentor: asString("mentor"),
     study_level: asString("study_level"),
+    stream: asString("stream"),
+    target_year: asString("target_year"),
+    stage: asString("stage"),
+    tag: asString("tag"),
     completion: asString("completion"),
     joined: asString("joined"),
     sort: asString("sort")
@@ -230,6 +271,10 @@ export function registryQueriesEqual(left: NormalizedRegistryQuery, right: Norma
     && left.plan === right.plan
     && left.mentor === right.mentor
     && left.studyLevel === right.studyLevel
+    && left.stream === right.stream
+    && left.targetYear === right.targetYear
+    && left.stage === right.stage
+    && left.tag === right.tag
     && left.completion === right.completion
     && left.joined === right.joined
     && left.sort === right.sort;
@@ -261,6 +306,10 @@ export function registryPremiumUnassignedQuery(): NormalizedRegistryQuery {
     plan: "premium",
     mentor: "unassigned",
     studyLevel: null,
+    stream: null,
+    targetYear: null,
+    stage: null,
+    tag: null,
     completion: null,
     joined: null,
     sort: null,
@@ -274,6 +323,10 @@ export function isRegistryPremiumUnassignedView(query: NormalizedRegistryQuery):
     && query.mentor === "unassigned"
     && !query.q
     && !query.studyLevel
+    && !query.stream
+    && !query.targetYear
+    && !query.stage
+    && !query.tag
     && !query.completion
     && !query.joined
     && !query.sort;
@@ -281,7 +334,7 @@ export function isRegistryPremiumUnassignedView(query: NormalizedRegistryQuery):
 
 export function omitRegistryFilter(
   query: NormalizedRegistryQuery,
-  key: "q" | "plan" | "mentor" | "studyLevel" | "completion" | "joined" | "sort"
+  key: "q" | "plan" | "mentor" | "studyLevel" | "stream" | "targetYear" | "stage" | "tag" | "completion" | "joined" | "sort"
 ): NormalizedRegistryQuery {
   return { ...query, [key]: null, page: 1, view: null };
 }
@@ -320,7 +373,7 @@ export function registryVisibleColumns(options: {
   showOpen: boolean;
   showActions?: boolean;
 }): StudentRegistryColumnKey[] {
-  const columns: StudentRegistryColumnKey[] = ["pgsCode", "student", "studyLevel", "plan"];
+  const columns: StudentRegistryColumnKey[] = ["pgsCode", "student", "studyLevel", "stream", "stage", "plan"];
   if (options.showMentor) columns.push("mentor");
   if (options.showJoined) columns.push("joined");
   columns.push("completion");

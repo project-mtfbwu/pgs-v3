@@ -68,10 +68,31 @@ describe("Registry query contract", () => {
       plan: "premium",
       mentor: "d0310000-0000-4000-8000-000000000012",
       studyLevel: "PG",
+      stream: null,
+      targetYear: null,
+      stage: null,
+      tag: null,
       completion: "complete",
       joined: "this_month",
       sort: "name_asc",
       page: 2
+    });
+    expect(parseRegistryQuery({
+      stream: "USMLE",
+      target_year: "2027",
+      stage: "active",
+      tag: "D0310000-0000-4000-8000-000000000099"
+    }, admin)).toMatchObject({
+      stream: "USMLE",
+      targetYear: 2027,
+      stage: "active",
+      tag: "d0310000-0000-4000-8000-000000000099"
+    });
+    expect(parseRegistryQuery({ stream: "sales", target_year: "27", stage: "contacted", tag: "premium" }, admin)).toMatchObject({
+      stream: null,
+      targetYear: null,
+      stage: null,
+      tag: null
     });
     expect(parseRegistryQuery({ mentor: "unassigned", joined: "1999", sort: "created_at" }, admin)).toMatchObject({
       mentor: "unassigned",
@@ -135,6 +156,7 @@ describe("Registry empty states", () => {
     expect(query.plan).toBe("premium");
     expect(query.mentor).toBe("unassigned");
     expect(isRegistryPremiumUnassignedView(query)).toBe(true);
+    expect(isRegistryPremiumUnassignedView({ ...query, stream: "USMLE" })).toBe(false);
     expect(registryHref(registryPremiumUnassignedQuery())).toBe("/ops/students?plan=premium&mentor=unassigned");
     expect(registryEmptyCopy("filter_zero", query)).toBe("No Premium students are currently Unassigned.");
     expect(registryEmptyCopy("filter_zero", { ...query, studyLevel: "PG" })).toBe("No students match these filters.");
@@ -144,22 +166,22 @@ describe("Registry empty states", () => {
 describe("Registry V1 columns", () => {
   it("shows Admin organization columns without email or tags", () => {
     expect(registryVisibleColumns({ showMentor: true, showJoined: true, showOpen: true })).toEqual([
-      "pgsCode", "student", "studyLevel", "plan", "mentor", "joined", "completion", "open"
+      "pgsCode", "student", "studyLevel", "stream", "stage", "plan", "mentor", "joined", "completion", "open"
     ]);
   });
 
   it("adds assignment and View as Student actions for Admin without showing UUIDs", () => {
     expect(registryVisibleColumns({ showMentor: true, showJoined: true, showOpen: true, showActions: true })).toEqual([
-      "pgsCode", "student", "studyLevel", "plan", "mentor", "joined", "completion", "open", "actions"
+      "pgsCode", "student", "studyLevel", "stream", "stage", "plan", "mentor", "joined", "completion", "open", "actions"
     ]);
   });
 
   it("hides organization mentor/joined columns for Mentor and Open for read-only", () => {
     expect(registryVisibleColumns({ showMentor: false, showJoined: false, showOpen: true })).toEqual([
-      "pgsCode", "student", "studyLevel", "plan", "completion", "open"
+      "pgsCode", "student", "studyLevel", "stream", "stage", "plan", "completion", "open"
     ]);
     expect(registryVisibleColumns({ showMentor: false, showJoined: false, showOpen: false })).toEqual([
-      "pgsCode", "student", "studyLevel", "plan", "completion"
+      "pgsCode", "student", "studyLevel", "stream", "stage", "plan", "completion"
     ]);
   });
 });
