@@ -31,6 +31,9 @@ for (const [label, envName] of [
       await expect(page.getByRole("option", { name: "Unread" })).toBeAttached();
       await expect(page.locator("main").innerText()).resolves.not.toMatch(uuidText);
       await expect(page.getByRole("button", { name: "Delete" })).toHaveCount(0);
+      await page.getByLabel("View").focus();
+      await page.keyboard.press("Tab");
+      await expect(page.getByRole("button", { name: "Apply" })).toBeFocused();
 
       if (testInfo.project.name === "mobile") {
         await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
@@ -54,6 +57,9 @@ for (const [label, envName] of [
       await expect(page.getByRole("heading", { level: 1, name: "Operations activity" })).toBeVisible();
       await expect(page.getByLabel("Activity domain")).toBeVisible();
       await expect(page.locator("main").innerText()).resolves.not.toMatch(uuidText);
+      await page.getByLabel("Activity domain").focus();
+      await page.keyboard.press("Tab");
+      await expect(page.getByRole("button", { name: "Filter activity" })).toBeFocused();
 
       if (testInfo.project.name === "mobile") {
         await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
