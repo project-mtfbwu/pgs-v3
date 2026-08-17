@@ -1,48 +1,55 @@
 import { Button } from "@/components/ui/button";
+import { OperationsActivityList } from "@/components/operations-activity-list";
 import { OperationsPageHeader } from "@/components/operations-page-header";
-import { OperationsTableFrame } from "@/components/operations-table-frame";
-import { identityLabel, resolveIdentityLabels } from "@/lib/identity-labels";
+import { loadOperationsActivity } from "@/lib/operations-activity-server";
+import {
+  OPERATIONS_ACTIVITY_DOMAINS,
+  normalizeOperationsActivityDomain,
+  operationsActivityDomainLabel
+} from "@/lib/operations-activity";
 import { requireStaffPermission } from "@/lib/staff-auth";
 import { redirectMentorPreviewAwayFromPrivilegedPages } from "@/lib/staff-preview-server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-type AuditViewEvent = {
-  id:string;occurred_at:string;event_type:string;actor_user_id:string|null;actor_kind:string;
-  target_type:string|null;target_id:string|null;outcome:string;source_subsystem:string;
-  metadata:Record<string,unknown>|null;
-};
-
-export default async function AuditPage({searchParams}:{searchParams:Promise<{domain?:string}>}){
+export default async function AuditPage({ searchParams }: { searchParams: Promise<{ domain?: string | string[] }> }) {
   await redirectMentorPreviewAwayFromPrivilegedPages();
   await requireStaffPermission("audit.read");
-  const filters=await searchParams;
-  const supabase=await createSupabaseServerClient();
-  let query=supabase.from("audit_events")
-    .select("id,occurred_at,event_type,actor_user_id,actor_kind,target_type,target_id,outcome,source_subsystem,metadata")
-    .order("occurred_at",{ascending:false}).limit(150);
-  if(filters.domain)query=query.eq("source_subsystem",filters.domain);
-  const {data}=await query;
-  const events=(data??[]) as AuditViewEvent[];
-  const labels = await resolveIdentityLabels(events.flatMap((event) => [event.actor_user_id, event.target_id]));
-  return <div className="ops:flex ops:flex-col ops:gap-6">
-    <OperationsPageHeader eyebrow="Activity" title="Operations activity" description="Authorized current history from the canonical audit_events ledger."/>
-    <section className="ops-system-data-panel" aria-label="Authorized Operations activity">
-        <form method="get" className="ops-system-filterbar ops:sm:grid-cols-[minmax(220px,1fr)_auto]">
-          <label className="ops:flex-1">
-            <span className="ops:sr-only">Activity domain</span>
-            <select className="ops-system-control ops:h-10 ops:w-full ops:border ops:border-input ops:bg-card ops:px-3 ops:text-sm ops:outline-none ops:focus-visible:ring-2 ops:focus-visible:ring-ring" name="domain" defaultValue={filters.domain??""}>
-              <option value="">All domains</option><option>staff</option><option>assignments</option><option>premium</option><option>documents</option><option>catalog</option><option>content</option><option>cms</option><option>leads</option><option>settings</option>
-            </select>
-          </label>
-          <Button type="submit">Filter activity</Button>
-        </form>
-        <OperationsTableFrame minimumWidth={900}>
-            <thead><tr><th>Time</th><th>Domain</th><th>Event</th><th>Target</th><th>Actor</th><th>Outcome</th></tr></thead>
-            <tbody>
-              {events.map((event)=><tr key={event.id}><td className="ops:whitespace-nowrap"><time dateTime={event.occurred_at}>{new Date(event.occurred_at).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})}</time></td><td><span className="ops-system-badge">{event.source_subsystem}</span></td><td className="ops:font-medium">{event.event_type}</td><td>{event.target_type??"—"}<br/>{event.target_id ? identityLabel(labels, event.target_id) : "—"}</td><td>{event.actor_user_id ? identityLabel(labels, event.actor_user_id) : event.actor_kind}</td><td><span className="ops-system-badge is-accent">{event.outcome}</span></td></tr>)}
-              {!events.length&&<tr><td className="ops-system-empty-cell" colSpan={6}>No authorized activity matches this view.</td></tr>}
-            </tbody>
-        </OperationsTableFrame>
+  const filters = await searchParams;
+  const domain = normalizeOperationsActivityDomain(Array.isArray(filters.domain) ? filters.domain[0] : filters.domain);
+  const events = await loadOperationsActivity(domain);
+  return (
+    <div className="ops:flex ops:flex-col ops:gap-6">
+      <OperationsPageHeader
+        eyebrow="Activity"
+        title="Operations activity"
+        description="Human-readable authorized history from the immutable audit_events ledger."
+      />
+      <section className="ops-system-data-panel ops:p-5" aria-labelledby="operations-activity-heading">
+        <div className="ops:flex ops:flex-col ops:gap-4 ops:sm:flex-row ops:sm:items-end ops:sm:justify-between">
+          <div>
+            <h2 className="ops:m-0 ops:text-xl ops:leading-7" id="operations-activity-heading">Recent activity</h2>
+            <p className="ops:mt-1 ops:text-sm ops:text-muted-foreground">Up to 150 authorized events. Audit identity remains the real actor.</p>
+          </div>
+          <form method="get" className="ops:flex ops:flex-wrap ops:items-end ops:gap-2">
+            <label className="ops:grid ops:gap-1 ops:text-sm ops:font-medium">
+              Activity domain
+              <select
+                className="ops-system-control ops:h-10 ops:min-w-52 ops:rounded-md ops:border ops:border-input ops:bg-card ops:px-3 ops:text-sm ops:outline-none ops:focus-visible:ring-2 ops:focus-visible:ring-ring"
+                name="domain"
+                defaultValue={domain ?? ""}
+              >
+                <option value="">All domains</option>
+                {OPERATIONS_ACTIVITY_DOMAINS.map((option) => (
+                  <option key={option} value={option}>{operationsActivityDomainLabel(option)}</option>
+                ))}
+              </select>
+            </label>
+            <Button type="submit">Filter activity</Button>
+          </form>
+        </div>
+        <div className="ops:mt-5">
+          <OperationsActivityList items={events} />
+        </div>
     </section>
-  </div>;
+    </div>
+  );
 }

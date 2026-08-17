@@ -66,12 +66,14 @@ export function AdminShell({
   displayName,
   roles,
   permissions,
+  notificationUnreadCount = 0,
   preview = null
 }: {
   children: React.ReactNode;
   displayName: string;
   roles: StaffRoleKey[];
   permissions: StaffPermission[];
+  notificationUnreadCount?: number;
   preview?: { mode: "student" | "mentor"; targetName: string; actorName: string } | null;
 }) {
   const pathname = usePathname();
@@ -197,10 +199,15 @@ export function AdminShell({
                   <TooltipTrigger asChild>
                     <Link
                       href="/ops/notifications"
-                      aria-label="Open notifications"
-                      className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ops-system-topbar-notify")}
+                      aria-label={`Open notifications${notificationUnreadCount ? `, ${notificationUnreadCount} unread` : ""}`}
+                      className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ops-system-topbar-notify ops:relative")}
                     >
                       <Bell aria-hidden="true" className="ops:size-4" />
+                      {notificationUnreadCount ? (
+                        <span className="ops:absolute ops:-right-1 ops:-top-1 ops:flex ops:min-h-4 ops:min-w-4 ops:items-center ops:justify-center ops:rounded-full ops:bg-destructive ops:px-1 ops:text-[10px] ops:font-bold ops:leading-4 ops:text-destructive-foreground">
+                          {notificationUnreadCount > 99 ? "99+" : notificationUnreadCount}
+                        </span>
+                      ) : null}
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent>Notifications</TooltipContent>

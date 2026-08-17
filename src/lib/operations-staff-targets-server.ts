@@ -63,15 +63,17 @@ function mapTarget(row: TargetRow): StaffTarget | null {
 
 export async function loadStaffTargets(
   context: StaffContext,
-  options: { assigneeId?: string | null; status?: StaffTargetFilter | null; limit?: number } = {}
+  options: { assigneeId?: string | null; status?: StaffTargetFilter | null; targetId?: string | null; limit?: number } = {}
 ): Promise<StaffTarget[]> {
   if (resolveStaffTargetsScope(context) === "restricted") return [];
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("staff_targets_list", {
-    target_assignee: options.assigneeId ?? null,
-    status_filter: options.status ?? null,
-    result_limit: options.limit ?? 100
-  });
+  const { data, error } = options.targetId
+    ? await supabase.rpc("staff_target_notification_item", { target_target: options.targetId })
+    : await supabase.rpc("staff_targets_list", {
+      target_assignee: options.assigneeId ?? null,
+      status_filter: options.status ?? null,
+      result_limit: options.limit ?? 100
+    });
   if (error) throw error;
   return ((data ?? []) as TargetRow[])
     .map(mapTarget)

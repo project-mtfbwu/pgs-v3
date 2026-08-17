@@ -24,10 +24,12 @@ export default async function StaffTargetsPage({
   const scope = resolveStaffTargetsScope(context);
   const status = normalizeStaffTargetFilter(Array.isArray(query.status) ? query.status[0] : query.status);
   const requestedAssignee = Array.isArray(query.assignee) ? query.assignee[0] : query.assignee;
+  const requestedTarget = Array.isArray(query.target) ? query.target[0] : query.target;
   const assigneeId = scope === "organization" && validUuid(requestedAssignee) ? requestedAssignee : null;
+  const targetId = validUuid(requestedTarget) ? requestedTarget : null;
   const [summary, targets, options] = await Promise.all([
     loadStaffTargetSummary(context, assigneeId),
-    loadStaffTargets(context, { assigneeId, status, limit: 100 }),
+    loadStaffTargets(context, { assigneeId, status, targetId, limit: 100 }),
     loadStaffTargetOptions(context)
   ]);
   const canManageAll = scope === "organization" && can(context, "staff_targets.manage_all");
@@ -68,9 +70,11 @@ export default async function StaffTargetsPage({
             <div className="ops:flex ops:flex-col ops:gap-4 ops:lg:flex-row ops:lg:items-end ops:lg:justify-between">
               <div>
                 <h2 id="staff-target-list-heading" className="ops:m-0 ops:text-xl ops:leading-7">
-                  {scope === "my_work" ? "My responsibility queue" : "Organization responsibility queue"}
+                  {targetId ? "Notification target" : scope === "my_work" ? "My responsibility queue" : "Organization responsibility queue"}
                 </h2>
-                <p className="ops:mt-1 ops:text-sm ops:text-muted-foreground">Up to 100 targets in the selected view.</p>
+                <p className="ops:mt-1 ops:text-sm ops:text-muted-foreground">
+                  {targetId ? "The linked target is shown only when your current authority permits it." : "Up to 100 targets in the selected view."}
+                </p>
               </div>
               <form className="ops:grid ops:gap-3 ops:sm:grid-cols-[minmax(150px,1fr)_minmax(190px,1fr)_auto]" method="get">
                 <label className="ops:grid ops:gap-1 ops:text-sm ops:font-medium">

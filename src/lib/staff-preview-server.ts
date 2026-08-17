@@ -136,8 +136,8 @@ export async function loadPreviewStudentAvatarUrl(path: string | null): Promise<
 export async function loadPreviewStudentNotifications(studentId: string) {
   const admin = createSupabaseAdminClient();
   const [items, unread] = await Promise.all([
-    admin.from("notifications").select("id,title,body,section,destination_path,read_at,created_at").eq("student_id", studentId).order("created_at", { ascending: false }).limit(100),
-    admin.from("notifications").select("id", { count: "exact", head: true }).eq("student_id", studentId).is("read_at", null)
+    admin.from("notifications").select("id,title,body,section,destination_path,read_at,created_at").eq("recipient_kind", "student").eq("student_id", studentId).order("created_at", { ascending: false }).limit(100),
+    admin.from("notifications").select("id", { count: "exact", head: true }).eq("recipient_kind", "student").eq("student_id", studentId).is("read_at", null)
   ]);
   return { items: items.data ?? [], unreadCount: unread.count ?? 0 };
 }
