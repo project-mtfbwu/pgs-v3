@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
 import { OperationsLogin } from "@/components/operations-login";
 import { PublicLegacyPage } from "@/components/public-legacy-page";
 import { loginHtml } from "@/legacy/generated/login";
 import { getAuthenticatedUser, safeNext } from "@/lib/auth";
 import { withLoginError } from "@/lib/login-ui";
 import { redirect } from "next/navigation";
+import { cmsMetadata } from "@/lib/cms-metadata";
 
-export const metadata: Metadata = { title: "Login" };
+export async function generateMetadata() { return cmsMetadata('login'); }
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ redirect?: string; error?: string; surface?: string }> }) {
   const params = await searchParams;
   const user = await getAuthenticatedUser();

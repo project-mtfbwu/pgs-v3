@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
+import { cmsMetadata } from "@/lib/cms-metadata";
 import { RecoveredStudentLegacyPage } from "@/components/recovered-student-legacy-page";
 import { applyHomeContent, getPageContent } from "@/lib/content";
 import { homeSourceHtml } from "@/lib/home-experience";
 import { getOwnAvatarUrl } from "@/lib/student-data";
 import { resolveStudentExperience, type AnonymousStudentExperience } from "@/lib/student-experience";
 
-export const metadata: Metadata = { title: "Get your details here" };
+export async function generateMetadata() { return cmsMetadata("home"); }
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {

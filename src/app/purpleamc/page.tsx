@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import { PublicLegacyPage } from "@/components/public-legacy-page";
 import { purpleAmcHtml } from "@/legacy/generated/purpleamc";
+import { cmsMetadata } from "@/lib/cms-metadata";
 
-export const metadata: Metadata = { title: "AMC Pathway" };
+export async function generateMetadata() { return cmsMetadata('purpleamc'); }
 export default function PurpleAmcPage() { return <PublicLegacyPage slug="purpleamc" html={purpleAmcHtml} />; }

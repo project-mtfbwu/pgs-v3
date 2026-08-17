@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import { PublicLegacyPage } from "@/components/public-legacy-page";
 import { countriesAusHtml } from "@/legacy/generated/countriesaus";
+import { cmsMetadata } from "@/lib/cms-metadata";
 
-export const metadata: Metadata = { title: "Study in Australia" };
+export async function generateMetadata() { return cmsMetadata('countriesaus'); }
 export default function CountriesAustraliaPage() { return <PublicLegacyPage slug="countriesaus" html={countriesAusHtml} />; }

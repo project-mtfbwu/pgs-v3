@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
 import { PublicLegacyPage } from "@/components/public-legacy-page";
 import { contactHtml } from "@/legacy/generated/contact";
+import { cmsMetadata } from "@/lib/cms-metadata";
 
-export const metadata: Metadata = { title: "Contact PurpleGuide" };
+export async function generateMetadata() { return cmsMetadata('contact'); }
 // The retained theme binds `.submit` to its retired AJAX transport. Removing only
 // that behavior hook leaves the approved button styling intact and lets V3 own persistence.
 const contactV3Html = contactHtml.replaceAll(" submit w-100", " w-100");

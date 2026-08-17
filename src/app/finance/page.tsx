@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import { PublicLegacyPage } from "@/components/public-legacy-page";
 import { financeHtml } from "@/legacy/generated/finance";
+import { cmsMetadata } from "@/lib/cms-metadata";
 
-export const metadata: Metadata = { title: "Study Abroad Finance" };
+export async function generateMetadata() { return cmsMetadata('finance'); }
 export default function FinancePage() { return <PublicLegacyPage slug="finance" html={financeHtml} />; }

@@ -39,8 +39,9 @@ const premiumRecoveryMigration = await readFile(new URL("../supabase/migrations/
 const ops06ScoreboardMigration = await readFile(new URL("../supabase/migrations/20260817065630_ops06_scoreboard_v1.sql", import.meta.url), "utf8");
 const ops07TargetsMigration = await readFile(new URL("../supabase/migrations/20260817072342_ops07_staff_targets.sql", import.meta.url), "utf8");
 const phase6StudentOperationsMigration = await readFile(new URL("../supabase/migrations/20260817110000_phase6_student_operations.sql", import.meta.url), "utf8");
+const phase7CmsCatalogMigration = await readFile(new URL("../supabase/migrations/20260817120345_phase7_cms_catalog.sql", import.meta.url), "utf8");
 const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}\n${privilegedDeleteAuditMigration}`;
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}\n${ops07TargetsMigration}\n${phase6StudentOperationsMigration}`;
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}\n${ops07TargetsMigration}\n${phase6StudentOperationsMigration}\n${phase7CmsCatalogMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -178,6 +179,10 @@ const required = [
   ,"private.notify_student_operations_change"
   ,"Your dashboard was updated"
   ,"Your counselor added a note"
+  ,"create table if not exists public.university_tags"
+  ,"private.enforce_catalog_public_mutation"
+  ,"private.enforce_catalog_child_publish"
+  ,"add column if not exists location text not null default ''"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -244,4 +249,8 @@ if (/service_role/i.test(ops07TargetsMigration)) throw new Error("OPS-07 must no
 if (/create table public\./i.test(phase6StudentOperationsMigration)) throw new Error("Phase 6 must not create a second Student Operations domain");
 if (phase6StudentOperationsMigration.includes("create or replace function private.notify_premium_workspace_change")) throw new Error("Phase 6 must not replace the certified workspace notification function");
 if (!phase6StudentOperationsMigration.includes("if new.visibility <> 'student_visible'")) throw new Error("Phase 6 must keep staff-only notes silent");
+if (phase7CmsCatalogMigration.includes("create or replace function private.enforce_publication_permission")) throw new Error("Phase 7 must not replace the certified publication helper used by CMS and content");
+if (phase7CmsCatalogMigration.includes("tags_text") || phase7CmsCatalogMigration.includes("ops_users") || phase7CmsCatalogMigration.includes("cms_users")) throw new Error("Phase 7 must not create duplicate tag text columns or a second identity model");
+if (!phase7CmsCatalogMigration.includes("alter table public.university_tags enable row level security")) throw new Error("university_tags must enable RLS");
+if (!phase7CmsCatalogMigration.includes("private.has_staff_permission('catalog.publish')")) throw new Error("Phase 7 catalog public mutations must require catalog.publish");
 console.log("RLS migration static checks passed");

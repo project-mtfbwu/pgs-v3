@@ -1,7 +1,7 @@
 import {describe,expect,it,vi} from "vitest";
 vi.mock("server-only",()=>({}));
 vi.mock("@/lib/staff-preview-server",()=>({getActiveStudentPreviewTargetId:async()=>null}));
-import {applyPublishedCatalogCards,applyPublishedCatalogDetail,applyPublishedEventDetail,applyPublishedEvents} from "@/lib/public-catalog";
+import {applyFeaturedCatalogCards,applyPublishedCatalogCards,applyPublishedCatalogDetail,applyPublishedEventDetail,applyPublishedEvents} from "@/lib/public-catalog";
 
 describe("published relational catalog parity",()=>{
   it("replaces only the traced empty program container and preserves escaped content",()=>{
@@ -19,14 +19,25 @@ describe("published relational catalog parity",()=>{
     const result=applyPublishedCatalogDetail(html,{kind:"courses",id:9,title:"Live course",summary:"Published summary",description:"",saved:true});
     expect(result).toContain('data-course-id="9"');expect(result).toContain("Live course");expect(result).toContain("Published summary");expect(result).toContain("save-course is-saved");
   });
-  it("adds relational events to both retained Upcoming Sessions renderers",()=>{
-    const html='<span class="mobile-fs-24">Upcoming Sessions</span></h1></div><div class="overflow-hidden border-radius-16px w-383px">old</div><h1 class="fnt-family fs-50 mb-0 text-black">Upcoming Sessions</h1></div></div><div class="row align-items-center">old desktop</div>';
+  it("replaces static Upcoming Sessions cards instead of injecting beside them",()=>{
+    const html='<section class="pt-3 mobile-event-program desktop-none"><div class="container"><div class="d-flex"><div class="w-30"><h1><span class="mobile-fs-24">Upcoming Sessions</span></h1></div><div class="overflow-hidden border-radius-16px w-383px">old static</div></div></div></section><div class="swiper-wrapper purple-teams" id="wrap"><div class="swiper-slide">old desktop</div></div><span class="swiper-notification"></span>';
     const result=applyPublishedEvents(html,[{id:7,title:"Safe & useful",summary:"Live session",description:"",startsAt:"2026-08-13T10:00:00Z",endsAt:null,bookingUrl:null}]);
-    expect(result.match(/data-relational-events/g)).toHaveLength(2);expect(result).toContain("Safe &amp; useful");expect(result).toContain('/purpleevents/session/7');
+    expect(result).toContain("Safe &amp; useful");
+    expect(result).toContain('/purpleevents/session/7');
+    expect(result).not.toContain("old static");
+    expect(result).not.toContain("old desktop");
+    expect(result).toContain("data-relational-events");
   });
   it("hydrates a retained event detail from the published event record",()=>{
     const html='<div class="w-70"><h1 class="hero">Old event</h1></div><button type="button" class="sop-learn-btn bg-blue-500 mt-2 fs-17 w-100 fw-600 text-black border-radius-4px py-2 ht-48">Book Your Seat</button>';
     const result=applyPublishedEventDetail(html,{id:9,title:"New <Event>",summary:"",description:"",startsAt:null,endsAt:null,bookingUrl:"https://example.com/book"});
     expect(result).toContain("New &lt;Event&gt;");expect(result).toContain('href="https://example.com/book"');
+  });
+  it("connects featured courses into the retained CV Ready Most Wanted slot",()=>{
+    const html='<div class="box-style-45 d-flex align-items-stretch gap-3 justify-content-center flex-wrap"><p class="text-muted">No featured courses yet. Mark courses as "show in picks" in admin.</p></div>';
+    const result=applyFeaturedCatalogCards(html,"courses",[{id:4,title:"Wanted course",summary:"Live",saved:false}]);
+    expect(result).toContain('data-relational-catalog="featured-courses"');
+    expect(result).toContain('/programsfull/program/4?type=course');
+    expect(result).not.toContain("No featured courses yet");
   });
 });

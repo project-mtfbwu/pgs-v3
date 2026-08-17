@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import { PublicLegacyPage } from "@/components/public-legacy-page";
 import { exploreCountriesHtml } from "@/legacy/generated/explorecountries";
+import { cmsMetadata } from "@/lib/cms-metadata";
 
-export const metadata: Metadata = { title: "Explore Countries" };
+export async function generateMetadata() { return cmsMetadata('explorecountries'); }
 export default function ExploreCountriesPage() { return <PublicLegacyPage slug="explorecountries" html={exploreCountriesHtml} />; }

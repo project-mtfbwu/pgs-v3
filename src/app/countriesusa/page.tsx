@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { cmsMetadata } from "@/lib/cms-metadata";
 import { LegacyPage } from "@/components/legacy-page";
 import { countriesUsaHtml } from "@/legacy/generated/countriesusa";
 import { applyUsaContent, getPageContent } from "@/lib/content";
@@ -6,7 +6,7 @@ import { applyPremiumBusinessRule } from "@/lib/premium-business-rule";
 import { applyAuthenticatedShell } from "@/lib/account-shell";
 import { resolveStudentExperience } from "@/lib/student-experience";
 
-export const metadata: Metadata = { title: "Study in the USA" };
+export async function generateMetadata() { return cmsMetadata("countriesusa"); }
 export const dynamic = "force-dynamic";
 
 export default async function CountriesUsaPage() {

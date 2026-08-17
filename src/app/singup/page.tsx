@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
 import { DeveloperStudentIdentityCard, DeveloperStudentShell } from "@/components/developer-student-shell";
 import { ProfileForm } from "@/components/profile-form";
 import { getOwnAvatarUrl } from "@/lib/student-data";
 import { requireStudentExperience } from "@/lib/student-experience";
+import { cmsMetadata } from "@/lib/cms-metadata";
 
-export const metadata: Metadata = { title: "Complete Profile" };
+export async function generateMetadata() { return cmsMetadata('signup'); }
 export const dynamic = "force-dynamic";
 
 export default async function SignupPage() {

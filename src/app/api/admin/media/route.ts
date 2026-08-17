@@ -10,3 +10,29 @@ import { consumeRateLimit } from "@/lib/server-security";
 const extensions:Record<string,string>={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif","application/pdf":"pdf","video/mp4":"mp4"};
 function signature(bytes:Uint8Array,mime:string){if(mime==="image/jpeg")return bytes[0]===255&&bytes[1]===216&&bytes[2]===255;if(mime==="image/png")return bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71;if(mime==="image/webp")return new TextDecoder().decode(bytes.slice(0,4))==="RIFF"&&new TextDecoder().decode(bytes.slice(8,12))==="WEBP";if(mime==="image/gif")return new TextDecoder().decode(bytes.slice(0,3))==="GIF";if(mime==="application/pdf")return new TextDecoder().decode(bytes.slice(0,5))==="%PDF-";if(mime==="video/mp4")return new TextDecoder().decode(bytes.slice(4,8))==="ftyp";return false;}
 export async function POST(request:Request){try{const context=await requireStaffPermission("media.manage");const limit=await consumeRateLimit(request,"upload.media",context.user.id);if(!limit.allowed)return jsonError(limit.configured?"Too many media uploads. Please wait and try again.":"Media uploads are temporarily unavailable.",limit.configured?429:503);if(Number(request.headers.get("content-length")??0)>11_000_000)throw new Error("Use an approved media file up to 10 MB.");const form=await request.formData();const file=form.get("file");const bucket=form.get("bucket")==="cms-previews"?"cms-previews":"marketing-public";if(!(file instanceof File)||!extensions[file.type]||file.size<1||file.size>10485760)throw new Error("Use an approved image, PDF, or MP4 file up to 10 MB.");const bytes=new Uint8Array(await file.arrayBuffer());if(!signature(bytes,file.type))throw new Error("The media contents do not match the declared file type.");const path=`${context.user.id}/${randomUUID()}.${extensions[file.type]}`;const admin=createSupabaseAdminClient();const uploaded=await admin.storage.from(bucket).upload(path,bytes,{contentType:file.type,cacheControl:bucket==="marketing-public"?"31536000":"0"});if(uploaded.error)throw new Error("Unable to upload the media object.");const supabase=await createSupabaseServerClient();const inserted=await supabase.from("media_assets").insert({bucket,path,alt_text:String(form.get("alt_text")??"").trim().slice(0,500),mime_type:file.type,byte_size:file.size,attribution:String(form.get("attribution")??"").trim().slice(0,1000)||null,created_by:context.user.id}).select("id").single();if(inserted.error){await admin.storage.from(bucket).remove([path]);throw new Error("Unable to register the media asset.");}return NextResponse.json({ok:true,id:inserted.data.id,path});}catch(error){return adminApiError(error);}}
+
+const mediaReferences = [
+  ["universities","image_asset_id"],["programs","image_asset_id"],["programs","brochure_asset_id"],
+  ["courses","image_asset_id"],["courses","brochure_asset_id"],["events","image_asset_id"],
+  ["event_facilitators","image_asset_id"],["articles","image_asset_id"],["highlights","image_asset_id"],
+  ["testimonials","image_asset_id"],["content_people","image_asset_id"],["premium_content_settings","media_asset_id"]
+] as const;
+
+export async function DELETE(request:Request){
+  try{
+    await requireStaffPermission("media.manage");
+    const input=await request.json() as {id?:unknown};
+    const id=typeof input.id==="string"?input.id.trim():"";
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) throw new Error("A valid media asset ID is required.");
+    const supabase=await createSupabaseServerClient();
+    for(const [table,column] of mediaReferences){
+      const {count}=await supabase.from(table).select(column,{count:"exact",head:true}).eq(column,id);
+      if(count) throw new Error("This media asset is still attached to catalog or content. Unlink it first.");
+    }
+    const {data,error}=await supabase.from("media_assets").delete().eq("id",id).select("id,bucket,path").maybeSingle();
+    if(error||!data) throw new Error("Unable to delete the media asset.");
+    const admin=createSupabaseAdminClient();
+    await admin.storage.from(String(data.bucket)).remove([String(data.path)]);
+    return NextResponse.json({ok:true});
+  }catch(error){return adminApiError(error);}
+}

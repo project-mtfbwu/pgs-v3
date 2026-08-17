@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import { PublicLegacyPage } from "@/components/public-legacy-page";
 import { countriesCanadaHtml } from "@/legacy/generated/countriescanada";
+import { cmsMetadata } from "@/lib/cms-metadata";
 
-export const metadata: Metadata = { title: "Study in Canada" };
+export async function generateMetadata() { return cmsMetadata('countriescanada'); }
 export default function CountriesCanadaPage() { return <PublicLegacyPage slug="countriescanada" html={countriesCanadaHtml} />; }

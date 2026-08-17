@@ -5,7 +5,7 @@ import { applyPremiumBusinessRule } from "@/lib/premium-business-rule";
 import { applyAuthenticatedShell } from "@/lib/account-shell";
 import { resolveActorContext } from "@/lib/actor-context";
 import { resolveStudentExperience } from "@/lib/student-experience";
-import { applyPublishedCatalogCards, applyPublishedCatalogDetail, applyPublishedEventDetail, applyPublishedEvents, getPublicCatalogCards, getPublicCatalogDetail, getPublicEvent, getPublicEvents } from "@/lib/public-catalog";
+import { applyFeaturedCatalogCards, applyPublishedCatalogCards, applyPublishedCatalogDetail, applyPublishedEventDetail, applyPublishedEvents, getPublicCatalogCards, getPublicCatalogDetail, getPublicEvent, getPublicEvents } from "@/lib/public-catalog";
 
 type Props<TSlug extends PublicContentSlug> = {
   slug: TSlug;
@@ -22,8 +22,17 @@ export async function PublicLegacyPage<TSlug extends PublicContentSlug>({ slug, 
   const studentState=state?.kind??"anonymous";
   if(slug==="cvreadyprogram"||slug==="purpleboard"){
     const kind=slug==="cvreadyprogram"?"programs":"courses";
-    const cards=await getPublicCatalogCards(kind,state&&state.kind!=="anonymous"?state.user.id:undefined);
+    const studentId=state&&state.kind!=="anonymous"?state.user.id:undefined;
+    const cards=await getPublicCatalogCards(kind,studentId);
     rendered=applyPublishedCatalogCards(rendered,kind,cards);
+    if(slug==="cvreadyprogram"){
+      const [featuredCourses,featuredPrograms]=await Promise.all([
+        getPublicCatalogCards("courses",studentId,true),
+        getPublicCatalogCards("programs",studentId,true)
+      ]);
+      rendered=applyFeaturedCatalogCards(rendered,"courses",featuredCourses);
+      rendered=applyFeaturedCatalogCards(rendered,"programs",featuredPrograms);
+    }
   }
   if(catalogDetail){const detail=await getPublicCatalogDetail(catalogDetail.kind,catalogDetail.id,state&&state.kind!=="anonymous"?state.user.id:undefined);if(detail)rendered=applyPublishedCatalogDetail(rendered,detail);}
   if(slug==="purpleevents"){rendered=applyPublishedEvents(rendered,await getPublicEvents());}

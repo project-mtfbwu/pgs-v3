@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import { PublicLegacyPage } from "@/components/public-legacy-page";
 import { purpleEventsHtml } from "@/legacy/generated/purpleevents";
+import { cmsMetadata } from "@/lib/cms-metadata";
 
-export const metadata: Metadata = { title: "Purple Events" };
+export async function generateMetadata() { return cmsMetadata('purpleevents'); }
 export default function PurpleEventsPage() { return <PublicLegacyPage slug="purpleevents" html={purpleEventsHtml} />; }
