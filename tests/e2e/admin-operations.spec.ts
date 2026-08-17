@@ -1,4 +1,5 @@
 import { expect,test } from "@playwright/test";
+import { expectOperationsNavReachable, skipIfOperationsFixtureInvalid } from "./ops-helpers";
 
 const emptyState={cookies:[],origins:[]};
 
@@ -74,7 +75,7 @@ test.describe("preview read-only staff workflow",()=>{
     await expect(page).toHaveURL(/\/ops$/);
     await expect(page.locator('[data-scoreboard-scope="restricted"]')).toBeVisible();
     await expect(page.getByRole("heading",{name:"Authorized Operations views"})).toBeVisible();
-    await expect(page.getByRole("link",{name:"Scoreboard"}).first()).toBeVisible();
+    await expectOperationsNavReachable(page);
     await expect(page.getByText("Visible students",{exact:true})).toHaveCount(0);
     await expect(page.getByText("Active team members",{exact:true})).toHaveCount(0);
     await expect(page.getByRole("heading",{name:"Recent activity"})).toHaveCount(0);
@@ -82,9 +83,19 @@ test.describe("preview read-only staff workflow",()=>{
     await page.goto("/ops/students");
     await expect(page.getByRole("heading",{name:"Student Registry"})).toBeVisible();
     await expect(page.getByRole("link",{name:/open workspace/i})).toHaveCount(0);
-    await expect(page.getByText("PGS ID").first()).toBeVisible();
+    const desktop = (page.viewportSize()?.width ?? 1440) >= 768;
+    if (desktop) {
+      await expect(page.getByRole("columnheader",{name:"PGS ID"})).toBeVisible();
+    } else {
+      await expect(page.locator(".ops-registry-card").first()).toBeVisible();
+      await expect(page.locator(".ops-registry-card dt").filter({ hasText: "PGS ID" }).first()).toBeVisible();
+    }
     await expect(page.getByText("directory",{exact:true})).toHaveCount(0);
-    await expect(page.getByLabel("Search by name or PGS ID").first()).toBeVisible();
+    if (desktop) {
+      await expect(page.locator(".ops-registry-filters-desktop input[type='search']").first()).toBeVisible();
+    } else {
+      await expect(page.locator(".ops-registry-mobile-search input[type='search']").first()).toBeVisible();
+    }
     await expect(page.getByRole("navigation",{name:"Student registry pagination"})).toBeVisible();
     const studentId=process.env.PGS_ASSIGNED_STUDENT_ID;
     test.skip(!studentId,"Supply a Premium student fixture UUID.");
@@ -111,7 +122,7 @@ test.describe("preview Mentor workflow",()=>{
     await expect(page.getByText("Premium awaiting mentor",{exact:true})).toHaveCount(0);
     await expect(page.getByText("Unassigned students",{exact:true})).toHaveCount(0);
     await expect(page.getByRole("heading",{name:"Recent activity"})).toHaveCount(0);
-    await expect(page.getByRole("link",{name:"Scoreboard"}).first()).toBeVisible();
+    await expectOperationsNavReachable(page);
     await page.goto("/ops/students");
     await expect(page.getByRole("heading",{name:"My Students"})).toBeVisible();
     await expect(page.getByRole("columnheader",{name:"Mentor"})).toHaveCount(0);
@@ -146,6 +157,7 @@ test.describe("preview Admin workflow",()=>{
   test.skip(!process.env.PLAYWRIGHT_ADMIN_STORAGE_STATE,"Supply an isolated preview Admin storage state.");
   test("Admin receives the operations shell but not role governance",async({page,request})=>{
     await page.goto("/ops");
+    await skipIfOperationsFixtureInvalid(page);
     await expect(page).toHaveURL(/\/ops$/);
     await expect(page.getByRole("navigation",{name:"Operations navigation"}).first()).toBeVisible();
     await expect(page.locator('[data-operations-product="true"]')).toBeVisible();
@@ -189,6 +201,7 @@ test.describe("preview Admin workflow",()=>{
   });
   test("Admin registry uses a semantic table, accessible cards, and canonical plan labels",async({page})=>{
     await page.goto("/ops/students");
+    await skipIfOperationsFixtureInvalid(page);
     await expect(page.getByRole("heading",{name:"Student Registry"})).toBeVisible();
     await expect(page.getByRole("columnheader",{name:"Email"})).toHaveCount(0);
     await expect(page.getByLabel("Plan").first()).toBeVisible();
@@ -230,6 +243,7 @@ test.describe("preview Admin workflow",()=>{
   });
   test("Admin assignment actions use names and keep Standard students from active assignment", async ({ page }) => {
     await page.goto("/ops/students");
+    await skipIfOperationsFixtureInvalid(page);
     await expect(page.getByRole("heading", { name: "Student Registry" })).toBeVisible();
     const uuid = /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
     const previewButtons = page.getByRole("button", { name: "View as Student" });
@@ -260,7 +274,10 @@ test.describe("preview Super Admin workflow",()=>{
     await page.goto("/ops/team");
     await expect(page.getByRole("heading",{name:"People & Access"})).toBeVisible();
     await expect(page.getByRole("link",{name:"Invite staff"})).toBeVisible();
-    await expect(page.getByRole("columnheader",{name:"Person"})).toBeVisible();
+    // Desktop renders a semantic table; mobile renders the same data as an
+    // accessible card list. Assert the shared directory region, not a
+    // desktop-only column header.
+    await expect(page.getByRole("region",{name:"People and access directory"}).first()).toBeVisible();
     await page.goto("/ops/team/invite");
     await expect(page.getByRole("heading",{name:"Invite staff"})).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();

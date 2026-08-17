@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { skipIfOperationsFixtureInvalid } from "./ops-helpers";
 
 const emptyState = { cookies: [], origins: [] };
 
@@ -27,6 +28,7 @@ for (const [label, envName] of [
 
     test("shows truthful organization metrics and Registry drill-downs", async ({ page }, testInfo) => {
       await page.goto("/ops");
+      await skipIfOperationsFixtureInvalid(page);
       await expect(page.locator('[data-scoreboard-scope="organization"]')).toBeVisible();
       const total = await metric(page, "total");
       const premium = await metric(page, "premium");

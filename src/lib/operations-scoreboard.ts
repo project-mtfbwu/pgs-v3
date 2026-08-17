@@ -1,4 +1,5 @@
 import "server-only";
+import { humanFacingName } from "@/lib/identity-labels";
 import { resolveOperationsScoreboardScope, type OperationsScoreboardScope } from "@/lib/operations-authorization";
 import { can, type StaffContext } from "@/lib/staff-auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -159,7 +160,7 @@ async function loadRecentActivity(context: StaffContext): Promise<ScoreboardActi
       .select("user_id,display_name")
       .in("user_id", actorIds);
     for (const row of staff ?? []) {
-      if (row.display_name) names.set(row.user_id, row.display_name);
+      if (row.display_name) names.set(row.user_id, humanFacingName(row.display_name, ""));
     }
   }
   return events.map((event) => ({

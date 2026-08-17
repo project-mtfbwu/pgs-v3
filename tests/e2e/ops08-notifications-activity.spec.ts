@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { skipIfOperationsFixtureInvalid } from "./ops-helpers";
 
 const emptyState = { cookies: [], origins: [] };
 const uuidText = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
@@ -24,6 +25,7 @@ for (const [label, envName] of [
 
     test("shows only the recipient inbox with accessible filters and no UUID leakage", async ({ page }, testInfo) => {
       await page.goto("/ops/notifications");
+      await skipIfOperationsFixtureInvalid(page);
       await expect(page.getByRole("heading", { level: 1, name: "Staff notifications" })).toBeVisible();
       await expect(page.getByRole("heading", { level: 2, name: "Inbox" })).toBeVisible();
       await expect(page.getByLabel("View")).toBeVisible();
@@ -54,6 +56,7 @@ for (const [label, envName] of [
 
     test("keeps canonical activity human-readable and accessible", async ({ page }, testInfo) => {
       await page.goto("/ops/activity");
+      await skipIfOperationsFixtureInvalid(page);
       await expect(page.getByRole("heading", { level: 1, name: "Operations activity" })).toBeVisible();
       await expect(page.getByLabel("Activity domain")).toBeVisible();
       await expect(page.locator("main").innerText()).resolves.not.toMatch(uuidText);

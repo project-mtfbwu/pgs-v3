@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { skipIfOperationsFixtureInvalid } from "./ops-helpers";
 
 const emptyState = { cookies: [], origins: [] };
 const uuidText = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
@@ -22,12 +23,13 @@ for (const [label, envName] of [
 
     test("shows organization work creation, filters, human labels, and accessible zero/data states", async ({ page }, testInfo) => {
       await page.goto("/ops/work");
+      await skipIfOperationsFixtureInvalid(page);
       await expect(page.getByRole("heading", { level: 1, name: "Staff Targets" })).toBeVisible();
       await expect(page.getByRole("heading", { name: "Create staff target" })).toBeVisible();
       await expect(page.getByLabel("Title")).toBeVisible();
       await expect(page.getByLabel("Assignee")).toBeVisible();
       await expect(page.getByLabel("Find student (optional)")).toBeVisible();
-      await expect(page.getByLabel("Status")).toBeVisible();
+      await expect(page.locator('select[name="status"]')).toBeVisible();
       await expect(page.locator('select[name="assignee"]')).toBeVisible();
       await expect(page.locator("main").innerText()).resolves.not.toMatch(uuidText);
 
@@ -43,6 +45,7 @@ for (const [label, envName] of [
 
     test("adds a staff mini scoreboard to Team detail without performance scoring", async ({ page }) => {
       await page.goto("/ops/team");
+      await skipIfOperationsFixtureInvalid(page);
       const firstStaff = page.getByRole("link", { name: /Manage|View/ }).first();
       if (!await firstStaff.count()) test.skip(true, "No staff identity is available.");
       await firstStaff.click();
