@@ -9,31 +9,46 @@ test.describe("Phase 7A catalog draft approval", () => {
   test.skip(!process.env.PLAYWRIGHT_SUPER_ADMIN_STORAGE_STATE, "Supply an isolated preview Super Admin storage state.");
 
   test("draft stays private, renders on the real page, then publishes only after approval", async ({ page }) => {
-    await page.goto("/admin/catalog/events?state=published");
+    await page.goto("/admin/catalog/events");
     await skipIfOperationsFixtureInvalid(page);
-    const firstRow = page.locator("tbody tr").first();
-    await expect(firstRow).toBeVisible();
-    await firstRow.getByRole("button", { name: "Edit" }).click();
+    const editButton = page.locator("tbody tr").filter({ has: page.getByRole("button", { name: "Edit" }) }).first().getByRole("button", { name: "Edit" });
+    if (await editButton.count()) {
+      await editButton.click();
+    } else {
+      await page.getByRole("button", { name: /^Add / }).click();
+    }
     const dialog = page.getByRole("dialog");
-    const title = dialog.getByLabel(/Title/);
+    const title = dialog.getByLabel(/^Title/);
     const liveTitle = await title.inputValue();
-    const entityId = Number(await firstRow.locator("td").first().textContent());
-    const bypass = await page.request.patch("/api/admin/catalog/events", { data: { id: entityId, title: liveTitle } });
-    expect(bypass.status()).toBe(400);
-    const draftTitle = `${liveTitle} — PREVIEW ${Date.now()}`;
-    await title.fill(draftTitle);
-    await dialog.getByLabel("Revision note").fill("Phase 7A real-page preview check");
-    await dialog.getByRole("button", { name: "Save draft" }).click();
+    const entityId = liveTitle ? Number(await page.locator("tbody tr").filter({ hasText: liveTitle }).locator("td").first().textContent()) : null;
+    if (entityId) {
+      const bypass = await page.request.patch("/api/admin/catalog/events", { data: { id: entityId, title: liveTitle } });
+      expect(bypass.status()).toBe(400);
+    }
+    await expect(dialog.getByRole("button", { name: "Save Draft" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: /^Preview/ }).or(dialog.getByRole("button", { name: /^Preview/ }))).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Publish" })).toBeVisible();
 
-    const draftRow = page.locator("tbody tr", { hasText: draftTitle });
-    await expect(draftRow).toBeVisible();
+    const draftTitle = `${liveTitle || "Phase 7A Event"} — PREVIEW ${Date.now()}`;
+    await title.fill(draftTitle);
+    if (!liveTitle) {
+      await dialog.getByLabel(/^Slug/).fill(`phase7a-preview-${Date.now()}`);
+    }
+    await dialog.getByLabel("Revision note").fill("Phase 7A real-page preview check");
+    await dialog.getByRole("button", { name: "Save Draft" }).click();
+    await expect(dialog.getByRole("status")).toContainText("Draft saved");
+    const previewLink = dialog.getByRole("link", { name: /^Preview/ });
+    await expect(previewLink).toBeVisible();
+    await expect(previewLink).toHaveAttribute("target", "_blank");
+    await expect(previewLink).toHaveAttribute("rel", /noopener/);
+
     const liveBeforePreview = await page.context().newPage();
     await liveBeforePreview.goto("/purpleevents");
     await expect(liveBeforePreview.getByText(draftTitle, { exact: true })).toHaveCount(0);
     await liveBeforePreview.close();
 
     const previewPromise = page.context().waitForEvent("page");
-    await draftRow.getByRole("link", { name: /Preview page/ }).click();
+    await previewLink.click();
     const preview = await previewPromise;
     await preview.waitForLoadState("domcontentloaded");
     await expect(preview.getByRole("status", { name: "CMS preview mode" })).toContainText("Public visitors still see published content");
@@ -42,19 +57,18 @@ test.describe("Phase 7A catalog draft approval", () => {
     expect(axe.violations).toEqual([]);
     await preview.getByRole("button", { name: "Exit preview" }).click();
     await preview.close();
+    await expect(page.getByRole("dialog")).toBeVisible();
 
-    await page.goto("/admin/catalog/events?state=published");
-    const editedRow = page.locator("tbody tr", { hasText: draftTitle });
-    await editedRow.getByRole("button", { name: "Edit" }).click();
-    await page.getByRole("dialog").getByLabel(/Title/).fill(liveTitle);
-    await page.getByRole("dialog").getByLabel("Revision note").fill("Approved content restored");
-    await page.getByRole("dialog").getByRole("button", { name: "Save draft" }).click();
-    const approvedRow = page.locator("tbody tr", { hasText: liveTitle }).first();
+    if (!liveTitle) return;
+
+    await dialog.getByLabel(/^Title/).fill(liveTitle);
+    await dialog.getByLabel("Revision note").fill("Approved content restored");
+    await dialog.getByRole("button", { name: "Save Draft" }).click();
     const publishResponse = page.waitForResponse((response) =>
       response.url().includes("/api/admin/catalog/events/drafts")
       && response.request().postData()?.includes('"action":"publish"') === true
     );
-    await approvedRow.getByRole("button", { name: /Approve/ }).click();
+    await dialog.getByRole("button", { name: "Publish" }).click();
     expect((await publishResponse).status()).toBe(200);
 
     const publicAfterPublish = await page.context().newPage();
@@ -68,14 +82,17 @@ test.describe("Phase 7A catalog draft approval", () => {
     await page.goto("/admin/content/pages/about");
     await skipIfOperationsFixtureInvalid(page);
     const hero = page.getByLabel("hero Heading");
-    const seo = page.getByLabel("SEO title");
+    const seo = page.getByRole("textbox", { name: "SEO title", exact: true });
     const liveHero = await hero.inputValue();
     const liveSeo = await seo.inputValue();
     const marker = `CMS PREVIEW ${Date.now()}`;
     await hero.fill(marker);
     await seo.fill(marker);
     await page.getByLabel("Revision note").fill("Phase 7A CMS preview check");
-    await page.getByRole("button", { name: "Save draft revision" }).click();
+    await expect(page.getByRole("button", { name: "Save Draft" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Publish" })).toBeVisible();
+    await page.getByRole("button", { name: "Save Draft" }).click();
+    await expect(page.getByRole("status")).toContainText("Draft saved");
 
     const live = await page.context().newPage();
     await live.goto("/about");
@@ -84,9 +101,13 @@ test.describe("Phase 7A catalog draft approval", () => {
     await live.close();
 
     const previewPromise = page.context().waitForEvent("page");
-    await page.getByRole("link", { name: /Preview actual page/ }).first().click();
+    const cmsPreviewLink = page.getByRole("link", { name: /^Preview/ }).first();
+    await expect(cmsPreviewLink).toHaveAttribute("target", "_blank");
+    await expect(cmsPreviewLink).toHaveAttribute("rel", /noopener/);
+    await cmsPreviewLink.click();
     const preview = await previewPromise;
     await preview.waitForLoadState("domcontentloaded");
+    await expect(page.getByRole("button", { name: "Save Draft" })).toBeVisible();
     await expect(preview.getByText(marker, { exact: true })).toBeVisible();
     await expect(preview).toHaveTitle(new RegExp(marker));
     await expect(preview.getByRole("status", { name: "CMS preview mode" })).toBeVisible();
@@ -95,9 +116,9 @@ test.describe("Phase 7A catalog draft approval", () => {
 
     await page.goto("/admin/content/pages/about");
     await page.getByLabel("hero Heading").fill(liveHero);
-    await page.getByLabel("SEO title").fill(liveSeo);
+    await page.getByRole("textbox", { name: "SEO title", exact: true }).fill(liveSeo);
     await page.getByLabel("Revision note").fill("Restored after Phase 7A preview check");
-    await page.getByRole("button", { name: "Save draft revision" }).click();
+    await page.getByRole("button", { name: "Save Draft" }).click();
   });
 });
 

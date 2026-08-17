@@ -41,19 +41,22 @@ test.describe("Admin catalog workflow", () => {
   test("Admin can open catalog management screens with accessible forms", async ({ page }) => {
     await page.goto("/admin/catalog/events");
     await skipIfOperationsFixtureInvalid(page);
-    await expect(page.getByRole("heading", { name: "Events / Webinars" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Events / Webinars", level: 1 })).toBeVisible();
     await expect(page.getByRole("button", { name: /^Add / })).toBeVisible();
     await page.getByRole("button", { name: /^Add / }).click();
     const dialog = page.getByRole("dialog");
-    await expect(dialog.getByRole("heading", { name: "Events / Webinars" })).toBeVisible();
+    await expect(dialog.getByRole("heading", { name: "Events / Webinars", level: 2 })).toBeVisible();
     await expect(dialog.getByLabel(/Title/)).toBeVisible();
     await expect(dialog.getByLabel(/^Image$/)).toBeVisible();
-    await expect(dialog.getByRole("button", { name: "Save draft" })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Save Draft" })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: /Preview/ })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Publish" })).toBeVisible();
+    await expect(dialog.getByText("Save draft to preview")).toBeVisible();
     await expect(dialog.getByLabel("Revision note")).toBeVisible();
     await page.keyboard.press("Escape");
     await expectNoAxeViolations(page);
     await page.goto("/admin/catalog/tags");
-    await expect(page.getByRole("heading", { name: "Tags", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Tags", exact: true, level: 1 })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Attach shared tags" })).toHaveCount(0);
   });
 });
