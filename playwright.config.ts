@@ -8,7 +8,12 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000",
-    trace: "retain-on-failure"
+    trace: "retain-on-failure",
+    // Preview deployments sit behind Vercel Deployment Protection; the bypass
+    // header lets the same specs run against them without a Vercel login.
+    extraHTTPHeaders: process.env.PLAYWRIGHT_PROTECTION_BYPASS
+      ? { "x-vercel-protection-bypass": process.env.PLAYWRIGHT_PROTECTION_BYPASS }
+      : undefined
   },
   webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
     command: "./node_modules/.bin/next start",
