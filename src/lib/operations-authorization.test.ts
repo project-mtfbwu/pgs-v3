@@ -28,15 +28,18 @@ describe("Operations Scoreboard authorization", () => {
     expect(resolveOperationsScoreboardScope(context(role, scoreboardPermissions))).toBe("organization");
   });
 
-  it("keeps an Admin who is also a handler at organization scope", () => {
-    expect(resolveOperationsScoreboardScope({
-      roles: ["admin", "mentor"],
-      permissions: new Set<StaffPermission>([
-        ...scoreboardPermissions,
-        "student_workspace.read"
-      ])
-    })).toBe("organization");
-  });
+  it.each(["admin", "super_admin"] as const)(
+    "keeps an authorized %s who is also a handler at organization scope",
+    (role) => {
+      expect(resolveOperationsScoreboardScope({
+        roles: [role, "mentor"],
+        permissions: new Set<StaffPermission>([
+          ...scoreboardPermissions,
+          "student_workspace.read"
+        ])
+      })).toBe("organization");
+    }
+  );
 
   it("resolves Mentor access to assigned-student scope without global permissions", () => {
     expect(resolveOperationsScoreboardScope(context("mentor", [
