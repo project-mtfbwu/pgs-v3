@@ -38,8 +38,9 @@ const ops05AssignmentsMigration = await readFile(new URL("../supabase/migrations
 const premiumRecoveryMigration = await readFile(new URL("../supabase/migrations/20260817035326_recover_premium_frontend_contract.sql", import.meta.url), "utf8");
 const ops06ScoreboardMigration = await readFile(new URL("../supabase/migrations/20260817065630_ops06_scoreboard_v1.sql", import.meta.url), "utf8");
 const ops07TargetsMigration = await readFile(new URL("../supabase/migrations/20260817072342_ops07_staff_targets.sql", import.meta.url), "utf8");
+const phase6StudentOperationsMigration = await readFile(new URL("../supabase/migrations/20260817110000_phase6_student_operations.sql", import.meta.url), "utf8");
 const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}\n${privilegedDeleteAuditMigration}`;
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}\n${ops07TargetsMigration}`;
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}\n${ops07TargetsMigration}\n${phase6StudentOperationsMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -171,6 +172,12 @@ const required = [
   ,"private.can_assign_staff_target"
   ,"staff_target.created"
   ,"staff_target.completed"
+  ,"private.enforce_student_alert_limits"
+  ,"An important alert can have at most 12 words."
+  ,"A student can have at most 3 active important alerts."
+  ,"private.notify_student_operations_change"
+  ,"Your dashboard was updated"
+  ,"Your counselor added a note"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -234,4 +241,7 @@ if (!ops07TargetsMigration.includes("target.assigned_staff_id = auth.uid()")) th
 if (!ops07TargetsMigration.includes("role.key in ('admin', 'super_admin')")) throw new Error("OPS-07 organization target authority must remain Admin/Super Admin");
 if (!ops07TargetsMigration.includes("target.due_at < statement_timestamp()")) throw new Error("OPS-07 overdue must use the live due timestamp");
 if (/service_role/i.test(ops07TargetsMigration)) throw new Error("OPS-07 must not require service-role access");
+if (/create table public\./i.test(phase6StudentOperationsMigration)) throw new Error("Phase 6 must not create a second Student Operations domain");
+if (phase6StudentOperationsMigration.includes("create or replace function private.notify_premium_workspace_change")) throw new Error("Phase 6 must not replace the certified workspace notification function");
+if (!phase6StudentOperationsMigration.includes("if new.visibility <> 'student_visible'")) throw new Error("Phase 6 must keep staff-only notes silent");
 console.log("RLS migration static checks passed");

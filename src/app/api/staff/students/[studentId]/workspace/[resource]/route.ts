@@ -3,6 +3,7 @@ import { recordDeniedAuditEvent, recordFailedAuditEvent } from "@/lib/audit";
 import { STUDENT_DOCUMENT_BUCKET } from "@/lib/document-access";
 import { jsonError, readJsonObject, validUuid } from "@/lib/http";
 import { cleanWorkspaceText, requirePremiumActor, WorkspaceAccessError } from "@/lib/premium-workspace";
+import { assertStudentAlertText, studentOperationsMutationError } from "@/lib/student-operations";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CLEAN_DOCUMENT_SCAN_STATUS } from "@/lib/document-access";
@@ -22,6 +23,11 @@ function id(value: unknown): string {
 
 function order(value:unknown):number{if(value===undefined)return 0;if(!Number.isSafeInteger(value)||Number(value)<0||Number(value)>1_000_000)throw new Error("Invalid sort order.");return Number(value);}
 function optionalDate(value:unknown):string|null{if(value==null||value==="")return null;if(typeof value!=="string"||Number.isNaN(Date.parse(value)))throw new Error("Invalid date.");return new Date(value).toISOString();}
+function writeError(error:{message?:string;details?:string}|null,fallback:string,status=400){
+  const mapped=studentOperationsMutationError(error);
+  if(mapped)return jsonError(mapped.message,mapped.status);
+  return jsonError(fallback,status);
+}
 function count(value:unknown):number{const result=Number(value);if(!Number.isSafeInteger(result)||result<0||result>100_000)throw new Error("Invalid dashboard count.");return result;}
 function percentage(value:unknown):number|null{if(value==null||value==="")return null;const result=Number(value);if(!Number.isSafeInteger(result)||result<0||result>100)throw new Error("Invalid onboarding percentage.");return result;}
 function textList(value:unknown,maxItems=30):string[]{if(!Array.isArray(value)||value.length>maxItems)throw new Error("Invalid dashboard list.");return value.map((item)=>cleanWorkspaceText(item,255));}
@@ -45,7 +51,7 @@ export async function POST(request: Request, route: Context) {
     let values: Record<string, unknown>;
     if (resource === "comments") values = { ...common, author_id: actor.user.id, body: cleanWorkspaceText(input.body, 4000), visibility: input.visibility === "staff_only" ? "staff_only" : "student_visible", parent_id: input.parent_id ? id(input.parent_id) : null };
     else if (resource === "tasks") values = { ...common, column_id: id(input.column_id), title: cleanWorkspaceText(input.title, 255), details: typeof input.details === "string" ? input.details.trim().slice(0, 6000) : "", sort_order:order(input.sort_order), due_at:optionalDate(input.due_at), assigned_to: typeof input.assigned_to === "string" ? id(input.assigned_to) : null, created_by: actor.user.id, updated_by: actor.user.id };
-    else if (resource === "alerts") values = { ...common, alert_text: cleanWorkspaceText(input.alert_text, 1000), severity: ["info", "important", "urgent"].includes(String(input.severity)) ? input.severity : "important", sort_order:order(input.sort_order), created_by: actor.user.id, updated_by: actor.user.id };
+    else if (resource === "alerts") values = { ...common, alert_text: assertStudentAlertText(input.alert_text), severity: ["info", "important", "urgent"].includes(String(input.severity)) ? input.severity : "important", sort_order:order(input.sort_order), created_by: actor.user.id, updated_by: actor.user.id };
     else if (resource === "reviews") values = { ...common, title: cleanWorkspaceText(input.title, 255), details: typeof input.details === "string" ? input.details.trim().slice(0, 4000) : "", status: "queued", student_visible: input.student_visible !== false, sort_order:order(input.sort_order), created_by: actor.user.id, updated_by: actor.user.id };
     else if (resource === "notes") values = { ...common, author_id: actor.user.id, body: cleanWorkspaceText(input.body, 6000), visibility: input.visibility === "student_visible" ? "student_visible" : "staff_only" };
     else if (resource === "requirements") values = { ...common, document_type: cleanWorkspaceText(input.document_type, 160), requirement_kind: ["required", "additional", "requested"].includes(String(input.requirement_kind)) ? input.requirement_kind : "additional", instructions: typeof input.instructions === "string" ? input.instructions.trim().slice(0, 2000) : "", sort_order:order(input.sort_order), requested_by: actor.user.id };
@@ -53,10 +59,12 @@ export async function POST(request: Request, route: Context) {
     else return jsonError("Use document review to update a document.", 405);
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase.from(table).insert(values).select("id").single();
-    if (error) return jsonError("Unable to create the workspace item.", 400);
+    if (error) return writeError(error,"Unable to create the workspace item.");
     return NextResponse.json({ ok: true, id: data.id });
   } catch (error) {
     if (error instanceof WorkspaceAccessError) return jsonError(error.message, error.status);
+    const mapped=studentOperationsMutationError(error instanceof Error?error:null);
+    if(mapped)return jsonError(mapped.message,mapped.status);
     return jsonError(error instanceof Error ? error.message : "Invalid workspace item.", 400);
   }
 }
@@ -102,14 +110,16 @@ export async function PATCH(request: Request, route: Context) {
       if(input.assigned_to!==undefined)values.assigned_to=input.assigned_to?id(input.assigned_to):null;
       values.updated_by = actor.user.id;
     } else if (resource === "alerts") {
-      if (typeof input.alert_text === "string") values.alert_text = cleanWorkspaceText(input.alert_text, 1000);
+      if (typeof input.alert_text === "string") values.alert_text = assertStudentAlertText(input.alert_text);
       if (typeof input.active === "boolean") values.active = input.active;
       if (["info", "important", "urgent"].includes(String(input.severity))) values.severity = input.severity;
+      if(input.sort_order!==undefined)values.sort_order=order(input.sort_order);
       values.updated_by = actor.user.id;
     } else if (resource === "reviews") {
       if (typeof input.title === "string") values.title = cleanWorkspaceText(input.title, 255);
       if (["queued","in_review","changes_requested","completed"].includes(String(input.status))) values.status = input.status;
       if (typeof input.student_visible === "boolean") values.student_visible = input.student_visible;
+      if(input.sort_order!==undefined)values.sort_order=order(input.sort_order);
       values.updated_by = actor.user.id;
     } else if (resource === "requirements") {
       if (typeof input.instructions === "string") values.instructions = input.instructions.trim().slice(0, 2000);
@@ -139,7 +149,7 @@ export async function PATCH(request: Request, route: Context) {
         targetType:"student",targetId:actor.studentId,
         metadata:{reason_code:"document_review_mutation_failed",route:"/api/staff/students/[studentId]/workspace/documents"}
       });
-      return jsonError("Unable to update the workspace item.",400);
+      return writeError(error,"Unable to update the workspace item.");
     }
     if(!data)return jsonError("Workspace item not found.",404);
     return NextResponse.json({ ok: true });
@@ -152,6 +162,8 @@ export async function PATCH(request: Request, route: Context) {
       });
       return jsonError(error.message, error.status);
     }
+    const mapped=studentOperationsMutationError(error instanceof Error?error:null);
+    if(mapped)return jsonError(mapped.message,mapped.status);
     return jsonError(error instanceof Error ? error.message : "Invalid workspace update.", 400);
   }
 }
@@ -180,7 +192,7 @@ export async function DELETE(request: Request, route: Context) {
     }
     const supabase = await createSupabaseServerClient();
     const {data,error}=await supabase.from(table).delete().eq("id",id(input.id)).eq("student_id",actor.studentId).select("id").maybeSingle();
-    if(error)return jsonError("Unable to delete the workspace item.",400);
+    if(error)return writeError(error,"Unable to delete the workspace item.");
     if(!data)return jsonError("Workspace item not found.",404);
     return NextResponse.json({ ok: true });
   } catch (error) {

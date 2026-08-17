@@ -14,7 +14,7 @@ export type WorkspaceActor = StudentViewerActor;
 export { StudentAccessError as WorkspaceAccessError };
 
 export type BoardColumn = { id: string; key: string; title: string; sort_order: number };
-export type StudentTask = { id: string; column_id: string; title: string; details: string; sort_order: number; due_at: string | null };
+export type StudentTask = { id: string; column_id: string; title: string; details: string; sort_order: number; due_at: string | null; created_at?: string; updated_at?: string };
 export type DocumentRequirement = { id: string; document_type: string; requirement_kind: string; status: string; instructions: string; sort_order: number; student_documents?: StudentDocument[] };
 export type DashboardChecklistItem = { text: string; checked: boolean };
 export type DashboardTrackerItem = { count: number; is_red?: boolean };
@@ -57,7 +57,7 @@ export type PremiumWorkspace = {
   columns: BoardColumn[];
   tasks: StudentTask[];
   comments: Array<{ id: string; parent_id: string | null; author_id: string; body: string; created_at: string }>;
-  reviews: Array<{ id: string; title: string; details: string; status: string; sort_order: number }>;
+  reviews: Array<{ id: string; title: string; details: string; status: string; sort_order: number; student_visible?: boolean }>;
   notes: Array<{ id: string; body: string; visibility: string; created_at: string }>;
   requirements: DocumentRequirement[];
   universities: Array<{ id: string; stage: string; sort_order: number; universities: { id: number; name: string; slug: string } | null }>;
@@ -85,9 +85,9 @@ export async function loadPremiumWorkspaceWithClient(
     client.from("mentor_assignments").select("mentor_id,staff_profiles!mentor_assignments_mentor_id_fkey(user_id,display_name)").eq("student_id", studentId).eq("status", "active").maybeSingle(),
     client.from("student_alerts").select("id,alert_text,severity").eq("student_id", studentId).eq("active", true).order("sort_order").limit(3),
     client.from("student_board_columns").select("id,key,title,sort_order").eq("student_id", studentId).order("sort_order"),
-    client.from("student_tasks").select("id,column_id,title,details,sort_order,due_at").eq("student_id", studentId).order("sort_order"),
+    client.from("student_tasks").select("id,column_id,title,details,sort_order,due_at,created_at,updated_at").eq("student_id", studentId).order("sort_order"),
     client.from("workspace_comments").select("id,parent_id,author_id,body,created_at").eq("student_id", studentId).order("created_at"),
-    client.from("review_queue_items").select("id,title,details,status,sort_order").eq("student_id", studentId).order("sort_order"),
+    client.from("review_queue_items").select("id,title,details,status,sort_order,student_visible").eq("student_id", studentId).order("sort_order"),
     client.from("counselor_notes").select("id,body,visibility,created_at").eq("student_id", studentId).order("created_at", { ascending: false }),
     client.from("student_document_requirements").select("id,document_type,requirement_kind,status,instructions,sort_order,student_documents(id,requirement_id,original_filename,mime_type,byte_size,version,qc_status,scan_status,uploaded_at,superseded_at,archived_at,purged_at)").eq("student_id", studentId).order("sort_order"),
     client.from("student_university_selections").select("id,stage,sort_order,universities(id,name,slug)").eq("student_id", studentId).order("sort_order")
