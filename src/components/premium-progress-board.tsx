@@ -5,6 +5,7 @@ import type { PremiumWorkspace } from "@/lib/premium-workspace";
 
 export function PremiumProgressBoard({workspace}:{workspace:PremiumWorkspace}){
   const completed=workspace.requirements.filter((item)=>item.status==="approved").length;
+  const pending=workspace.requirements.filter((item)=>item.status!=="approved").slice(0,3);
   return <div className="developer-progress is-active">
     <section className="pt-6 about-section half-section overlap-height position-relative overflow-hidden mobile-doc-section">
       <div className="container overlap-gap-section p-0">
@@ -26,12 +27,12 @@ export function PremiumProgressBoard({workspace}:{workspace:PremiumWorkspace}){
         <div className="card-box">
           <div className="list-of-graphs">
             <div className="d-flex-group"><p className="mb-0 text-black">#draftMeter</p></div>
-            {workspace.requirements.length?workspace.requirements.slice(0,6).map((item)=><div className="d-flex-group" key={item.id}><div className="graph-box"><Image src="/assets/img/meeter.png" alt="" width={54} height={54} unoptimized/></div><span className="mobile-roted">|</span><div className="graph-box-content">{item.document_type} <small>({item.status.replace("_"," ")})</small></div></div>):<div className="draft-default-note">We do three drafts for every document. Once the first draft is ready, you&apos;ll see it here.</div>}
+            {pending.length?pending.map((item)=><div className="d-flex-group" key={item.id}><div className="graph-box"><Image src="/assets/img/meeter.png" alt="" width={54} height={54} unoptimized/></div><span className="mobile-roted">|</span><div className="graph-box-content">{item.document_type} <small>({item.status.replace("_"," ")})</small></div></div>):<div className="draft-default-note">{workspace.requirements.length?"All configured document types are approved.":"Once your document requirements are configured, pending drafts will appear here."}</div>}
           </div>
           <div className="count-of-grpah"><span>+</span><p className="mb-0 fnt-family fs-100 lh-full">{completed}</p><span>completed</span></div>
         </div>
-        <section className="premium-review-notes">
-          <div><h2 className="fnt-family">#reviewQueue</h2>{workspace.reviews.map((item)=><article key={item.id}><strong>{item.title}</strong><span>{item.status.replace("_"," ")}</span><p>{item.details}</p></article>)}{!workspace.reviews.length&&<p>No review items yet.</p>}</div>
+        <section className="premium-review-notes" id="review-notes">
+          <div id="reviewQueue"><h2 className="fnt-family">#reviewQueue</h2>{workspace.reviews.map((item)=><article key={item.id}><label><input type="checkbox" checked={item.status==="completed"} disabled/> <strong>{item.title}</strong></label><span>{item.status.replace("_"," ")}</span><p>{item.details}</p></article>)}{!workspace.reviews.length&&<p>No review items yet.</p>}</div>
           <div><h2 className="fnt-family">#counselorNotes</h2>{workspace.notes.map((note)=><article key={note.id}><p>{note.body}</p><time>{new Date(note.created_at).toLocaleDateString("en-GB")}</time></article>)}{!workspace.notes.length&&<p>No student-visible notes yet.</p>}</div>
         </section>
       </div>

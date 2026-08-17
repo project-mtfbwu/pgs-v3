@@ -33,6 +33,46 @@ describe("authenticated legacy shell", () => {
     expect(finalizedPremium).toContain("Open Your <br> Premium <br> Dashboard");
   });
 
+  it("shows a signed-in staff identity on error pages without linking back into student routes", () => {
+    const html = '<a href="/Login" class="btn btn-login">Login</a><a href="#"><img src="/assets/img/profile-icon.png">Profile</a><a href="#"><img src="/assets/img/heart-icon.png">Saved List</a><a href="/Login"><img src="/assets/img/logout.png">Login</a>';
+    const rendered = applyAuthenticatedShell(html, {
+      name: "Ops Admin",
+      unreadCount: 0,
+      accountHref: "/ops",
+      profileHref: "/ops",
+      savedHref: "/ops/students"
+    });
+    expect(rendered).toContain('href="/ops" class="btn btn-login pgs-auth-account"');
+    expect(rendered).toContain('href="/ops/students"');
+    expect(rendered).toContain('href="/logout"');
+    expect(rendered).toContain("Logout");
+    expect(rendered).not.toContain('href="/student/dashboard"');
+  });
+
+  it("injects the live legacy notification dropdown contract", () => {
+    const html = '<button class="header-notification-wrapper"><span class="header-notification-badge"></span></button><div class="site-notification-menu">No notifications yet.</div>';
+    const rendered = applyAuthenticatedShell(html, {
+      name: "Premium Student",
+      unreadCount: 1,
+      premium: true,
+      notifications: [{
+        id: "11111111-1111-4111-8111-111111111111",
+        title: "Document reviewed",
+        body: "Your SOP is ready.",
+        section: "Documents",
+        destination_path: "/upload_your_doc#documents",
+        read_at: null,
+        created_at: "2026-08-17T00:00:00.000Z"
+      }]
+    });
+    expect(rendered).toContain('data-notification-open="11111111-1111-4111-8111-111111111111"');
+    expect(rendered).toContain('data-notification-destination="/upload_your_doc#documents"');
+    expect(rendered).toContain('data-notification-delete="11111111-1111-4111-8111-111111111111"');
+    expect(rendered).toContain('data-notification-clear="true"');
+    expect(rendered).toContain("Document reviewed");
+    expect(rendered).toContain("View all notifications");
+  });
+
   it.each([
     ["home",homeHtml],["Canada",countriesCanadaHtml],["events",purpleEventsHtml]
   ])("preserves the complete %s header and sidebar DOM in both authenticated states",(_page,html)=>{

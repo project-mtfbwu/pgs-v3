@@ -1,6 +1,6 @@
 import "server-only";
 import type { User } from "@supabase/supabase-js";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { resolveActorContext } from "@/lib/actor-context";
 import { safeNext } from "@/lib/auth";
 import { resolvePremiumValidity, type PremiumEntitlementRecord } from "@/lib/premium-entitlement";
@@ -15,6 +15,15 @@ import {
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type StudentExperienceKind = "anonymous" | "authenticated_standard" | "authenticated_premium";
+export type StudentHeaderNotification = {
+  id: string;
+  title: string;
+  body: string;
+  section: string | null;
+  destination_path: string | null;
+  read_at: string | null;
+  created_at: string;
+};
 export type StudentPreviewState = {
   mode: "student";
   actorName: string;
@@ -32,7 +41,7 @@ export type StudentExperienceSubject = {
   profile: StudentProfile;
   name: string;
 };
-export type AnonymousStudentExperience = { kind: "anonymous"; user: null; profile: null; name: null; unreadCount: 0; premiumStatus: "none"; preview?: undefined };
+export type AnonymousStudentExperience = { kind: "anonymous"; user: null; profile: null; name: null; unreadCount: 0; notifications: []; premiumStatus: "none"; preview?: undefined };
 export type AuthenticatedStudentExperience = {
   kind: "authenticated_standard" | "authenticated_premium";
   actor: StudentExperienceActor;
@@ -41,6 +50,7 @@ export type AuthenticatedStudentExperience = {
   profile: StudentProfile;
   name: string;
   unreadCount: number;
+  notifications: StudentHeaderNotification[];
   premiumStatus: "active" | "revoked" | "expired" | "none";
   premiumEntitlement: PremiumEntitlementRecord | null;
   preview?: StudentPreviewState;
@@ -64,6 +74,7 @@ export function composeAuthenticatedStudentExperience(input: {
   subjectProfile: StudentProfile;
   subjectEmail: string;
   unreadCount: number;
+  notifications?: StudentHeaderNotification[];
   validity: { status: AuthenticatedStudentExperience["premiumStatus"]; entitlement: PremiumEntitlementRecord | null };
   preview?: { actorName: string };
 }): AuthenticatedStudentExperience | null {
@@ -90,6 +101,7 @@ export function composeAuthenticatedStudentExperience(input: {
     profile: subject.profile,
     name: subject.name,
     unreadCount: input.unreadCount,
+    notifications: input.notifications ?? [],
     premiumStatus: input.validity.status,
     premiumEntitlement: input.validity.entitlement,
     preview: input.preview
@@ -150,6 +162,7 @@ async function previewStudentExperience(
     subjectProfile: loaded.profile as StudentProfile,
     subjectEmail: loaded.email,
     unreadCount: notifications.unreadCount,
+    notifications: notifications.items.slice(0, 8) as StudentHeaderNotification[],
     validity,
     preview: { actorName: preview.actorName }
   });
@@ -158,7 +171,7 @@ async function previewStudentExperience(
 /** Null means an authenticated actor exists, but no genuine student context does. */
 export async function resolveStudentExperience(): Promise<StudentExperienceResolution> {
   const actor = await resolveActorContext();
-  if (!actor.authenticated) return {kind:"anonymous",user:null,profile:null,name:null,unreadCount:0,premiumStatus:"none"};
+  if (!actor.authenticated) return {kind:"anonymous",user:null,profile:null,name:null,unreadCount:0,notifications:[],premiumStatus:"none"};
   if (actor.staff) {
     const preview = await getStaffPreviewContext(actor.staff);
     if (preview?.mode === "student") {
@@ -169,7 +182,8 @@ export async function resolveStudentExperience(): Promise<StudentExperienceResol
   const user = actor.user;
   const profile = actor.student.profile;
   const supabase = await createSupabaseServerClient();
-  const [notifications, validity] = await Promise.all([
+  const [notifications, unread, validity] = await Promise.all([
+    supabase.from("notifications").select("id,title,body,section,destination_path,read_at,created_at",{count:"exact"}).order("created_at",{ascending:false}).limit(8),
     supabase.from("notifications").select("id",{count:"exact",head:true}).is("read_at",null),
     entitlementsForStudent(user.id)
   ]);
@@ -178,14 +192,15 @@ export async function resolveStudentExperience(): Promise<StudentExperienceResol
     actorName: displayName(profile, user),
     subjectProfile: profile,
     subjectEmail: user.email ?? "",
-    unreadCount: notifications.count ?? 0,
+    unreadCount: unread.count ?? 0,
+    notifications: (notifications.data??[]) as StudentHeaderNotification[],
     validity
   });
 }
 
 export async function requireStudentExperience(nextPath:string):Promise<AuthenticatedStudentExperience>{
   const state=await resolveStudentExperience();
-  if(!state)notFound();
+  if(!state)redirect("/student/dashboard");
   if(state.kind==="anonymous")redirect(`/login?redirect=${encodeURIComponent(safeNext(nextPath,"/student/dashboard"))}`);
   return state;
 }

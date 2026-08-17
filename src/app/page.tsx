@@ -16,6 +16,7 @@ export default async function HomePage() {
     profile: null,
     name: null,
     unreadCount: 0,
+    notifications: [],
     premiumStatus: "none"
   } satisfies AnonymousStudentExperience);
   const html = applyHomeContent(homeSourceHtml(state.kind), content);

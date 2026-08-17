@@ -21,6 +21,7 @@ import {
   canStartStaffPreview,
   getStaffPreviewContext
 } from "@/lib/staff-preview-server";
+import { staffPreviewConfigured } from "@/lib/staff-preview";
 
 export default async function StudentsPage({
   searchParams
@@ -79,6 +80,7 @@ export default async function StudentsPage({
         <OperationsStudentRegistry
           canManageAssignments={canAssignStudents(context, preview)}
           canPreviewStudent={canStartStaffPreview(context, preview)}
+          previewConfigured={staffPreviewConfigured()}
           handlers={mentors}
           mentorScoped={mentorScoped}
           query={query}

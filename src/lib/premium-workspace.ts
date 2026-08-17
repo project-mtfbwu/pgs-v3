@@ -16,6 +16,23 @@ export { StudentAccessError as WorkspaceAccessError };
 export type BoardColumn = { id: string; key: string; title: string; sort_order: number };
 export type StudentTask = { id: string; column_id: string; title: string; details: string; sort_order: number; due_at: string | null };
 export type DocumentRequirement = { id: string; document_type: string; requirement_kind: string; status: string; instructions: string; sort_order: number; student_documents?: StudentDocument[] };
+export type DashboardChecklistItem = { text: string; checked: boolean };
+export type DashboardTrackerItem = { count: number; is_red?: boolean };
+export type PremiumWorkspaceProfile = {
+  pathway_label: string;
+  intake_label: string;
+  universities_applied: number;
+  offers_received: number;
+  visa_status: string;
+  tuition_receipt_uploaded: boolean | null;
+  onboarding_percentage: number | null;
+  onboarding_checklist: DashboardChecklistItem[];
+  feedback_session_title: string;
+  feedback_session_items: DashboardChecklistItem[];
+  documents_tracker: Record<string, DashboardTrackerItem>;
+  currently_working_on: string[];
+  future_tasks: string[];
+};
 export type StudentDocument = {
   id: string;
   requirement_id: string;
@@ -34,7 +51,7 @@ export type StudentDocument = {
 export type PremiumWorkspace = {
   studentId: string;
   profile: { full_name: string; avatar_path: string | null; study_level: string | null } | null;
-  premiumProfile: { pathway_label: string; intake_label: string; universities_applied: number; offers_received: number; visa_status: string } | null;
+  premiumProfile: PremiumWorkspaceProfile | null;
   mentor: { display_name: string; user_id: string } | null;
   alerts: Array<{ id: string; alert_text: string; severity: string }>;
   columns: BoardColumn[];
@@ -44,6 +61,10 @@ export type PremiumWorkspace = {
   notes: Array<{ id: string; body: string; visibility: string; created_at: string }>;
   requirements: DocumentRequirement[];
   universities: Array<{ id: string; stage: string; sort_order: number; universities: { id: number; name: string; slug: string } | null }>;
+};
+export type PremiumDashboardCatalog = {
+  events: Array<{ id: number; title: string; slug: string; summary: string; starts_at: string | null; booking_url: string | null }>;
+  courses: Array<{ id: number; title: string; slug: string; short_description: string }>;
 };
 
 export async function getPremiumStatus(studentId: string): Promise<PremiumStatus> {
@@ -60,7 +81,7 @@ export async function loadPremiumWorkspaceWithClient(
 ): Promise<PremiumWorkspace> {
   const [profile, premiumProfile, assignment, alerts, columns, tasks, comments, reviews, notes, requirements, universities] = await Promise.all([
     client.from("profiles").select("full_name,avatar_path,study_level").eq("id", studentId).maybeSingle(),
-    client.from("premium_workspace_profiles").select("pathway_label,intake_label,universities_applied,offers_received,visa_status").eq("student_id", studentId).maybeSingle(),
+    client.from("premium_workspace_profiles").select("pathway_label,intake_label,universities_applied,offers_received,visa_status,tuition_receipt_uploaded,onboarding_percentage,onboarding_checklist,feedback_session_title,feedback_session_items,documents_tracker,currently_working_on,future_tasks").eq("student_id", studentId).maybeSingle(),
     client.from("mentor_assignments").select("mentor_id,staff_profiles!mentor_assignments_mentor_id_fkey(user_id,display_name)").eq("student_id", studentId).eq("status", "active").maybeSingle(),
     client.from("student_alerts").select("id,alert_text,severity").eq("student_id", studentId).eq("active", true).order("sort_order").limit(3),
     client.from("student_board_columns").select("id,key,title,sort_order").eq("student_id", studentId).order("sort_order"),
@@ -76,7 +97,7 @@ export async function loadPremiumWorkspaceWithClient(
   return {
     studentId,
     profile: profile.data,
-    premiumProfile: premiumProfile.data,
+    premiumProfile: premiumProfile.data as PremiumWorkspaceProfile | null,
     mentor,
     alerts: alerts.data ?? [], columns: columns.data ?? [], tasks: tasks.data ?? [], comments: comments.data ?? [],
     reviews: reviews.data ?? [], notes: notes.data ?? [], requirements: (requirements.data ?? []) as DocumentRequirement[],
@@ -93,6 +114,21 @@ export async function loadPremiumWorkspace(studentId: string): Promise<PremiumWo
     ? createSupabaseAdminClient()
     : await createSupabaseServerClient();
   return loadPremiumWorkspaceWithClient(client, studentId);
+}
+
+export async function loadPremiumDashboardCatalog(): Promise<PremiumDashboardCatalog> {
+  const client = await createSupabaseServerClient();
+  const now = new Date().toISOString();
+  const [upcoming, courses] = await Promise.all([
+    client.from("events").select("id,title,slug,summary,starts_at,booking_url").eq("published", true).gte("starts_at", now).order("starts_at").limit(12),
+    client.from("courses").select("id,title,slug,short_description").eq("published", true).eq("featured", true).order("updated_at", { ascending: false }).limit(5)
+  ]);
+  let events = upcoming.data ?? [];
+  if (!events.length) {
+    const fallback = await client.from("events").select("id,title,slug,summary,starts_at,booking_url").eq("published", true).order("starts_at", { ascending: false }).limit(12);
+    events = fallback.data ?? [];
+  }
+  return { events, courses: courses.data ?? [] } as PremiumDashboardCatalog;
 }
 
 export function cleanWorkspaceText(value: unknown, max: number): string {

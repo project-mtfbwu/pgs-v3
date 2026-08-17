@@ -5,9 +5,10 @@ import Link from "next/link";
 import type { MouseEvent, ReactNode } from "react";
 import { useState } from "react";
 import { StaffPreviewBanner } from "@/components/staff-preview-banner";
+import { StudentNotificationDropdown } from "@/components/student-notification-dropdown";
 import { useStudentSidebarState } from "@/components/student-sidebar-state-provider";
 import { signOutAndNavigate } from "@/lib/logout-navigation";
-import type { StudentExperienceKind, StudentPreviewState } from "@/lib/student-experience";
+import type { StudentExperienceKind, StudentHeaderNotification, StudentPreviewState } from "@/lib/student-experience";
 import {
   premiumShellDestination,
   studentSidebarLinks,
@@ -30,6 +31,7 @@ type Props = {
   avatarUrl: string;
   stateKind: StudentExperienceKind;
   unreadCount?: number;
+  notifications?: StudentHeaderNotification[];
   active?: StudentShellNavKey;
   children: ReactNode;
   contentClassName?: string;
@@ -42,6 +44,7 @@ export function DeveloperStudentShell({
   avatarUrl,
   stateKind,
   unreadCount = 0,
+  notifications = [],
   active,
   children,
   contentClassName = "",
@@ -88,16 +91,13 @@ export function DeveloperStudentShell({
               </Link>
               <ul className="header-tab-top">
                 <li><Link className={active === "feed" ? "active-tab" : ""} href="/student/dashboard">#feed</Link></li>
-                <li><Link className={active === "premium" ? "active-tab" : ""} href={premiumHref}>#purplePremium</Link></li>
+                <li><details className="developer-header-dropdown"><summary className={active === "premium" ? "active-tab" : ""}>#purplePremium</summary><div><Link href={premiumHref}>Premium dashboard</Link><Link href="/home/purplepremium_overview">Overview</Link><Link href="/purplenonmedical">STEM &amp; MBA pathways</Link><Link href="/purpleusme">USMLE</Link><Link href="/purpleplab">PLAB</Link><Link href="/purpleamc">AMC</Link></div></details></li>
                 <li><Link className={active === "cv" ? "active-tab" : ""} href="/cvreadyprogram">#cvReadyPrograms</Link></li>
               </ul>
               <div className="developer-header-links">
                 <Link href="/usmlerotation">#USMLERotation</Link>
-                <Link href="/explorecountries">#exploreCountries</Link>
-                <Link href="/notifications" className="header-notification-wrapper" aria-label={`Notifications, ${unreadCount} unread`}>
-                  Notifications
-                  <span className={`header-notification-badge${unreadCount ? "" : " is-empty"}`}>{unreadCount}</span>
-                </Link>
+                <details className="developer-header-dropdown"><summary>#exploreCountries</summary><div><Link href="/explorecountries">Explore all</Link><Link href="/countriesusa">USA</Link><Link href="/countriesuk">UK</Link><Link href="/countriescanada">Canada</Link><Link href="/countriesaus">Australia</Link><Link href="/countrieseurope">Europe</Link></div></details>
+                <StudentNotificationDropdown initialItems={notifications} unreadCount={unreadCount} readOnly={Boolean(preview)} />
                 {authenticated
                   ? <Link className="btn btn-login pgs-auth-account" data-student-state={stateKind} href="/student/dashboard">{name}</Link>
                   : <Link className="btn btn-login" href="/login">Login</Link>}
@@ -111,7 +111,7 @@ export function DeveloperStudentShell({
             <Image src="/assets/img/logo.png" alt="#PGS" width={132} height={31} unoptimized />
           </Link>
           <div className="developer-mobile-actions">
-            <Link href="/notifications" aria-label={`${unreadCount} unread notifications`}>Notifications</Link>
+            <StudentNotificationDropdown initialItems={notifications} unreadCount={unreadCount} readOnly={Boolean(preview)} mobile />
             {authenticated ? <Link href="/student/dashboard">{name}</Link> : <Link href="/login">Login</Link>}
             <button className="btn-toggle-mobile" type="button" aria-label="Open mobile navigation" aria-expanded={drawerOpen} onClick={() => setDrawerOpen(true)}>
               <Image src="/assets/img/toggle-lines.png" alt="" width={20} height={20} unoptimized />
@@ -169,6 +169,11 @@ export function DeveloperStudentShell({
             {authenticated && email && <small>{email}</small>}
             <Link href="/student/dashboard">#feed</Link>
             <Link href={premiumHref}>#purplePremium</Link>
+            <Link href="/home/purplepremium_overview">Premium overview</Link>
+            <Link href="/purplenonmedical">STEM &amp; MBA pathways</Link>
+            <Link href="/purpleusme">USMLE pathway</Link>
+            <Link href="/purpleplab">PLAB pathway</Link>
+            <Link href="/purpleamc">AMC pathway</Link>
             <Link href="/cvreadyprogram">#cvReadyPrograms</Link>
             <Link href="/usmlerotation">#USMLERotation</Link>
             <Link href="/explorecountries">#exploreCountries</Link>

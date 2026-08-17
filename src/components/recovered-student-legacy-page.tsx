@@ -84,7 +84,9 @@ export function RecoveredStudentLegacyPage({
     rendered = applyAuthenticatedShell(rendered, {
       name: state.name,
       unreadCount: state.unreadCount,
-      premium: state.kind === "authenticated_premium"
+      premium: state.kind === "authenticated_premium",
+      notifications: state.notifications,
+      notificationReadOnly: Boolean(state.preview)
     });
     rendered = applyStudentIdentity(rendered, state, avatarUrl);
   }

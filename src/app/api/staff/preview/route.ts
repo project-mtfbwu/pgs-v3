@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { recordDeniedAuditEvent, recordStaffLifecycleAuditEvent } from "@/lib/audit";
 import { jsonError, readJsonObject, validUuid } from "@/lib/http";
+import { logServerError } from "@/lib/server-security";
 import { getStaffContext, StaffAuthorizationError } from "@/lib/staff-auth";
-import { isAssignableHandlerRole, isStaffPreviewMode } from "@/lib/staff-preview";
+import { isAssignableHandlerRole, isStaffPreviewMode, staffPreviewConfigured } from "@/lib/staff-preview";
 import {
   canUseStaffPreview,
   clearStaffPreviewCookie,
@@ -33,6 +34,12 @@ export async function POST(request: Request) {
         metadata: { reason_code: "permission_denied", route: "/api/staff/preview" }
       });
       return jsonError("You do not have permission to use View as.", 403);
+    }
+    if (!staffPreviewConfigured()) {
+      logServerError("staff_preview_unconfigured", new Error("AUTH_FLOW_SECRET is missing or shorter than 32 characters."), {
+        actor_id: context.user.id
+      });
+      return jsonError("View as Student is not configured on this deployment.", 503);
     }
 
     const mode = typeof input.mode === "string" ? input.mode : "";
@@ -77,6 +84,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (error instanceof StaffAuthorizationError) return jsonError(error.message, error.status);
+    logServerError("staff_preview_start_failed", error);
     return jsonError("Unable to start preview.", 500);
   }
 }

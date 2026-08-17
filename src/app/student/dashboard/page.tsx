@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
+import { NoStudentContextPage } from "@/components/no-student-context-page";
 import { RecoveredStudentLegacyPage } from "@/components/recovered-student-legacy-page";
 import { studentDashboardHtml } from "@/legacy/generated/student-dashboard";
 import { getOwnAvatarUrl } from "@/lib/student-data";
@@ -10,7 +11,7 @@ export const dynamic="force-dynamic";
 
 export default async function StudentDashboardPage(){
   const state=await resolveStudentExperience();
-  if(!state)notFound();
+  if(!state)return <NoStudentContextPage/>;
   if(state.kind==="authenticated_premium")redirect("/dashboard");
   const avatarUrl=state.kind==="anonymous"
     ? "/assets/img/default-avatar.png"

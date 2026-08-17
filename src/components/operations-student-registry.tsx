@@ -68,13 +68,15 @@ function TableCell({
   column,
   handlers,
   canManage,
-  canPreviewStudent
+  canPreviewStudent,
+  previewConfigured
 }: {
   row: StudentRegistryRow;
   column: StudentRegistryColumnKey;
   handlers: RegistryMentorOption[];
   canManage: boolean;
   canPreviewStudent: boolean;
+  previewConfigured: boolean;
 }) {
   if (column === "student") {
     return (
@@ -98,6 +100,7 @@ function TableCell({
       <OperationsRegistryAssignmentActions
         canManage={canManage}
         canPreviewStudent={canPreviewStudent}
+        previewConfigured={previewConfigured}
         handlers={handlers}
         row={{
           id: row.id,
@@ -129,7 +132,8 @@ export function OperationsStudentRegistry({
   mentorScoped,
   handlers = [],
   canManageAssignments = false,
-  canPreviewStudent = false
+  canPreviewStudent = false,
+  previewConfigured = true
 }: {
   result: StudentRegistryResult;
   query: NormalizedRegistryQuery;
@@ -140,6 +144,7 @@ export function OperationsStudentRegistry({
   handlers?: RegistryMentorOption[];
   canManageAssignments?: boolean;
   canPreviewStudent?: boolean;
+  previewConfigured?: boolean;
 }) {
   const showActions = canManageAssignments || canPreviewStudent;
   const columns = registryVisibleColumns({ showMentor, showOpen, showJoined, showActions });
@@ -159,6 +164,11 @@ export function OperationsStudentRegistry({
       <p className="ops-registry-status" aria-live="polite">
         {emptyCopy ?? resultSummary(result)}
       </p>
+      {canPreviewStudent && !previewConfigured ? (
+        <p id="student-preview-unavailable" className="ops-team-warning" role="status">
+          View as Student is not configured on this deployment.
+        </p>
+      ) : null}
       <div className="ops-registry-desktop">
         <OperationsTableFrame minimumWidth={920} ariaLabel="Scrollable student registry">
           <caption className="ops:sr-only">Authorized student registry</caption>
@@ -180,6 +190,7 @@ export function OperationsStudentRegistry({
                       handlers={handlers}
                       canManage={canManageAssignments}
                       canPreviewStudent={canPreviewStudent}
+                      previewConfigured={previewConfigured}
                     />
                   </td>
                 ))}
@@ -216,6 +227,7 @@ export function OperationsStudentRegistry({
                                 handlers={handlers}
                                 canManage={canManageAssignments}
                                 canPreviewStudent={canPreviewStudent}
+                                previewConfigured={previewConfigured}
                               />
                             )
                             : cellValue(row, column)}
@@ -232,6 +244,7 @@ export function OperationsStudentRegistry({
                     <OperationsRegistryAssignmentActions
                       canManage={canManageAssignments}
                       canPreviewStudent={canPreviewStudent}
+                      previewConfigured={previewConfigured}
                       handlers={handlers}
                       row={{
                         id: row.id,

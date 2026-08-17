@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useStudentSidebarState } from "@/components/student-sidebar-state-provider";
 import { signOutAndNavigate } from "@/lib/logout-navigation";
@@ -196,17 +196,43 @@ async function saveCatalogItem(target: HTMLElement) {
   }
 }
 
+async function manageLegacyNotification(target: HTMLElement) {
+  const open = target.closest<HTMLElement>("[data-notification-open]");
+  const remove = target.closest<HTMLElement>("[data-notification-delete]");
+  const clear = target.closest<HTMLElement>("[data-notification-clear]");
+  if (open) {
+    const destination = open.dataset.notificationDestination;
+    if (open.dataset.notificationReadonly !== "true") {
+      const response = await fetch(`/api/student/notifications/${open.dataset.notificationOpen}`, { method: "PATCH" });
+      if (!response.ok) return;
+      open.closest("article")?.classList.replace("is-unread", "is-read");
+    }
+    if (destination) window.location.assign(destination);
+    return;
+  }
+  if (remove) {
+    const response = await fetch(`/api/student/notifications/${remove.dataset.notificationDelete}`, { method: "DELETE" });
+    if (response.ok) remove.closest("article")?.remove();
+    return;
+  }
+  if (clear) {
+    const response = await fetch("/api/student/notifications", { method: "DELETE" });
+    if (response.ok) clear.closest(".site-notification-menu")?.querySelectorAll(".site-notification-items article").forEach((item) => item.remove());
+  }
+}
+
 export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
   const router = useRouter();
   const { open: sidebarOpen } = useStudentSidebarState();
+  const rootRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const root = document.querySelector<HTMLElement>(`[data-legacy-page="${page}"]`);
+    const root = rootRef.current;
     if (root) setSidebarPresentation(root, sidebarOpen);
   }, [page, sidebarOpen]);
 
   useEffect(() => {
-    const root = document.querySelector<HTMLElement>(`[data-legacy-page="${page}"]`);
+    const root = rootRef.current;
     if (!root) return;
 
     const abort = new AbortController();
@@ -232,6 +258,13 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
       const target = event.target as HTMLElement;
       const link = target.closest<HTMLAnchorElement>("a");
       const button = target.closest<HTMLButtonElement>("button");
+
+      if (target.closest("[data-notification-open], [data-notification-delete], [data-notification-clear]")) {
+        event.preventDefault();
+        event.stopPropagation();
+        void manageLegacyNotification(target);
+        return;
+      }
 
       if ((link?.href.includes("Googlelogins/googleLogin") || button?.classList.contains("btn-google")) && page === "login") {
         event.preventDefault();
@@ -407,5 +440,5 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
     };
   }, [page, router]);
 
-  return <main data-legacy-page={page} data-student-state={studentState} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <main ref={rootRef} data-legacy-page={page} data-student-state={studentState} dangerouslySetInnerHTML={{ __html: html }} />;
 }

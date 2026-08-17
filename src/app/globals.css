@@ -8,6 +8,92 @@ body {
   overflow-x: hidden;
 }
 
+.no-student-context {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7f7fa;
+  color: #1d1923;
+  font: 400 16px/1.5 Arial, sans-serif;
+}
+.no-student-context-panel {
+  box-sizing: border-box;
+  width: min(100%, 576px);
+  padding: clamp(24px, 5vw, 32px);
+  border: 1px solid #d8d4dc;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(29, 25, 35, .06);
+}
+.no-student-context-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #efe9ff;
+  color: #4c267d;
+}
+.no-student-context-icon svg { width: 24px; height: 24px; }
+.no-student-context-eyebrow {
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #5f5868;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.no-student-context-eyebrow svg { width: 16px; height: 16px; }
+.no-student-context h1 {
+  margin: 0;
+  color: #1d1923;
+  font: 600 clamp(24px, 5vw, 32px)/1.2 Arial, sans-serif;
+  letter-spacing: -.02em;
+}
+.no-student-context-copy {
+  margin: 12px 0 0;
+  color: #5f5868;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.no-student-context-copy strong { color: #1d1923; }
+.no-student-context-actions {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.no-student-context-actions a {
+  min-height: 44px;
+  padding: 10px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #150035;
+  border-radius: 8px;
+  color: #150035;
+  font-weight: 700;
+  text-decoration: none;
+}
+.no-student-context-actions a.no-student-context-primary { background: #150035; color: #fff; }
+.no-student-context-actions svg { width: 16px; height: 16px; }
+.no-student-context-actions a:focus-visible { outline: 3px solid #7c3aed; outline-offset: 3px; }
+@media (max-width: 480px) {
+  .no-student-context { padding: 16px; align-items: flex-start; }
+  .no-student-context-panel { margin-top: 24px; }
+  .no-student-context-actions { flex-direction: column; }
+  .no-student-context-actions a { width: 100%; box-sizing: border-box; }
+}
+
 :root {
   --pgs-layer-student-sidebar: 1001;
   --pgs-layer-student-overlay: 1010;
@@ -278,4 +364,62 @@ body {
   .developer-saved-layout > h1 { font-size:46px; }
   .developer-saved-grid,.developer-progress-tips { grid-template-columns:1fr; }
   .developer-progress-guidance { align-items:flex-start; flex-direction:column; }
+}
+
+/* Recovered Premium dashboard and live legacy notification behavior. */
+.student-notification-dropdown { position:relative; }
+.developer-header-dropdown { position:relative; }
+.developer-header-dropdown summary { cursor:pointer; list-style:none; }
+.developer-header-dropdown summary::-webkit-details-marker { display:none; }
+.developer-header-dropdown > div { position:absolute; z-index:1050; top:calc(100% + 10px); left:0; min-width:210px; padding:10px; border:1px solid #111; border-radius:10px; background:#fff; box-shadow:0 10px 24px rgba(0,0,0,.18); }
+.developer-header-links .developer-header-dropdown > div { right:0; left:auto; }
+.developer-header-dropdown > div a { display:block; padding:7px 9px; color:#111; white-space:nowrap; }
+.developer-header-dropdown summary:focus-visible,.developer-header-dropdown a:focus-visible { outline:3px solid #135fbd; outline-offset:3px; }
+.student-notification-dropdown > .header-notification-wrapper { display:inline-flex; align-items:center; gap:7px; border:0; background:transparent; color:#000; font:inherit; }
+.student-notification-dropdown .site-notification-menu { position:absolute; z-index:1100; top:calc(100% + 12px); right:0; width:min(390px,calc(100vw - 28px)); max-height:520px; padding:15px; overflow:auto; border:1px solid #111; border-radius:12px; background:#fff; box-shadow:0 12px 30px rgba(0,0,0,.2); }
+.student-notification-dropdown.is-mobile .site-notification-menu { position:fixed; top:70px; right:14px; }
+.site-notification-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.site-notification-heading button,.site-notification-menu > button { border:0; background:transparent; color:#472080; text-decoration:underline; }
+.site-notification-menu article { position:relative; padding:10px 32px 10px 0; border-top:1px solid #d4d4d4; }
+.site-notification-menu article > button:first-child { width:100%; border:0; background:transparent; color:#111; text-align:left; }
+.site-notification-menu article > button:first-child span,.site-notification-menu article > button:first-child time { display:block; color:#525252; font-size:.78rem; }
+.site-notification-menu article > button:first-child strong { display:block; }
+.site-notification-menu article > button:first-child p { margin:3px 0; color:#222; }
+.site-notification-menu article.is-unread { border-left:4px solid #6d35b4; padding-left:9px; }
+.site-notification-delete { position:absolute; top:9px; right:0; width:30px; height:30px; border:0; background:transparent; color:#8a1724; font-size:1.4rem; }
+.student-notification-dropdown button:focus-visible,.site-notification-menu a:focus-visible { outline:3px solid #135fbd; outline-offset:3px; }
+
+.developer-premium-dashboard .premium-quick-overview { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.developer-premium-dashboard .card-fill-box { display:flex; min-height:145px; flex-direction:column; justify-content:space-between; }
+.developer-premium-dashboard .card-fill-box strong { display:block; margin-top:15px; font-size:1.35rem; }
+.dashboard-notes-actions { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:45px 0; }
+.dashboard-notes-actions > article { padding:24px; border:1px solid #222; border-radius:14px; }
+.dashboard-aspirant-card { background:#d8c4ff; }
+.dashboard-aspirant-card .btn-progress { margin:14px 8px 0 0; }
+.canonical-where-you-stand { margin:60px auto 0; }
+.canonical-prep-grid article ul { margin:12px 0 0; padding-left:18px; }
+.canonical-prep-grid dl > div { display:flex; justify-content:space-between; gap:15px; border-bottom:1px solid #bbb; }
+.premium-finalized-universities { margin:0 auto 30px; padding:24px; border-radius:18px; background:#050505; color:#fff; }
+.premium-finalized-universities a { color:#fff; text-decoration:underline; }
+.dashboard-work-lists { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:30px auto; }
+.dashboard-work-lists article { padding:24px; border:1px solid #222; border-radius:14px; }
+.dashboard-upcoming-events { margin:55px auto; }
+.dashboard-events-board { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+.dashboard-event-card { padding:18px; border:1px solid #222; border-radius:12px; background:#fff; }
+.dashboard-event-card time { color:#4f286f; font-weight:700; }
+.dashboard-lower-callout { display:flex; align-items:center; justify-content:center; gap:24px; margin:50px auto 90px; padding:24px; border-radius:16px; background:#ffde7f; }
+.premium-comments.comment-box-grid { margin:35px auto; }
+.premium-comments .comment-item { margin:12px 0; padding:16px; border:1px solid #aaa; border-radius:10px; }
+.premium-comments .comment-item.is-reply { margin-left:42px; border-left:4px solid #6d35b4; }
+.premium-comments .comment-footer { display:flex; align-items:center; justify-content:space-between; gap:15px; }
+.premium-comments .comment-input label { display:block; color:#111; font-weight:600; }
+.premium-comments .comment-input textarea { display:block; width:100%; min-height:110px; margin:8px 0; }
+
+@media (max-width:900px) {
+  .developer-premium-dashboard .premium-quick-overview,.dashboard-events-board { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:767px) {
+  .developer-premium-dashboard .premium-quick-overview,.dashboard-notes-actions,.dashboard-work-lists,.dashboard-events-board { grid-template-columns:1fr; }
+  .dashboard-lower-callout { align-items:flex-start; flex-direction:column; }
+  .premium-comments .comment-item.is-reply { margin-left:18px; }
 }

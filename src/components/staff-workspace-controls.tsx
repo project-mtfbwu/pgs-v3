@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { BoardColumn, DocumentRequirement, PremiumWorkspace } from "@/lib/premium-workspace";
+import type { BoardColumn, DocumentRequirement, PremiumWorkspace, PremiumWorkspaceProfile } from "@/lib/premium-workspace";
 
 type Props = {
   studentId: string;
@@ -13,9 +13,32 @@ type Props = {
   reviews: PremiumWorkspace["reviews"];
   notes: PremiumWorkspace["notes"];
   selections: PremiumWorkspace["universities"];
+  premiumProfile: PremiumWorkspaceProfile | null;
 };
 
-export function StaffWorkspaceControls({ studentId, columns, requirements, universityOptions, comments, alerts, reviews, notes, selections }: Props) {
+function lines(value: FormDataEntryValue | null): string[] {
+  return String(value ?? "").split("\n").map((item) => item.trim()).filter(Boolean);
+}
+function checklist(value: FormDataEntryValue | null) {
+  return lines(value).map((item) => {
+    const [text, state] = item.split("|").map((part) => part.trim());
+    return { text, checked: state?.toLowerCase() === "done" };
+  });
+}
+function tracker(value: FormDataEntryValue | null) {
+  return Object.fromEntries(lines(value).map((item) => {
+    const [name, count = "0", color = ""] = item.split("|").map((part) => part.trim());
+    return [name, { count: Number(count), is_red: color.toLowerCase() === "red" }];
+  }));
+}
+function checklistText(items: PremiumWorkspaceProfile["onboarding_checklist"] | undefined) {
+  return (items ?? []).map((item) => `${item.text}|${item.checked ? "done" : "pending"}`).join("\n");
+}
+function trackerText(items: PremiumWorkspaceProfile["documents_tracker"] | undefined) {
+  return Object.entries(items ?? {}).map(([name, item]) => `${name}|${item.count}${item.is_red ? "|red" : ""}`).join("\n");
+}
+
+export function StaffWorkspaceControls({ studentId, columns, requirements, universityOptions, comments, alerts, reviews, notes, selections, premiumProfile }: Props) {
   const [message, setMessage] = useState("");
   async function create(resource: string, values: Record<string, unknown>) {
     setMessage("Saving…");
@@ -33,7 +56,31 @@ export function StaffWorkspaceControls({ studentId, columns, requirements, unive
     const result = await response.json(); if (!response.ok) return setMessage(result.message ?? "Unable to delete."); window.location.reload();
   }
   return <section className="staff-workspace-controls"><h2>Workspace actions</h2><p>Changes below use the same student-owned rows shown on the PurpleGuide student workspace.</p><span role="status">{message}</span>
-    <details><summary>Update dashboard overview</summary><form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void update("profile", { pathway_label: data.get("pathway_label"), intake_label: data.get("intake_label"), universities_applied: Number(data.get("universities_applied")), offers_received: Number(data.get("offers_received")), visa_status: data.get("visa_status") }); }}><input name="pathway_label" placeholder="Pathway" maxLength={120} /><input name="intake_label" placeholder="Intake" maxLength={120} /><input name="universities_applied" type="number" min="0" placeholder="Universities applied" /><input name="offers_received" type="number" min="0" placeholder="Offers" /><input name="visa_status" placeholder="Visa status" maxLength={120} /><button>Update overview</button></form></details>
+    <details><summary>Update Premium dashboard</summary><form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void update("profile", {
+      pathway_label: data.get("pathway_label"), intake_label: data.get("intake_label"),
+      universities_applied: Number(data.get("universities_applied")), offers_received: Number(data.get("offers_received")),
+      visa_status: data.get("visa_status"), tuition_receipt_uploaded: data.get("tuition_receipt_uploaded") === "" ? null : data.get("tuition_receipt_uploaded") === "true",
+      onboarding_percentage: data.get("onboarding_percentage") === "" ? null : Number(data.get("onboarding_percentage")),
+      onboarding_checklist: checklist(data.get("onboarding_checklist")),
+      feedback_session_title: data.get("feedback_session_title"), feedback_session_items: checklist(data.get("feedback_session_items")),
+      documents_tracker: tracker(data.get("documents_tracker")), currently_working_on: lines(data.get("currently_working_on")),
+      future_tasks: lines(data.get("future_tasks"))
+    }); }}>
+      <label>Pathway<input name="pathway_label" defaultValue={premiumProfile?.pathway_label ?? ""} maxLength={120} /></label>
+      <label>Intake<input name="intake_label" defaultValue={premiumProfile?.intake_label ?? ""} maxLength={120} /></label>
+      <label>Universities applied<input name="universities_applied" type="number" min="0" defaultValue={premiumProfile?.universities_applied ?? 0} /></label>
+      <label>Offers received<input name="offers_received" type="number" min="0" defaultValue={premiumProfile?.offers_received ?? 0} /></label>
+      <label>Tuition receipt uploaded<select name="tuition_receipt_uploaded" defaultValue={premiumProfile?.tuition_receipt_uploaded == null ? "" : String(premiumProfile.tuition_receipt_uploaded)}><option value="">Not set</option><option value="true">Yes</option><option value="false">No</option></select></label>
+      <label>Visa application<select name="visa_status" defaultValue={premiumProfile?.visa_status || "not_applied"}><option value="not_applied">Not applied</option><option value="applied">Applied</option></select></label>
+      <label>Onboarding percentage<input name="onboarding_percentage" type="number" min="0" max="100" defaultValue={premiumProfile?.onboarding_percentage ?? ""} /></label>
+      <label>Onboarding checklist <small>One per line: label|done or label|pending</small><textarea name="onboarding_checklist" defaultValue={checklistText(premiumProfile?.onboarding_checklist)} maxLength={8000} /></label>
+      <label>Feedback session title<input name="feedback_session_title" defaultValue={premiumProfile?.feedback_session_title ?? ""} maxLength={180} /></label>
+      <label>Feedback items <small>One per line: label|done or label|pending</small><textarea name="feedback_session_items" defaultValue={checklistText(premiumProfile?.feedback_session_items)} maxLength={8000} /></label>
+      <label>Document tracker <small>One per line: label|count or label|count|red</small><textarea name="documents_tracker" defaultValue={trackerText(premiumProfile?.documents_tracker)} maxLength={8000} /></label>
+      <label>Currently working on <small>One item per line</small><textarea name="currently_working_on" defaultValue={(premiumProfile?.currently_working_on ?? []).join("\n")} maxLength={8000} /></label>
+      <label>Future tasks <small>One item per line</small><textarea name="future_tasks" defaultValue={(premiumProfile?.future_tasks ?? []).join("\n")} maxLength={8000} /></label>
+      <button>Update dashboard</button>
+    </form></details>
     <details><summary>Add task</summary><form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void create("tasks", { title: data.get("title"), details: data.get("details"), column_id: data.get("column_id"), sort_order: Number(data.get("sort_order")) }); }}><input name="title" placeholder="Task title" required maxLength={255} /><textarea name="details" placeholder="Details" maxLength={6000} /><select name="column_id" required>{columns.map((column) => <option key={column.id} value={column.id}>{column.title}</option>)}</select><input name="sort_order" type="number" min="0" defaultValue="0" /><button>Add task</button></form></details>
     <details><summary>Add student-visible comment or reply</summary><form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void create("comments", { body: data.get("body"), visibility: "student_visible", parent_id: data.get("parent_id") || null }); }}><textarea name="body" required maxLength={4000} /><select name="parent_id"><option value="">New comment</option>{comments.map((comment) => <option key={comment.id} value={comment.id}>Reply to: {comment.body.slice(0, 70)}</option>)}</select><button>Post comment</button></form></details>
     {comments.length > 0 && <details><summary>Edit or delete a comment</summary><form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void update("comments", { id: data.get("id"), body: data.get("body") }); }}><select name="id" required>{comments.map((comment) => <option key={comment.id} value={comment.id}>{comment.body.slice(0, 80)}</option>)}</select><textarea name="body" required maxLength={4000} placeholder="Replacement comment" /><button>Update comment</button><button type="button" className="is-delete" onClick={(event) => { const form=event.currentTarget.form; const value=new FormData(form??undefined).get("id"); if(typeof value==="string")void remove("comments",value); }}>Delete comment</button></form></details>}

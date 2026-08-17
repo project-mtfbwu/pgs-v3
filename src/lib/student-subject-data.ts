@@ -12,8 +12,8 @@ export async function loadStudentSavedItems(studentId: string) {
   }
   const supabase = await createSupabaseServerClient();
   const [programs, courses] = await Promise.all([
-    supabase.from("saved_programs").select("program_id,programs(id,title,slug,short_description)").order("saved_at", { ascending: false }),
-    supabase.from("saved_courses").select("course_id,courses(id,title,slug,short_description)").order("saved_at", { ascending: false })
+    supabase.from("saved_programs").select("program_id,programs(id,title,slug,short_description,image_asset_id,media_assets!programs_image_asset_id_fkey(bucket,path,alt_text),program_tags(catalog_tags(name)))").order("saved_at", { ascending: false }),
+    supabase.from("saved_courses").select("course_id,courses(id,title,slug,short_description,image_asset_id,media_assets!courses_image_asset_id_fkey(bucket,path,alt_text),course_tags(catalog_tags(name)))").order("saved_at", { ascending: false })
   ]);
   return { programs: programs.data ?? [], courses: courses.data ?? [] };
 }

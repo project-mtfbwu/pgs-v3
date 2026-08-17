@@ -1,8 +1,14 @@
 import type { BoardColumn, StudentTask } from "@/lib/premium-workspace";
 
 export function StudentKanbanBoard({ columns, tasks }: { columns: BoardColumn[]; tasks: StudentTask[] }) {
-  return <section className="premium-kanban" aria-label="Your custom progress board">
-    {columns.map((column) => <div className={`premium-kanban-column is-${column.key}`} key={column.id}>
+  const canonicalOrder = ["journey_map", "in_progress", "draft_phase", "completed"];
+  const ordered = [...columns].sort((left, right) => {
+    const leftIndex = canonicalOrder.indexOf(left.key);
+    const rightIndex = canonicalOrder.indexOf(right.key);
+    return (leftIndex < 0 ? 99 : leftIndex) - (rightIndex < 0 ? 99 : rightIndex) || left.sort_order - right.sort_order;
+  });
+  return <section className="premium-kanban" id="kanban-board" aria-label="Your custom progress board">
+    {ordered.map((column) => <div className={`premium-kanban-column is-${column.key}`} key={column.id}>
       <h3>{column.title}</h3>
       <div className="premium-kanban-stack">
         {tasks.filter((task) => task.column_id === column.id).map((task) => <article className="card-sm" key={task.id}>

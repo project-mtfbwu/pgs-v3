@@ -134,20 +134,19 @@ export async function loadPreviewStudentAvatarUrl(path: string | null): Promise<
 }
 
 export async function loadPreviewStudentNotifications(studentId: string) {
-  const { data, count } = await createSupabaseAdminClient()
-    .from("notifications")
-    .select("id,title,body,section,destination_path,read_at,created_at", { count: "exact" })
-    .eq("student_id", studentId)
-    .order("created_at", { ascending: false })
-    .limit(100);
-  return { items: data ?? [], unreadCount: count ?? (data ?? []).filter((item) => !item.read_at).length };
+  const admin = createSupabaseAdminClient();
+  const [items, unread] = await Promise.all([
+    admin.from("notifications").select("id,title,body,section,destination_path,read_at,created_at").eq("student_id", studentId).order("created_at", { ascending: false }).limit(100),
+    admin.from("notifications").select("id", { count: "exact", head: true }).eq("student_id", studentId).is("read_at", null)
+  ]);
+  return { items: items.data ?? [], unreadCount: unread.count ?? 0 };
 }
 
 export async function loadPreviewSavedItems(studentId: string) {
   const admin = createSupabaseAdminClient();
   const [programs, courses] = await Promise.all([
-    admin.from("saved_programs").select("program_id,programs(id,title,slug,short_description)").eq("student_id", studentId).order("saved_at", { ascending: false }),
-    admin.from("saved_courses").select("course_id,courses(id,title,slug,short_description)").eq("student_id", studentId).order("saved_at", { ascending: false })
+    admin.from("saved_programs").select("program_id,programs(id,title,slug,short_description,image_asset_id,media_assets!programs_image_asset_id_fkey(bucket,path,alt_text),program_tags(catalog_tags(name)))").eq("student_id", studentId).order("saved_at", { ascending: false }),
+    admin.from("saved_courses").select("course_id,courses(id,title,slug,short_description,image_asset_id,media_assets!courses_image_asset_id_fkey(bucket,path,alt_text),course_tags(catalog_tags(name)))").eq("student_id", studentId).order("saved_at", { ascending: false })
   ]);
   return { programs: programs.data ?? [], courses: courses.data ?? [] };
 }

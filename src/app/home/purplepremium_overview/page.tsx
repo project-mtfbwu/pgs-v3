@@ -13,6 +13,7 @@ const anonymousState: AnonymousStudentExperience = {
   profile: null,
   name: null,
   unreadCount: 0,
+  notifications: [],
   premiumStatus: "none"
 };
 

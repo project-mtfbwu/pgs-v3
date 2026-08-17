@@ -37,12 +37,14 @@ export function OperationsRegistryAssignmentActions({
   row,
   handlers,
   canManage,
-  canPreviewStudent
+  canPreviewStudent,
+  previewConfigured
 }: {
   row: RegistryAssignmentRow;
   handlers: RegistryMentorOption[];
   canManage: boolean;
   canPreviewStudent: boolean;
+  previewConfigured: boolean;
 }) {
   const router = useRouter();
   const handlerFieldId = useId();
@@ -147,7 +149,14 @@ export function OperationsRegistryAssignmentActions({
         <span>Premium required for mentor assignment</span>
       ) : null}
       {canPreviewStudent ? (
-        <Button size="sm" type="button" variant="outline" disabled={pending} onClick={() => void startPreview()}>
+        <Button
+          size="sm"
+          type="button"
+          variant="outline"
+          disabled={pending || !previewConfigured}
+          aria-describedby={!previewConfigured ? "student-preview-unavailable" : undefined}
+          onClick={() => void startPreview()}
+        >
           View as Student
         </Button>
       ) : null}

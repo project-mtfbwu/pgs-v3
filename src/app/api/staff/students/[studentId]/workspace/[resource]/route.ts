@@ -23,6 +23,10 @@ function id(value: unknown): string {
 function order(value:unknown):number{if(value===undefined)return 0;if(!Number.isSafeInteger(value)||Number(value)<0||Number(value)>1_000_000)throw new Error("Invalid sort order.");return Number(value);}
 function optionalDate(value:unknown):string|null{if(value==null||value==="")return null;if(typeof value!=="string"||Number.isNaN(Date.parse(value)))throw new Error("Invalid date.");return new Date(value).toISOString();}
 function count(value:unknown):number{const result=Number(value);if(!Number.isSafeInteger(result)||result<0||result>100_000)throw new Error("Invalid dashboard count.");return result;}
+function percentage(value:unknown):number|null{if(value==null||value==="")return null;const result=Number(value);if(!Number.isSafeInteger(result)||result<0||result>100)throw new Error("Invalid onboarding percentage.");return result;}
+function textList(value:unknown,maxItems=30):string[]{if(!Array.isArray(value)||value.length>maxItems)throw new Error("Invalid dashboard list.");return value.map((item)=>cleanWorkspaceText(item,255));}
+function checklist(value:unknown):Array<{text:string;checked:boolean}>{if(!Array.isArray(value)||value.length>30)throw new Error("Invalid dashboard checklist.");return value.map((item)=>{if(!item||typeof item!=="object")throw new Error("Invalid dashboard checklist.");const row=item as Record<string,unknown>;return{text:cleanWorkspaceText(row.text,255),checked:row.checked===true};});}
+function tracker(value:unknown):Record<string,{count:number;is_red:boolean}>{if(!value||typeof value!=="object"||Array.isArray(value)||Object.keys(value).length>30)throw new Error("Invalid document tracker.");return Object.fromEntries(Object.entries(value).map(([name,item])=>{if(!item||typeof item!=="object"||Array.isArray(item))throw new Error("Invalid document tracker.");const row=item as Record<string,unknown>;return[cleanWorkspaceText(name,160),{count:count(row.count),is_red:row.is_red===true}];}));}
 
 async function context(params: Context["params"]) {
   const { studentId, resource } = await params;
@@ -69,6 +73,14 @@ export async function PATCH(request: Request, route: Context) {
         universities_applied: count(input.universities_applied),
         offers_received: count(input.offers_received),
         visa_status: typeof input.visa_status === "string" ? input.visa_status.trim().slice(0, 120) : "",
+        tuition_receipt_uploaded: input.tuition_receipt_uploaded == null ? null : input.tuition_receipt_uploaded === true,
+        onboarding_percentage: percentage(input.onboarding_percentage),
+        onboarding_checklist: checklist(input.onboarding_checklist),
+        feedback_session_title: typeof input.feedback_session_title === "string" ? input.feedback_session_title.trim().slice(0, 180) : "",
+        feedback_session_items: checklist(input.feedback_session_items),
+        documents_tracker: tracker(input.documents_tracker),
+        currently_working_on: textList(input.currently_working_on),
+        future_tasks: textList(input.future_tasks),
         updated_by: actor.user.id
       };
       const supabase = await createSupabaseServerClient();

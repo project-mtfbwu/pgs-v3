@@ -87,7 +87,7 @@ test.describe("authoritative Premium presentation",()=>{
   test("Premium retained pages keep the complete header and sidebar",async({page},testInfo)=>{
     await page.goto("/");const documentNavigations=await page.evaluate(()=>performance.getEntriesByType("navigation").length);await expect(page.locator('[data-legacy-page="home"]')).toHaveAttribute("data-student-state","authenticated_premium");
     await expectAuthenticatedHeader(page,"authenticated_premium");await toggleSidebar(page);await navigateToUsmle(page,testInfo.project.name);await expect(page.locator('[data-legacy-page="usmlerotation"]')).toHaveAttribute("data-student-state","authenticated_premium");await expectAuthenticatedHeader(page,"authenticated_premium");await toggleSidebar(page);expect(await page.evaluate(()=>performance.getEntriesByType("navigation").length)).toBe(documentNavigations);
-    await page.goto("/dashboard");await expect(page.locator(".canonical-where-you-stand")).toBeVisible();await expect(page.locator(".premium-kanban")).toBeVisible();
+    await page.goto("/dashboard");await expect(page.locator(".canonical-where-you-stand")).toBeVisible();await expect(page.locator(".premium-kanban")).toHaveCount(0);
     await page.goto("/feed_track_progress");await expect(page.locator(".premium-kanban")).toBeVisible();
     await page.goto("/upload_your_doc");await expect(page.locator(".developer-documents-page")).toBeVisible();
   });
