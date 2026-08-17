@@ -37,8 +37,9 @@ const ops04PeopleMigration = await readFile(new URL("../supabase/migrations/2026
 const ops05AssignmentsMigration = await readFile(new URL("../supabase/migrations/20260816183545_ops05_assignments_view_as.sql", import.meta.url), "utf8");
 const premiumRecoveryMigration = await readFile(new URL("../supabase/migrations/20260817035326_recover_premium_frontend_contract.sql", import.meta.url), "utf8");
 const ops06ScoreboardMigration = await readFile(new URL("../supabase/migrations/20260817065630_ops06_scoreboard_v1.sql", import.meta.url), "utf8");
+const ops07TargetsMigration = await readFile(new URL("../supabase/migrations/20260817072342_ops07_staff_targets.sql", import.meta.url), "utf8");
 const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}\n${privilegedDeleteAuditMigration}`;
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}`;
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}\n${ops07TargetsMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -165,6 +166,11 @@ const required = [
   ,"premium_awaiting_mentor"
   ,"result_scope = 'organization'"
   ,"safe_mentor = 'assigned'"
+  ,"create table public.staff_targets"
+  ,"staff_targets.manage_all"
+  ,"private.can_assign_staff_target"
+  ,"staff_target.created"
+  ,"staff_target.completed"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -218,4 +224,14 @@ if (!ops06ScoreboardMigration.includes("at time zone 'Asia/Kolkata'")) throw new
 if (!ops06ScoreboardMigration.includes("role.key in ('admin', 'super_admin')")) throw new Error("OPS-06 organization scope must remain Admin/Super Admin only");
 if (!ops06ScoreboardMigration.includes("role.key = 'mentor'")) throw new Error("OPS-06 Mentor scope must be explicitly assignment-shaped");
 if (/service_role/i.test(ops06ScoreboardMigration)) throw new Error("OPS-06 Scoreboard must not require service-role access");
+if (/create table public\.(?:staff_target_events|target_audit|staff_tasks)/i.test(ops07TargetsMigration)) throw new Error("OPS-07 must keep one target truth and canonical audit_events");
+if (!ops07TargetsMigration.includes("alter table public.staff_targets enable row level security")) throw new Error("OPS-07 staff_targets must enable RLS");
+if (!ops07TargetsMigration.includes("revoke all on table public.staff_targets from public, anon, authenticated")) throw new Error("OPS-07 direct target table CRUD must remain unavailable");
+if (/create policy[\s\S]*on public\.staff_targets/i.test(ops07TargetsMigration)) throw new Error("OPS-07 must use permission-shaped RPCs instead of direct table policies");
+if (!ops07TargetsMigration.includes("private.is_assignable_handler(target_staff)")) throw new Error("OPS-07 must reuse canonical active handler eligibility");
+if (!ops07TargetsMigration.includes("mentor.status = 'active'")) throw new Error("OPS-07 Mentor target scope must require an active mentor assignment");
+if (!ops07TargetsMigration.includes("target.assigned_staff_id = auth.uid()")) throw new Error("OPS-07 Mentor target reads must be own-work scoped");
+if (!ops07TargetsMigration.includes("role.key in ('admin', 'super_admin')")) throw new Error("OPS-07 organization target authority must remain Admin/Super Admin");
+if (!ops07TargetsMigration.includes("target.due_at < statement_timestamp()")) throw new Error("OPS-07 overdue must use the live due timestamp");
+if (/service_role/i.test(ops07TargetsMigration)) throw new Error("OPS-07 must not require service-role access");
 console.log("RLS migration static checks passed");

@@ -6,7 +6,7 @@ export type StaffRoleKey = "super_admin" | "admin" | "mentor" | "read_only_staff
 export const staffPermissionKeys = [
   "overview.read","students.read","student_workspace.read","student_workspace.read_all",
   "student_workspace.manage","student_workspace.manage_all","premium.manage","mentor_assignments.manage",
-  "document_shares.manage",
+  "document_shares.manage","staff_targets.read","staff_targets.manage","staff_targets.manage_all",
   "catalog.read","catalog.manage","catalog.publish","cms.read","cms.manage","cms.publish",
   "content.read","content.manage","content.publish","media.read","media.manage",
   "leads.read","leads.manage","staff.read","roles.manage","audit.read",

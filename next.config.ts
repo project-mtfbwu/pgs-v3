@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/ops", destination: "/admin" },
       { source: "/ops/students/:path*", destination: "/admin/students/:path*" },
+      { source: "/ops/work", destination: "/admin/work" },
       { source: "/ops/team", destination: "/admin/staff" },
       { source: "/ops/team/:path*", destination: "/admin/staff/:path*" },
       { source: "/ops/notifications", destination: "/admin/notifications" },

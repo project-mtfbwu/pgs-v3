@@ -5,8 +5,8 @@ import { logServerError, requestCorrelationId } from "@/lib/server-security";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type AuditActorKind = "anonymous" | "student" | "staff" | "system";
-export type AuditTargetType = "staff_user" | "student" | "student_document" | "document_share" | "cms_page";
-export type AuditSourceSubsystem = "staff" | "students" | "assignments" | "premium" | "documents" | "cms" | "auth";
+export type AuditTargetType = "staff_user" | "staff_target" | "student" | "student_document" | "document_share" | "cms_page";
+export type AuditSourceSubsystem = "staff" | "staff_targets" | "students" | "assignments" | "premium" | "documents" | "cms" | "auth";
 
 type SafeMetadataValue = string | number | boolean | null;
 export type AuditMetadata = Partial<Record<
@@ -21,6 +21,10 @@ export type AuditMetadata = Partial<Record<
   | "assignment_id"
   | "mentor_id"
   | "previous_mentor_id"
+  | "assigned_staff_id"
+  | "student_id"
+  | "priority"
+  | "due_at"
   | "entitlement_id"
   | "qc_decision"
   | "share_id"
@@ -35,6 +39,7 @@ type DeniedEventType =
   | "staff.access.denied"
   | "student.access.denied"
   | "assignment.change.denied"
+  | "staff_target.change.denied"
   | "premium.entitlement.denied"
   | "document.access.denied"
   | "document.share_access_denied"
@@ -47,6 +52,7 @@ type DeniedEventType =
 type FailedEventType =
   | "staff.access.failed"
   | "assignment.change.failed"
+  | "staff_target.change.failed"
   | "premium.entitlement.failed"
   | "document.access.failed"
   | "document.review.failed"
@@ -69,7 +75,8 @@ type PreviewDeniedEventType = "staff_preview.denied";
 const allowedMetadataKeys = new Set([
   "permission_required","reason_code","route","role","previous_role","new_role",
   "previous_status","new_status","assignment_id","mentor_id","previous_mentor_id",
-  "entitlement_id","qc_decision","share_id","recipient_user_id","expires_at","result","preview_mode"
+  "assigned_staff_id","student_id","priority","due_at","entitlement_id","qc_decision",
+  "share_id","recipient_user_id","expires_at","result","preview_mode"
 ]);
 
 type TrustedAuditInput<T extends string> = {

@@ -66,6 +66,9 @@ const OPS_PERMISSIONS: StaffPermission[] = [
   "premium.manage",
   "mentor_assignments.manage",
   "document_shares.manage",
+  "staff_targets.read",
+  "staff_targets.manage",
+  "staff_targets.manage_all",
   "staff.read",
   "roles.manage",
   "audit.read"
@@ -73,7 +76,14 @@ const OPS_PERMISSIONS: StaffPermission[] = [
 
 export const STAFF_ROLE_PERMISSION_PREVIEW: Record<StaffDirectoryRole, StaffPermission[]> = {
   read_only_staff: ["overview.read", "students.read"],
-  mentor: ["overview.read", "student_workspace.read", "student_workspace.manage", "media.read"],
+  mentor: [
+    "overview.read",
+    "student_workspace.read",
+    "student_workspace.manage",
+    "staff_targets.read",
+    "staff_targets.manage",
+    "media.read"
+  ],
   admin: [
     "overview.read",
     "students.read",
@@ -81,6 +91,9 @@ export const STAFF_ROLE_PERMISSION_PREVIEW: Record<StaffDirectoryRole, StaffPerm
     "student_workspace.manage_all",
     "premium.manage",
     "mentor_assignments.manage",
+    "staff_targets.read",
+    "staff_targets.manage",
+    "staff_targets.manage_all",
     "catalog.read",
     "catalog.manage",
     "catalog.publish",
@@ -109,6 +122,9 @@ export const STAFF_ROLE_PERMISSION_PREVIEW: Record<StaffDirectoryRole, StaffPerm
     "premium.manage",
     "mentor_assignments.manage",
     "document_shares.manage",
+    "staff_targets.read",
+    "staff_targets.manage",
+    "staff_targets.manage_all",
     "catalog.read",
     "catalog.manage",
     "catalog.publish",

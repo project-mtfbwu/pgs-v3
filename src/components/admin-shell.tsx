@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   Activity,
   Bell,
+  BriefcaseBusiness,
   Gauge,
   GraduationCap,
   LogOut,
@@ -44,6 +45,7 @@ type Item = {
 const items: Item[] = [
   { href: "/ops", label: "Scoreboard", permission: "overview.read", icon: Gauge, scoreboard: true },
   { href: "/ops/students", label: "Students", permission: "overview.read", icon: GraduationCap },
+  { href: "/ops/work", label: "Targets", permission: "overview.read", icon: BriefcaseBusiness },
   { href: "/ops/team", label: "Team", permission: "staff.read", icon: UsersRound },
   { href: "/ops/notifications", label: "Notifications", permission: "overview.read", icon: Bell },
   { href: "/ops/activity", label: "Activity", permission: "audit.read", icon: Activity }
@@ -52,6 +54,7 @@ const items: Item[] = [
 const sectionTitles: Record<string, string> = {
   "/ops": "Operations Scoreboard",
   "/ops/students": "Students",
+  "/ops/work": "Staff Targets",
   "/ops/team": "Team",
   "/ops/team/invite": "Invite staff",
   "/ops/notifications": "Notifications",

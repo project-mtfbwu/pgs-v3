@@ -15,11 +15,14 @@ export default async function StaffPage() {
     <div className="ops:flex ops:flex-col ops:gap-6">
       <OperationsPageHeader
         actions={
-          canManage ? (
-            <Link className="ops-system-primary-action" href="/ops/team/invite">
-              Invite staff
-            </Link>
-          ) : undefined
+          <div className="ops:flex ops:flex-wrap ops:gap-3">
+            <Link href="/ops/work">Open staff targets</Link>
+            {canManage ? (
+              <Link className="ops-system-primary-action" href="/ops/team/invite">
+                Invite staff
+              </Link>
+            ) : null}
+          </div>
         }
         description={
           canManage

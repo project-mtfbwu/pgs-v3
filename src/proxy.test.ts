@@ -35,6 +35,7 @@ describe("canonical Operations product routing", () => {
     ["/admin", "/ops"],
     ["/admin/students?premium=active", "/ops/students?premium=active"],
     ["/admin/students/student-1", "/ops/students/student-1"],
+    ["/admin/work", "/ops/work"],
     ["/admin/staff", "/ops/team"],
     ["/admin/staff/invite", "/ops/team/invite"],
     ["/admin/staff/staff-1", "/ops/team/staff-1"],
@@ -85,6 +86,7 @@ describe("canonical Operations product routing", () => {
     expect(rewrites).toEqual([
       { source: "/ops", destination: "/admin" },
       { source: "/ops/students/:path*", destination: "/admin/students/:path*" },
+      { source: "/ops/work", destination: "/admin/work" },
       { source: "/ops/team", destination: "/admin/staff" },
       { source: "/ops/team/:path*", destination: "/admin/staff/:path*" },
       { source: "/ops/notifications", destination: "/admin/notifications" },

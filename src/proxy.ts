@@ -42,6 +42,7 @@ function canonicalOperationsPath(pathname: string): string | null {
   if (pathname === "/admin/students" || pathname.startsWith("/admin/students/")) {
     return pathname.replace(/^\/admin\/students/, "/ops/students");
   }
+  if (pathname === "/admin/work") return "/ops/work";
   if (pathname === "/admin/staff" || pathname.startsWith("/admin/staff/")) {
     return pathname.replace(/^\/admin\/staff/, "/ops/team");
   }
