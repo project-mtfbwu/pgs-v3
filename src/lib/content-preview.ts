@@ -54,11 +54,13 @@ export async function getCmsPreviewRevision(slug: string): Promise<CmsPreviewRev
   const staff = await getStaffContext();
   if (!staff || !can(staff, "cms.read")) return null;
   const supabase = await createSupabaseServerClient();
+  const { data: page } = await supabase.from("cms_pages").select("id").eq("slug", slug).maybeSingle();
+  if (!page) return null;
   const { data } = await supabase
     .from("cms_page_revisions")
-    .select("content,seo_title,seo_description,open_graph,cms_pages!inner(slug)")
+    .select("content,seo_title,seo_description,open_graph")
     .eq("id", revisionId)
-    .eq("cms_pages.slug", slug)
+    .eq("page_id", page.id)
     .maybeSingle();
   if (!data) return null;
   return {

@@ -1,5 +1,4 @@
 import { draftMode } from "next/headers";
-import { NextResponse } from "next/server";
 import { adminApiError } from "@/lib/admin-api";
 import {
   catalogPreviewEntities,
@@ -9,6 +8,7 @@ import {
   type CatalogPreviewEntity
 } from "@/lib/content-preview";
 import { validUuid } from "@/lib/http";
+import { previewRedirect } from "@/lib/preview-redirect";
 import { requireStaffPermission } from "@/lib/staff-auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     if (!data) throw new Error("Catalog preview revision not found.");
     const mode = await draftMode();
     mode.enable();
-    const response = NextResponse.redirect(new URL(destination, request.url));
+    const response = previewRedirect(destination);
     response.cookies.set(contentPreviewCookie, encodeCatalogPreview(entity, entityId, revision), {
       httpOnly: true,
       sameSite: "lax",
@@ -46,7 +46,6 @@ export async function GET(request: Request) {
       path: "/"
     });
     response.cookies.delete("pgs_cms_preview");
-    response.headers.set("Cache-Control", "private, no-store");
     return response;
   } catch (error) {
     return adminApiError(error);
