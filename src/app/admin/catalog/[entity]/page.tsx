@@ -23,7 +23,7 @@ const relationTables: Record<AdminRelation, { table: string; label: string }> = 
   events: { table: "events", label: "title" }
 };
 
-export default async function CatalogEntityPage({ params, searchParams }: { params: Promise<{ entity: string }>; searchParams: Promise<{ q?: string; state?: string }> }) {
+export default async function CatalogEntityPage({ params, searchParams }: { params: Promise<{ entity: string }>; searchParams: Promise<{ q?: string; state?: string; featured?: string; when?: string }> }) {
   const context = await requireStaffPermission("catalog.read");
   const { entity: key } = await params;
   const entity = getAdminEntity("catalog", key);
@@ -34,6 +34,13 @@ export default async function CatalogEntityPage({ params, searchParams }: { para
   const searchField = entity.fields.find((field) => field.type === "text" || field.type === "textarea")?.key;
   if (filters.q && searchField) query = query.ilike(searchField, `%${filters.q.slice(0, 100)}%`);
   if (filters.state && entity.fields.some((field) => field.key === "published")) query = query.eq("published", filters.state === "published");
+  if ((filters.featured === "1" || filters.featured === "true") && entity.fields.some((field) => field.key === "featured")) {
+    query = query.eq("featured", true);
+  }
+  if (key === "events" && (filters.when === "upcoming" || filters.when === "past")) {
+    const now = new Date().toISOString();
+    query = filters.when === "upcoming" ? query.gte("starts_at", now) : query.lt("starts_at", now);
+  }
   const { data } = await query.order(entity.idKey, { ascending: false });
   let displayRows = (data ?? []) as Array<Record<string, unknown>>;
   let tagOptions: TagOption[] = [];

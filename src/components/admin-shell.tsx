@@ -15,6 +15,7 @@ import {
   UsersRound
 } from "lucide-react";
 import { OperationsActorMenu } from "@/components/operations-actor-menu";
+import { OperationsStaffSearch } from "@/components/operations-staff-search";
 import { StaffPreviewBanner } from "@/components/staff-preview-banner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
@@ -194,6 +195,7 @@ export function AdminShell({
               </div>
             </div>
             <div className="ops:flex ops:items-center ops:gap-2">
+              {allowed.has("overview.read") ? <OperationsStaffSearch /> : null}
               {allowed.has("overview.read") ? (
                 <Tooltip>
                   <TooltipTrigger asChild>

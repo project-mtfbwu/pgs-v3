@@ -144,7 +144,8 @@ html.operations-session {
 }
 
 .operations-root[data-operations-product="true"] .ops-system-topbar-menu,
-.operations-root[data-operations-product="true"] .ops-system-topbar-notify {
+.operations-root[data-operations-product="true"] .ops-system-topbar-notify,
+.operations-root[data-operations-product="true"] .ops-system-topbar-search {
   flex-shrink: 0;
   overflow: visible;
   width: 56px;
@@ -156,7 +157,8 @@ html.operations-session {
 }
 
 .operations-root[data-operations-product="true"] .ops-system-topbar-menu svg,
-.operations-root[data-operations-product="true"] .ops-system-topbar-notify svg {
+.operations-root[data-operations-product="true"] .ops-system-topbar-notify svg,
+.operations-root[data-operations-product="true"] .ops-system-topbar-search svg {
   width: 48px;
   height: 48px;
   stroke-width: 2;
@@ -993,4 +995,71 @@ li:first-child .ops-system-compact-row {
   gap: 12px;
   align-items: end;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.ops-analytics {
+  display: grid;
+  gap: 20px;
+  padding-top: 8px;
+  border-top: 1px solid var(--operations-border);
+}
+
+.ops-analytics-metric {
+  display: block;
+  min-height: 120px;
+  padding: 16px;
+  border: 1px solid var(--operations-border);
+  border-radius: 12px;
+  background: var(--operations-card);
+  color: var(--operations-foreground);
+}
+
+.ops-analytics-metric:hover,
+.ops-analytics-metric:focus-visible {
+  border-color: var(--operations-ring);
+}
+
+.ops-search-dialog {
+  max-height: min(90vh, 40rem);
+  overflow: auto;
+}
+
+.ops-search-dialog [data-slot="dialog-description"] {
+  color: var(--operations-foreground);
+}
+
+.ops-search-groups {
+  display: grid;
+  gap: 16px;
+}
+
+.ops-search-group h3 {
+  margin: 0 0 8px;
+  color: var(--operations-foreground);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.ops-search-group ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ops-search-group a {
+  display: grid;
+  gap: 2px;
+  padding: 10px 0;
+  border-top: 1px solid var(--operations-border);
+  color: var(--operations-foreground);
+  text-decoration: none;
+}
+
+.ops-search-group li:first-child a {
+  border-top: 0;
+}
+
+.ops-search-group a span {
+  font-size: 13px;
 }

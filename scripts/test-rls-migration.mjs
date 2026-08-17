@@ -43,8 +43,9 @@ const phase7CmsCatalogMigration = await readFile(new URL("../supabase/migrations
 const phase7aDraftPreviewMigration = await readFile(new URL("../supabase/migrations/20260817125959_phase7a_cms_draft_preview.sql", import.meta.url), "utf8");
 const phase8IntegrationMigration = await readFile(new URL("../supabase/migrations/20260817185841_phase8_integration_connections.sql", import.meta.url), "utf8");
 const miniCrmMigration = await readFile(new URL("../supabase/migrations/20260817192231_mini_crm_v1.sql", import.meta.url), "utf8");
+const analyticsSearchMigration = await readFile(new URL("../supabase/migrations/20260817195145_advanced_analytics_search.sql", import.meta.url), "utf8");
 const phase4dMigration = `${documentLifecycleMigration}\n${documentHardeningMigration}\n${documentRlsHelperMigration}\n${documentDeleteGuardMigration}\n${privilegedDeleteFixMigration}\n${privilegedDeleteAuditMigration}`;
-const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}\n${ops07TargetsMigration}\n${phase6StudentOperationsMigration}\n${phase7CmsCatalogMigration}\n${phase7aDraftPreviewMigration}\n${phase8IntegrationMigration}\n${miniCrmMigration}`;
+const migration = `${proofMigration}\n${publicMigration}\n${studentMigration}\n${premiumMigration}\n${adminMigration}\n${adminContentMigration}\n${staffProfileMigration}\n${hardeningMigration}\n${rateLimitFixMigration}\n${mentorLifecycleMigration}\n${premiumValidityMigration}\n${accountDeletionMigration}\n${triggerSecurityMigration}\n${accountCascadeMigration}\n${premiumIndexesMigration}\n${immediateGrantMigration}\n${grantTimestampMigration}\n${mentorTriggerFixMigration}\n${cleanDocumentGateMigration}\n${actorContextMigration}\n${auditFoundationMigration}\n${studentViewerMigration}\n${phase4dMigration}\n${phase4eMigration}\n${phase4eGateMigration}\n${phase4eIndexMigration}\n${ops02RegistryMigration}\n${ops03RegistryMigration}\n${ops04PeopleMigration}\n${ops05AssignmentsMigration}\n${premiumRecoveryMigration}\n${ops06ScoreboardMigration}\n${ops07TargetsMigration}\n${phase6StudentOperationsMigration}\n${phase7CmsCatalogMigration}\n${phase7aDraftPreviewMigration}\n${phase8IntegrationMigration}\n${miniCrmMigration}\n${analyticsSearchMigration}`;
 const required = [
   "alter table public.cms_editors enable row level security",
   "alter table public.page_content enable row level security",
@@ -203,6 +204,9 @@ const required = [
   ,"student.tag_removed"
   ,"stream_filter"
   ,"staff_student_crm_profile"
+  ,"staff_operations_analytics"
+  ,"staff_operations_search"
+  ,"private.analytics_registry_href"
 ];
 
 const missing = required.filter((statement) => !migration.includes(statement));
@@ -289,4 +293,13 @@ if (/join public\.catalog_tags|from public\.catalog_tags/i.test(miniCrmMigration
 if (/create policy[\s\S]*students\.read[\s\S]*on public\.profiles/i.test(miniCrmMigration)) throw new Error("Mini CRM must not restore a students.read table SELECT policy on profiles");
 if (!miniCrmMigration.includes("private.has_active_premium(p.id)")) throw new Error("Mini CRM Premium must stay derived from canonical entitlement");
 if (!miniCrmMigration.includes("ma.status = 'active'")) throw new Error("Mini CRM assignment must stay derived from active mentor_assignments");
+if (/create table public\.(?:analytics_students|search_students_copy|reporting_assignments)/i.test(analyticsSearchMigration)) throw new Error("Analytics must not create a shadow student/search ledger");
+if (/elasticsearch|algolia|vector|embedding/i.test(analyticsSearchMigration)) throw new Error("Analytics/search must remain Postgres-first without ML indexes");
+if (!analyticsSearchMigration.includes("private.has_active_premium(student.id)")) throw new Error("Analytics Premium must stay derived from canonical entitlement");
+if (!analyticsSearchMigration.includes("active_assignment.status = 'active'")) throw new Error("Analytics assignment must stay derived from active mentor_assignments");
+if (!analyticsSearchMigration.includes("at time zone 'Asia/Kolkata'")) throw new Error("Analytics join periods must use India-time boundaries");
+if (analyticsSearchMigration.includes("from public.student_comments") || analyticsSearchMigration.includes("from public.student_documents")) throw new Error("Search must not query private comments or document contents");
+if (/grant execute on function public\.staff_operations_analytics\(text, uuid\)\s+to anon/i.test(analyticsSearchMigration)) throw new Error("Anonymous callers must not execute analytics");
+if (/grant execute on function public\.staff_operations_search\(text, integer\)\s+to anon/i.test(analyticsSearchMigration)) throw new Error("Anonymous callers must not execute staff search");
+if (!analyticsSearchMigration.includes("^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")) throw new Error("Staff search must refuse raw UUID queries");
 console.log("RLS migration static checks passed");
