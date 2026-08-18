@@ -60,7 +60,8 @@ export async function POST(request: Request) {
     }
 
     const systemPrompt = buildStudentSystemPrompt();
-    const userPrompt = buildStudentUserPrompt(question, studentCtx);
+    const sourceLinksContext = `\n\nAVAILABLE SOURCE LINKS (use these in your "sources" array, do not invent other hrefs):\n- My Dashboard: /dashboard\n- My Loopboard: /purpleboard\n- Upload Documents: /upload_your_doc\n- Upcoming Events: /purpleevents\n- Courses: /programsfull`;
+    const userPrompt = buildStudentUserPrompt(question, studentCtx + sourceLinksContext);
 
     // Call AI provider.
     const client = getOpenAIClient();

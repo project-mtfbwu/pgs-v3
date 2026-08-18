@@ -67,23 +67,26 @@ export async function POST(request: Request) {
 
     // Build data context — authorized tools only.
     const contextParts: string[] = [];
+    const collectedSourceLinks: Array<{ label: string; href: string }> = [];
 
     // Always include analytics summary (scope-aware).
-    const analyticsCtx = await getAiOpsContext(staffContext);
+    const { context: analyticsCtx, sourceLinks: analyticsLinks } = await getAiOpsContext(staffContext);
     contextParts.push(analyticsCtx);
+    collectedSourceLinks.push(...analyticsLinks);
 
     // If a specific student is requested, authorize and include workspace.
     if (requestedStudentId && validUuid(requestedStudentId)) {
       const studentCtx = await getAiStudentWorkspaceContext(requestedStudentId, staffContext);
       if (studentCtx) {
         contextParts.push(studentCtx);
+        collectedSourceLinks.push({ label: "Student Detail", href: `/ops/students/${requestedStudentId}` });
       } else {
         contextParts.push(`[Student ${requestedStudentId}: not found or not authorized for your role]`);
       }
     }
 
     // Include search results if the question looks like a search query.
-    const searchTriggers = ["who", "which", "find", "show", "list", "search", "students", "priya", "who has"];
+    const searchTriggers = ["who", "which", "find", "show", "list", "search", "students", "summarize"];
     if (searchTriggers.some((t) => question.toLowerCase().includes(t))) {
       const searchCtx = await getAiSearchContext(question);
       if (searchCtx && !searchCtx.startsWith("No results")) {
@@ -91,7 +94,12 @@ export async function POST(request: Request) {
       }
     }
 
-    const userPrompt = buildOpsUserPrompt(question, contextParts.join("\n\n---\n\n"));
+    // Inject pre-validated source links so the model uses real hrefs.
+    const sourceLinksContext = collectedSourceLinks.length > 0
+      ? `\n\nAVAILABLE SOURCE LINKS (use these in your "sources" array, do not invent other hrefs):\n${collectedSourceLinks.map((l) => `- ${l.label}: ${l.href}`).join("\n")}`
+      : "";
+
+    const userPrompt = buildOpsUserPrompt(question, contextParts.join("\n\n---\n\n") + sourceLinksContext);
 
     // Call AI provider.
     const client = getOpenAIClient();

@@ -35,7 +35,7 @@ function AiAnswerView({ answer }: { answer: AiAnswer }) {
           </p>
           <ul className="ops:space-y-1">
             {answer.facts.map((fact: string, i: number) => (
-              <li key={i} className="ops:text-sm ops:text-foreground">
+              <li key={i} className="ops:break-words ops:text-sm ops:text-foreground">
                 · {fact}
               </li>
             ))}
@@ -47,7 +47,7 @@ function AiAnswerView({ answer }: { answer: AiAnswer }) {
           <p className="ops:mb-1.5 ops:text-xs ops:font-semibold ops:uppercase ops:tracking-wide ops:text-muted-foreground">
             AI Summary
           </p>
-          <p className="ops:text-sm ops:text-foreground">{answer.summary}</p>
+          <p className="ops:break-words ops:text-sm ops:text-foreground">{answer.summary}</p>
         </div>
       )}
       {answer.suggested_next_step && (
@@ -153,7 +153,7 @@ export function AskPgsPanel({ studentId }: Props) {
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="ops:flex ops:w-[min(28rem,95vw)] ops:flex-col ops:border-l ops:bg-card ops:p-0"
+        className="ops:flex ops:h-dvh ops:w-[min(28rem,95vw)] ops:flex-col ops:border-l ops:bg-card ops:p-0 ops:overflow-hidden"
         aria-label="Ask PGS AI panel"
       >
         <SheetHeader className="ops:border-b ops:border-border ops:px-4 ops:py-4">
@@ -176,7 +176,7 @@ export function AskPgsPanel({ studentId }: Props) {
           </SheetDescription>
         </SheetHeader>
 
-        <div className="ops:flex ops:flex-1 ops:flex-col ops:gap-4 ops:overflow-y-auto ops:p-4">
+        <div className="ops:flex ops:flex-1 ops:flex-col ops:gap-4 ops:overflow-y-auto ops:overscroll-contain ops:p-4">
           {!answer && !pending && !error && !unavailable && (
             <div>
               <p className="ops:mb-2 ops:text-xs ops:font-semibold ops:uppercase ops:tracking-wide ops:text-muted-foreground">

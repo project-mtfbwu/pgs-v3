@@ -2,7 +2,24 @@ import "server-only";
 import OpenAI from "openai";
 
 // ── Cost / safety limits ────────────────────────────────────────────────────
-export const AI_MODEL = "gpt-4o-mini" as const;
+
+/**
+ * Model name — configurable via PGS_AI_MODEL env var.
+ * Safe default is gpt-4o-mini (fast, low cost, supports json_object response format).
+ * Allowlist: only known OpenAI model IDs that support json_object mode.
+ */
+const ALLOWED_MODELS = new Set([
+  "gpt-4o-mini",
+  "gpt-4o",
+  "gpt-4-turbo",
+  "gpt-4",
+  "gpt-3.5-turbo",
+]);
+const CONFIGURED_MODEL = process.env.PGS_AI_MODEL ?? "gpt-4o-mini";
+export const AI_MODEL: string = ALLOWED_MODELS.has(CONFIGURED_MODEL)
+  ? CONFIGURED_MODEL
+  : "gpt-4o-mini";
+
 /** Approximate token budget for the data injected into every request. */
 export const AI_MAX_INPUT_TOKENS = 4_000;
 /** Max tokens in model response. */

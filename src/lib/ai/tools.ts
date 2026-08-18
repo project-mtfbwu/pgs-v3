@@ -26,44 +26,70 @@ function truncateContext(text: string, maxTokens: number = AI_MAX_INPUT_TOKENS):
 // ── OPS TOOLS ───────────────────────────────────────────────────────────────
 
 /** Minimal ops analytics summary safe to send to AI. No Auth/credential fields. */
-export async function getAiOpsContext(staffContext: StaffContext): Promise<string> {
+export async function getAiOpsContext(staffContext: StaffContext): Promise<{ context: string; sourceLinks: Array<{ label: string; href: string }> }> {
+  const noData = { context: "Operational analytics are not available for your current role.", sourceLinks: [] };
   try {
     const analytics = await loadOperationsAnalytics(staffContext);
-    if (!analytics) return "Operational analytics are not available for your current role.";
+    if (!analytics) return noData;
 
     const lines: string[] = [
-      `[Ops Scope: ${analytics.scope}]`,
+      `[Ops Scope: ${analytics.scope === "organization" ? "Organization-wide" : "Assigned students only"}]`,
       `[Period: ${analytics.grain}]`,
-      `Students — total: ${analytics.students.total}, Premium: ${analytics.students.premium}, Standard: ${analytics.students.standard}`,
-      `Assigned: ${analytics.students.assigned}, Unassigned: ${analytics.students.unassigned}`,
-      `Premium awaiting mentor: ${analytics.students.premiumAwaitingMentor}`,
     ];
 
+    // Student counts with embedded hrefs so model can cite them.
+    const h = analytics.students.hrefs;
+    lines.push(
+      `Students — total: ${analytics.students.total} (link:${h.total}), Premium: ${analytics.students.premium} (link:${h.premium}), Standard: ${analytics.students.standard} (link:${h.standard})`
+    );
+    lines.push(
+      `Assigned: ${analytics.students.assigned} (link:${h.assigned}), Unassigned: ${analytics.students.unassigned} (link:${h.unassigned})`
+    );
+    lines.push(
+      `Premium awaiting mentor: ${analytics.students.premiumAwaitingMentor} (link:${h.premium_awaiting_mentor})`
+    );
+
     if (analytics.work) {
+      const w = analytics.work;
       lines.push(
-        `Work — open targets: ${analytics.work.open}, due soon: ${analytics.work.dueSoon}, overdue: ${analytics.work.overdue}`
+        `Work targets — open: ${w.open} (link:${w.hrefOpen}), due soon: ${w.dueSoon} (link:${w.hrefDueSoon}), overdue: ${w.overdue} (link:${w.hrefOverdue}), completed recently: ${w.completedRecently}`
       );
     }
 
     if (analytics.streams.length) {
-      lines.push(`Streams: ${analytics.streams.map((s) => `${s.label}(${s.count})`).join(", ")}`);
+      lines.push(`Streams: ${analytics.streams.map((s) => `${s.label}: ${s.count} students (link:${s.href})`).join(" | ")}`);
     }
     if (analytics.targetYears.length) {
-      lines.push(`Target years: ${analytics.targetYears.map((y) => `${y.label}(${y.count})`).join(", ")}`);
+      lines.push(`Target years: ${analytics.targetYears.map((y) => `${y.label}: ${y.count} (link:${y.href})`).join(" | ")}`);
     }
     if (analytics.stages.length) {
-      lines.push(`CRM stages: ${analytics.stages.map((st) => `${st.label}(${st.count})`).join(", ")}`);
+      lines.push(`CRM stages: ${analytics.stages.map((st) => `${st.label}: ${st.count} (link:${st.href})`).join(" | ")}`);
     }
     if (analytics.handlers.length) {
       lines.push(
-        `Mentors: ${analytics.handlers.map((h) => `${h.name}(students:${h.students},premium:${h.premium})`).join(", ")}`
+        `Mentors: ${analytics.handlers.map((h) => `${h.name}: ${h.students} students, ${h.premium} premium (link:${h.href})`).join(" | ")}`
       );
     }
 
-    return truncateContext(lines.join("\n"));
+    // Stable source links to give to model — these are the safe internal hrefs.
+    const sourceLinks: Array<{ label: string; href: string }> = [
+      { label: "All Students", href: h.total },
+      { label: "Premium Students", href: h.premium },
+    ];
+    if (analytics.students.premiumAwaitingMentor > 0) {
+      sourceLinks.push({ label: "Premium Awaiting Mentor", href: h.premium_awaiting_mentor });
+    }
+    if (analytics.work?.overdue && analytics.work.overdue > 0) {
+      sourceLinks.push({ label: "Overdue Work", href: analytics.work.hrefOverdue });
+    }
+    if (analytics.work?.dueSoon && analytics.work.dueSoon > 0) {
+      sourceLinks.push({ label: "Work Due Soon", href: analytics.work.hrefDueSoon });
+    }
+
+    return { context: truncateContext(lines.join("\n")), sourceLinks };
   } catch (error) {
     logServerError("ai_ops_context_failed", error);
-    return "Operational data could not be loaded.";
+    return { context: "Operational data could not be loaded.", sourceLinks: [] };
   }
 }
 
