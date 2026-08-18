@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   UsersRound
 } from "lucide-react";
+import { AskPgsPanel } from "@/components/ask-pgs-panel";
 import { OperationsActorMenu } from "@/components/operations-actor-menu";
 import { OperationsStaffSearch } from "@/components/operations-staff-search";
 import { StaffPreviewBanner } from "@/components/staff-preview-banner";
@@ -195,6 +196,7 @@ export function AdminShell({
               </div>
             </div>
             <div className="ops:flex ops:items-center ops:gap-2">
+              {allowed.has("overview.read") ? <AskPgsPanel /> : null}
               {allowed.has("overview.read") ? <OperationsStaffSearch /> : null}
               {allowed.has("overview.read") ? (
                 <Tooltip>

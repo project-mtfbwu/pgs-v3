@@ -1,0 +1,58 @@
+---
+description: Owner Figma / PGS Flow frontend method — FIND MAP CONNECT FIX, extract structure, visual plan before code
+alwaysApply: true
+---
+
+# PGS V3 Figma and frontend recovery
+
+The owner spent months designing the PGS frontend. Owner Figma is not a mockup to reinterpret.
+
+Applies especially to Student/Public surfaces. Operations/CMS may use the locked internal stack (shadcn) but still follow PGS Flow, approved Figma where relevant, and the visual-plan gate.
+
+## Permanent frontend method
+
+FIND → MAP → CONNECT → FIX
+
+Do **not** casually redesign, create replacement pages, invent UX because implementation feels easier, or replace Figma-linked components with generic SaaS layouts.
+
+Default: KEEP existing approved frontend. Build backend/DB/security/RBAC/CMS/Operations/documents/Premium under it. Change UI only when the owner asks, an approved reference requires restoration, or the task needs a small behavior change. Never redesign because the backend changed.
+
+PGS Flow = navigation/product map (from → screen/state → data/action → backend). Figma V6 / V6 Pop-up = frontend reference, not redesign permission.
+
+## Before creating a new Student/Public page
+
+1. Search existing current frontend.
+2. Search Figma / PGS Flow page mapping.
+3. Search original developer frontend.
+4. Search public HTML / live implementation.
+5. Prove the required page/component genuinely does not exist.
+6. Show the owner the gap.
+7. Get owner approval.
+
+Only then may a new page be proposed.
+
+## Figma provides more than colors
+
+When studying Figma, extract: information hierarchy, section order, component relationships, navigation logic, desktop/tablet/mobile behavior, popup/modal relationships, empty/locked states, page-to-page flow, spacing, content density, visual grouping, cards/panels, forms, tables, charts, actions, state representation.
+
+Do **not** treat Figma as “make something vaguely similar.” Translate the approved visual structure into the target stack while keeping PGS product semantics.
+
+## Visual plan before implementation
+
+For meaningful UI work, show the owner the proposed result **before** coding. Use ASCII layout, component map, before → after diagram, page hierarchy, role variants, and desktop/tablet/mobile behavior.
+
+Example:
+
+CURRENT → four isolated KPI cards → large empty space
+
+PROPOSED → KPI row → segmentation panel → recent activity panel → operational entry panel
+
+If a richer design requires future-phase data: show the intended layout, mark the block **DEFERRED**, do not fake metrics or charts.
+
+Owner reviews this. Only after `GO AHEAD`: IMPLEMENT.
+
+## Accessibility constraint
+
+Figma is visual authority. WCAG 2.2 AA (`pgs-v3-accessibility.mdc`) is a hard implementation constraint.
+
+Do not silently copy insufficient contrast, inaccessible tiny text, color-only state, ambiguous icon-only controls, keyboard-incompatible interaction, or zoom clipping. Preserve visual intent; adjust the nearest token/control to a compliant value. Report `FIGMA ACCESSIBILITY ADAPTATION` instead of redesigning the page.

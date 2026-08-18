@@ -1,0 +1,117 @@
+---
+description: WCAG 2.2 AA hard gate for all PGS surfaces — semantics, names, contrast, keyboard, focus, forms, postflight
+alwaysApply: true
+---
+
+# PGS V3 accessibility / web standards
+
+Permanent companion to `pgs-v3-operating-protocol.mdc` and `pgs-v3-frontend-figma.mdc`.
+
+Applies to **all** surfaces: Public, Student, Operations, CMS, Guardian Portal, future CRM / analytics / AI.
+
+**Target: WCAG 2.2 Level AA minimum.** Accessibility is a **release requirement**, not optional visual polish.
+
+A contrast/accessibility defect is not “only visual,” “minor UI,” or “matches Figma.” If text or controls fail this baseline: **FIX IT BEFORE PRODUCT VERIFICATION.**
+
+## Semantic HTML first
+
+Prefer native: `button`, `a`, `nav`, `main`, `header`, `footer`, `section`, `article`, `form`, `label`, `fieldset`, `legend`, `table`/`thead`/`tbody`/`th`/`td`, `dialog` where appropriate.
+
+Do **not** replace native controls with clickable `div`/`span` unless there is a proven technical reason.
+
+Navigation = `<a>` / `Link`. Action = `<button>`. Do not use buttons for normal page navigation merely for styling. Do not use anchors without a meaningful `href` as buttons.
+
+Real tabular data uses semantic tables (`scope` where needed). Do not construct tables from random div grids purely for styling. On mobile, preserve meaning even when presentation changes.
+
+Landmarks: `header`, `nav`, `main`, `aside` where appropriate, `footer`. Prefer one meaningful page `h1` → `h2` sections → `h3` subsections. Do **not** choose heading levels based on visual font size.
+
+## Accessible names — not aria-label everywhere
+
+Every interactive/focusable control must have an accessible name.
+
+Preferred order: (1) visible native text/content (2) native `<label>` for form controls (3) `aria-labelledby` when visible labeling already exists (4) `aria-label` only when no appropriate visible/native label exists.
+
+Required naming examples: icon-only buttons, Bell/notifications, mobile menu, close, pagination, search, form fields, dialogs, menus, tabs where semantics require it.
+
+Do **not** add redundant `aria-label` to normal visible text, headings, paragraphs, or already correctly named buttons. Visible label and accessible name must not contradict each other.
+
+Meaningful images: useful `alt`. Decorative images/icons: `alt=""` or presentation semantics. Do not duplicate visible text in alt/ARIA.
+
+## Contrast — hard gate
+
+Do not approve colors by eye. Programmatically/test contrast against the **actual** background.
+
+- Normal text: **≥ 4.5:1**
+- Large-scale text: **≥ 3:1**
+- Meaningful icons / graphical controls / UI boundaries: **3:1** where WCAG non-text contrast applies
+
+Includes: body, metadata, placeholders where relied upon, disabled/read-only where requirements apply, badges, nav labels, table text, captions, links, buttons, selected states, focus indicators, icons.
+
+PGS purple, muted gray, pale backgrounds, badges, and secondary text must be tested. **NO LOW-CONTRAST "DESIGNER GRAY".**
+
+If Figma color fails accessibility: preserve visual intent, adjust the token to the nearest compliant accessible value. Accessibility wins over pixel-perfect color matching.
+
+## Color is never the only signal
+
+Status must not rely only on red / green / purple / gray. Also provide text, icon, badge label, and/or shape/state.
+
+Not only a green dot → `"Approved"` + indicator. Not only a red border → `"Required field"` / error message.
+
+## Typography / zoom / reflow
+
+Use real text, not images of text. Text must remain usable when enlarged. Do not create fixed-height containers that clip text.
+
+Avoid tiny metadata, overflow-hidden without an accessible way to obtain full content, non-wrapping labels that break at zoom, and absolute positioning that overlaps when text grows. Use scalable/rem-based typography where practical. No PGS application text below the established readable design floor unless an explicitly approved exceptional component proves accessibility.
+
+Interface must remain usable at **200%** text/zoom without loss of content or functionality. Reflow rather than requiring horizontal + vertical scrolling together, except genuinely two-dimensional content such as wide data tables. Test important pages at 100%, 200%, and narrow/mobile.
+
+## Keyboard and focus
+
+Everything interactive must be keyboard operable: logical tab order; Enter/Space where native semantics require it; Escape closes dismissible menus/dialogs/sheets; no keyboard traps; focus returned after modal/sheet closes. Do **not** use `tabindex > 0`.
+
+Never remove visible focus indication. Keyboard focus must be clearly visible and not hidden behind sticky header, sheet, modal, overlay, or sidebar. Do not rely on an imperceptible color change.
+
+Use approved shadcn/Radix primitives for dialog / sheet / dropdown / tooltip. Verify accessible title/name, focus, Escape, keyboard navigation, role/state, trigger naming. Tooltip must never be the only way essential information is available.
+
+## Forms
+
+Every form control needs a persistent programmatic label. **Placeholder is not the only label.** Errors must identify the affected control, explain what is wrong, and be programmatically associated where appropriate. Required fields must not rely on color alone. Validation should preserve entered values wherever safe.
+
+## Motion
+
+Do not require animation to understand state. Respect `prefers-reduced-motion` for non-essential motion. No flashing / distracting effects.
+
+## Figma vs accessibility
+
+FIGMA IS VISUAL AUTHORITY. ACCESSIBILITY IS A HARD IMPLEMENTATION CONSTRAINT.
+
+When approved Figma has insufficient contrast, inaccessible tiny text, ambiguous icon-only controls, keyboard-incompatible interaction, color-only state, or clipping at zoom: **do not silently copy the defect.** Return:
+
+```
+FIGMA ACCESSIBILITY ADAPTATION
+ORIGINAL: <design>
+ISSUE: <WCAG/accessibility problem>
+PGS IMPLEMENTATION: <smallest visual adjustment preserving owner's design>
+```
+
+Do not redesign the page unnecessarily.
+
+## Checks
+
+For meaningful UI changes, run the project's available accessibility checks. Prefer Playwright + axe where appropriate. Automated tools are **not** sufficient alone. Also test keyboard, visible focus, contrast, accessible names, zoom/reflow, modal/sheet behavior.
+
+Do **not** call accessibility PASS if checks were not performed.
+
+## Postflight (required on meaningful UI work)
+
+ACCESSIBILITY:
+
+- Semantic HTML: PASS / FAIL
+- Accessible names: PASS / FAIL
+- Contrast: PASS / FAIL
+- Keyboard: PASS / FAIL
+- Focus: PASS / FAIL
+- Forms/labels: PASS / N/A / FAIL
+- Zoom/reflow: PASS / FAIL
+- Automated accessibility scan: PASS / FAIL / NOT RUN
+- Known exceptions: \<exact items\>

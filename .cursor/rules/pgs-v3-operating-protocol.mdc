@@ -1,33 +1,35 @@
 ---
-description: PGS V3 operating protocol — roles, sources, approval gate, product invariants
+description: PGS V3 operating protocol — roles, two truths, GO AHEAD gate, phase/data bounds
 alwaysApply: true
 ---
 
 # PGS V3 operating protocol
 
+Permanent companion rules: `pgs-v3-product-recovery.mdc`, `pgs-v3-frontend-figma.mdc`, `pgs-v3-domain-contracts.mdc`, `pgs-v3-reference-bank.mdc`, `pgs-v3-accessibility.mdc`.
+
+Applies to Operations, Student Operations, CMS, Student/Public frontend, Guardian Portal, CRM, Analytics, and future modules.
+
 ## Roles
-- Owner = final decisions. ChatGPT = architect/QC mentor. Cursor = implementation engineer.
+- Owner = final product, workflow, business, and visual authority.
+- Cursor = implementation engineer. Does not independently redefine product behavior.
+- ChatGPT = logic, architecture, QC, and implementation review.
+- Owner decision wins over legacy code, Figma, current V3, and reference apps.
+
+## Two truths — never mix
+- **Product / UX / visual:** latest owner decision → PGS Flow → approved Figma (V6, V6 Pop-up, backend Figma where relevant) → original developer implementation → public HTML / live legacy → legacy MySQL as supporting evidence.
+- **Engineering / security:** current certified V3 → Supabase Auth → Postgres → RLS → trusted RPC/server → canonical permissions → `mentor_assignments` → `premium_entitlement` → Phase 4D documents → `audit_events` → approved migrations/contracts.
+- Legacy may define **business intent**. Legacy does **not** override modern security.
+
+## Every turn
 - Propose → wait for `GO AHEAD` → implement. If the plan changes, re-propose and wait again.
+- No universe scouting. No phase creep. No inventing workflows, pages, or SaaS copies that already have a PGS source.
+- Default inspection: current task → affected modules → direct deps → direct DB/RLS/API → proposal. Broaden only for conflict, missing source, stale evidence, security-critical verification, or owner-requested audit.
 
-## Source priority
-1. Owner decisions + PGS Flow / approved Figma = product/flow truth
-2. Current PGS V3 = implementation truth
-3. Only if missing/conflicting: `public_html`, Hostinger DB/SQL, PurpleGuide GitHub (read-only recovery)
-- Do not broadly re-scout or modify legacy references. Prefer reuse of business logic; modernize security — do not copy insecure legacy architecture.
-
-## Frontend
-- Default: KEEP existing approved frontend. Build backend/DB/security/RBAC/CMS/Operations/documents/Premium under it.
-- Change UI only when owner asks, approved reference requires restoration, or the task needs a small behavior change. Never redesign because the backend changed. Do not invent pages when an approved/conversion reference exists.
-- PGS Flow = navigation/product map (from → screen/state → data/action → backend). Figma V6 / V6 Pop-up = frontend reference, not redesign permission.
-
-## Scope (no universe scouting)
-- Default: current task → affected modules → direct deps → direct DB/RLS/API → proposal.
-- Expand only for conflict, missing info, stale evidence, security-critical verification, or failed implementation needing reference evidence.
-
-## Pre-implementation gate
-Before meaningful work, show briefly: WHAT EXISTS → WRONG/MISSING → WHY → PROPOSED → AFTER (PGS terms) → files/DB/modules touched → what will NOT be touched. ELI5 + compact BEFORE→AFTER. Then STOP.
+## Pre-implementation
+Return the four-source decision output in `pgs-v3-product-recovery.mdc`. For UI, include the visual plan in `pgs-v3-frontend-figma.mdc`. Then **STOP**.
 - No code, migrations, Supabase changes, deletes, installs, commits, pushes, or deploys until `GO AHEAD`.
 - Explicit fresh approval required for: data/Auth deletes, migrations on connected DB, RLS/Storage changes, prod env vars, destructive Git, production deploy/promotion.
+- If real/business/test user data needs keep/delete/migrate: **STOP** and ask the owner. Do not silently preserve or destroy it.
 
 ## Product invariants (unless owner changes them)
 - Student UI states only: `anonymous` | `authenticated_standard` | `authenticated_premium`
@@ -36,6 +38,7 @@ Before meaningful work, show briefly: WHAT EXISTS → WRONG/MISSING → WHY → 
 - Documents: normal access requires explicit `clean`; non-clean/unknown fails closed
 - Frontend visibility ≠ security; authorize server/DB-side
 
-## Proof & reports
+## After implementation
+Compact Vomit Protocol in `pgs-v3-product-recovery.mdc`. Tests passing = engineering verified, not product verified. Visual/workflow changes need owner Preview QC.
 - Do not weaken product/security to force a test green. Skipped/not-run ≠ passed.
-- After work: GOAL → BEFORE → CHANGED → AFTER → REUSED → PROVED → REMAINS → PASS/FIX/BLOCKED. Compact; no dump of greps/SQL/logs/textbook repeats.
+- Meaningful UI work must include the accessibility postflight in `pgs-v3-accessibility.mdc`. Do not call accessibility PASS if checks were not performed. Contrast/a11y defects are not “only visual.”

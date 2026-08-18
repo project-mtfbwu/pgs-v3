@@ -1,0 +1,95 @@
+---
+description: One-truth domain contracts — surfaces, identity, RBAC, Scoreboard, Student Ops, comments, Loopboard, documents
+alwaysApply: true
+---
+
+# PGS V3 domain contracts
+
+Permanent architecture: **one truth per domain**. Different surfaces are different interfaces into the same truth.
+
+- ONE STUDENT · ONE STAFF IDENTITY · ONE AUTH FOUNDATION
+- ONE ASSIGNMENT TRUTH (`mentor_assignments`)
+- ONE PREMIUM TRUTH (`premium_entitlement`)
+- ONE DOCUMENT TRUTH (Phase 4D)
+- ONE COMMENT / CONVERSATION TRUTH
+- ONE LOOPBOARD TRUTH
+- ONE AUDIT HISTORY (`audit_events`)
+- ONE RECIPIENT-AWARE NOTIFICATION DOMAIN
+
+STUDENT FRONTEND = student's interface. OPERATIONS = staff operational interface. CMS = content/catalog interface. SCOREBOARD = permission-shaped measurement. VIEW AS STUDENT = secure staff preview. GUARDIAN PORTAL = guardian interface to explicitly approved linked-child data.
+
+Do not combine Operations, CMS, and Student/Public into one generic admin system.
+
+## One staff identity
+
+Do not create `ops_users`, `cms_users`, a separate Ops login authority, or a separate CMS role universe.
+
+Use: Supabase Auth → staff profile → roles/permissions → surface access → record scope.
+
+A staff member may have Ops only, CMS only, both, or neither. Surface permission is separate from identity.
+
+## Role / permission / scope
+
+Role is a permission bundle. Role name alone is not authority.
+
+AUTH USER → STAFF PROFILE → ROLE/PERMISSIONS → SURFACE ACCESS → RECORD SCOPE
+
+Examples: Super Admin = broad authorized scope. Admin = organization-authorized scope. Mentor = assigned students only. Read-only Staff = explicitly permitted read scope.
+
+Never fetch all rows then hide unauthorized rows in React. Unauthorized data must not leave the trusted backend/RLS boundary.
+
+## Scoreboard
+
+Not decoration. Interaction: SEARCH → SEGMENT → MEASURE → CLICK → INSPECT → OPERATE.
+
+Metrics must be truthful, permission-shaped, traceable, and drillable where useful. No fake percentage changes, trend arrows, sparklines, charts, comparisons, or organization totals without real data contracts.
+
+Mentor Scoreboard concept: WHAT HAPPENED · WHAT IS PENDING · WHY · NEXT ACTION. Do not fabricate those metrics before their data contracts exist.
+
+## Student Operations
+
+Lives inside Operations. Flow: `/ops/students` → find student → Student Profile → Student Operations.
+
+It is **not** another student database, a fake staff copy of the student frontend, or a newly invented Student360 product. It is the staff interface into the **same** authoritative student domains.
+
+For each Student Operations module: legacy recovery → owner/Figma mapping → current Supabase mapping → Reference Bank check → ADOPT / ADAPT / REJECT → proposed contract → owner approval → implement staff interface → connect same truth to existing student frontend → owner Preview QC.
+
+## View as Student
+
+Operations → Student → secure short-lived preview context → **actual existing** Student frontend.
+
+Never ask for the student password, takeover the student session, become the real student, or create a fake copy of the student dashboard.
+
+V1: read-only, explicit staff-preview indicator, mutation prevention, dedicated permission if required, audit start/end.
+
+## Comments
+
+One authoritative conversation domain. Desired: student comment → staff notification → staff reply → student notification → continuing conversation (and the reverse). Do not build two comment systems. Do not replace the approved student Comments UI unnecessarily.
+
+## Loopboard
+
+One authoritative #PGS Loopboard. Staff and Student interfaces use the same board truth.
+
+Preserve useful legacy: stages, ordering, stage-entry timestamps, notifications. Modernize with: creator, history/audit, approved student-created items, staff lock state, due date where approved.
+
+Do not add Jira bureaucracy (sprints, story points, epics) unless the owner explicitly requests them.
+
+## Documents
+
+Never revive legacy filesystem architecture. Phase 4D is canonical: private Storage → staged upload → finalize → scan/QC pending → clean/blocked/failed → versioning → deliverability → archive/delete lifecycle.
+
+Legacy document workflow may inform staff UX (student upload → staff review → state change → student notification). Phase 4D remains security authority.
+
+## Notifications / audit / logs
+
+Keep separate: **NOTIFICATIONS** = recipient needs to know or act. **AUDIT** = immutable who-did-what (`audit_events`). **RUNTIME LOGS** = technical observability.
+
+Long-term notifications: one recipient-aware domain supporting student and staff recipients.
+
+## Surface split
+
+**Operations:** people, students, assignments, workflow, progress, staff, scoreboard, notifications, activity.
+
+**CMS:** content, catalog, universities, courses, events, resources, FAQs, popups, publishing, SEO, media.
+
+**Student / Public:** existing owner-designed product experience.

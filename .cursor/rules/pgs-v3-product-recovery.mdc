@@ -1,0 +1,74 @@
+---
+description: Four-source recovery gate, KEEP/REPLACE, ADOPT/ADAPT/REJECT, GO AHEAD and Vomit Protocol
+alwaysApply: true
+---
+
+# PGS V3 product recovery
+
+Prevent inventing existing workflows, rebuilding owner-designed frontend, losing useful legacy business logic, copying insecure legacy architecture, random SaaS/GitHub inspiration, phase creep, and implementation before owner approval.
+
+Never start from zero unless all prior sources prove that nothing useful exists.
+
+## Four-source gate (before meaningful implementation)
+
+Inspect only the relevant area. Do not universe-scout.
+
+**SOURCE A — LEGACY DEVELOPER.** What did the original developer already build? Recover: workflow, tables, states, relationships, role logic, notifications, frontend connection. Reconstruct: ROUTE → CONTROLLER → VIEW → DATABASE TABLE(S) → BUSINESS RULE → ROLE/SCOPE → NOTIFICATION → STUDENT/PUBLIC RESULT.
+
+**SOURCE B — OWNER / FIGMA / PGS.** Latest owner decision, PGS Flow, approved Figma, current approved frontend, owner conversation decisions.
+
+**SOURCE C — PGS REFERENCE BANK.** Use **only** the named bank entry for the problem family (`pgs-v3-reference-bank.mdc`). Study mature app + approved OSS + approved framework. Do not independently pick products or repos. If no bank ID fits: `REFERENCE BANK GAP — <problem>`.
+
+**SOURCE D — CURRENT PGS V3.** Schema, permissions, RLS, RPCs, server actions, components, frontend, migrations, tests. Do not create a duplicate domain if V3 already has one.
+
+### Required decision output — then STOP
+
+LEGACY FINDINGS · OWNER / FIGMA FINDINGS · REFERENCE BANK FINDINGS · CURRENT V3 FINDINGS · ADOPT · ADAPT · REJECT · PROPOSED PGS CONTRACT · BEFORE FLOW · AFTER FLOW · SECURITY MODEL · DATA MODEL · VISUAL PLAN · FILES / TABLES AFFECTED · TEST PLAN · DEFERRED WORK · OWNER DECISIONS REQUIRED
+
+Also include: WHAT · WHY · USER EXPERIENCE · DATA / AUTHORITY · ROLLBACK / PHASE IMPACT.
+
+Wait for explicit `GO AHEAD`. Exception only when the owner already approved this exact implementation batch.
+
+## ADOPT / ADAPT / REJECT
+
+- **ADOPT** = already correct for PGS.
+- **ADAPT** = useful, but must be modernized or changed for PGS.
+- **REJECT** = inappropriate, insecure, overbuilt, duplicated, or conflicts with owner intent.
+
+Examples: legacy Kanban stage ordering → ADOPT. Legacy one-comment-one-admin-reply → ADAPT into continuing conversation. Legacy filesystem document download → REJECT. HubSpot generic CRM object-builder → REJECT unless owner needs it. Figma dashboard rhythm → ADOPT/ADAPT. Fake chart because a reference app has one → REJECT.
+
+## Legacy KEEP / REPLACE
+
+Do not dismiss legacy because it is PHP, insecure, monolithic, or old MySQL. Recover the **business contract**. Do not copy the insecure implementation.
+
+**Typical KEEP:** workflow, status/state concepts, staff operating sequence, page relationships, notification triggers, deep-link concepts, ordering logic, timestamps/history intent, useful business constraints.
+
+**Typical REPLACE:** PHP sessions, plaintext/weak passwords, raw SQL interpolation, client-trusted permissions, direct filesystem access, giant controllers, runtime CREATE TABLE, duplicate role systems, `users.mentor_admin_id` as canonical relationship, `purplepremium_applications` as Premium truth, old general audit.
+
+Modern replacements: mentor field → `mentor_assignments`. Premium application status → `premium_entitlement`. Document filesystem/QC → Phase 4D private Storage lifecycle. Audit → `audit_events`. Login → Supabase Auth. Role checks → canonical DB-backed permissions + RLS.
+
+Useful legacy patterns already proven: student list as staff operating entry; mentor-assigned student scope; per-student management workspace; dashboard progress fields; finalized universities; comments and replies; Kanban / progress board; review queue; counselor notes; important alerts; document QC; recipient-aware student notifications; deep links to exact student frontend sections.
+
+## Current-product check before rebuild
+
+Prove WHAT EXISTED → WHAT WAS CONVERTED → WHAT CHANGED LATER → WHAT EXISTS NOW → WHERE THE DEFECT / DRIFT IS. Do not assume current code is wrong merely because it differs from a reference product.
+
+## Phase boundary
+
+Never implement a later phase just to make the current screen prettier. Example: OPS-01B visual phase must not secretly implement OPS-02 Registry, OPS-03 Search, OPS-05 Assignment, or OPS-06 analytics contracts. If a richer design needs future data: show the intended layout, mark the block **DEFERRED**, do not fake it.
+
+## Existing data
+
+If implementation discovers real/business/test user data requiring migration or compatibility work: **STOP**. Ask owner KEEP / DELETE / MIGRATE.
+
+## After implementation (Vomit Protocol)
+
+GOAL · BEFORE · CHANGED · AFTER · LEGACY LOGIC REUSED · REFERENCE PATTERNS USED · FILES / MIGRATIONS · SECURITY IMPACT · TESTS · ACCESSIBILITY · DEFECTS / REMAINS · PREVIEW · OWNER QC REQUIRED
+
+Do not dump search logs, unchanged files, giant excerpts, or irrelevant reasoning.
+
+Tests passing = **engineering verified**. Visual/workflow changes also need owner Preview QC = **product verified**. Meaningful UI work must include the accessibility postflight in `pgs-v3-accessibility.mdc`; do not call accessibility PASS if checks were not performed. Fix contrast/a11y defects before product verification.
+
+## Final formula
+
+LEGACY DEVELOPER KNOWLEDGE + OWNER PRODUCT LOGIC + OWNER FIGMA / PGS FLOW + PGS REFERENCE BANK + CURRENT CERTIFIED V3 SECURITY / ARCHITECTURE → SMALLEST CORRECT PGS CONTRACT → VISUAL / TECHNICAL PLAN → OWNER APPROVAL → IMPLEMENT → TEST → OWNER PREVIEW QC.

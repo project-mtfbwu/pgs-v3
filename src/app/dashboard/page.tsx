@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AskPurpleGuide } from "@/components/ask-purple-guide";
 import { DeveloperStudentIdentityCard, DeveloperStudentShell } from "@/components/developer-student-shell";
 import { NoStudentContextPage } from "@/components/no-student-context-page";
 import { PremiumComments } from "@/components/premium-comments";
@@ -29,6 +30,7 @@ export default async function PremiumDashboardPage() {
   const shortlisted = workspace.universities.filter((item)=>item.stage!=="finalized"&&item.stage!=="declined");
   const finalized = workspace.universities.filter((item)=>item.stage==="finalized");
   return <DeveloperStudentShell name={name} email={user.email ?? ""} avatarUrl={avatarUrl} stateKind={state.kind} unreadCount={state.unreadCount} notifications={state.notifications} active="premium" preview={state.preview} contentClassName="developer-premium-dashboard">
+    <AskPurpleGuide />
     <section className="pt-0 mobile-student-cart about-section half-section overlap-height position-relative overflow-hidden pl-100px">
       <DeveloperStudentIdentityCard name={name} email={user.email??""} avatarUrl={avatarUrl} pathway={dashboard?.pathway_label||profile.study_level} premiumActive />
       <div className="container overlap-gap-section p-0">

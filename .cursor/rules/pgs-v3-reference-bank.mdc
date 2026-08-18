@@ -1,0 +1,75 @@
+---
+description: PGS Reference Bank catalog, locked stack, and study-not-copy rules for non-frontend work
+alwaysApply: true
+---
+
+# PGS Reference Bank (non-frontend)
+
+This catalog is **Source C** of the four-source implementation gate. See `pgs-v3-product-recovery.mdc`. Bank products are not product authority.
+
+Applies to Operations, dashboards, CMS, RBAC, documents, Premium, APIs, and other non-frontend work. Student/public frontend remains PGS Flow / Figma / legacy parity — do not restyle from bank products.
+
+Do **not** independently select SaaS products, GitHub repos, UI kits, frameworks, or libraries. Never implement a feature just because HubSpot, Linear, Plane, Twenty, or Contentful has it — PGS must have an actual product reason.
+
+## Required study (per module)
+
+1. Identify the applicable **Bank ID** from the catalog below.
+2. Study **only** that row’s mature app, OSS repo, and approved framework/library.
+3. Return: **APP LESSONS** · **OSS IMPLEMENTATION LESSONS** · **FRAMEWORK CAPABILITIES** · **ADOPT** · **ADAPT** · **REJECT**.
+
+If no bank ID fits: **STOP**. Return `REFERENCE BANK GAP — <problem>`. Do not pick a substitute.
+
+## Authority (bank is lowest)
+
+OWNER DECISION → PGS FLOW / FIGMA → existing PGS V3 architecture → developer legacy evidence → Reference Bank.
+
+A reference may **never** override: owner product logic, PGS frontend design, Supabase RLS, canonical RBAC, `mentor_assignments`, `premium_entitlement`, Phase 4D document security, `audit_events`.
+
+## OSS = inspect, never dump
+
+Open-source does **not** mean copy code. Reference repos are for:
+
+- architecture, data model, state flow, component decomposition, tests, UX edge cases
+
+**Not:** copying huge files into PGS.
+
+Before copying any implementation: identify license, exact file, prove compatibility, and state why reuse beats composing the existing locked stack. **AGPL / GPL / fair-source:** pattern study only unless the owner explicitly approves otherwise.
+
+Bank frameworks are **approved to consider, not auto-install.** Before adding a dep, prove: the project does not already solve it; it materially reduces custom code; it is maintained; security/performance impact is acceptable. Transitive packages are not approved direct deps.
+
+## Catalog (owner-locked)
+
+| ID | PGS use | Mature app | OSS (study) | Framework/library | Study |
+|---|---|---|---|---|---|
+| **RB-01 CRM CORE** | OPS Student Registry, search, tags, filters, assignments, later Mini CRM | HubSpot CRM | `twentyhq/twenty` | shadcn/ui + TanStack Table | record index, filters, saved views, ownership, drill-down, operational tables |
+| **RB-02 ACCESS** | People & Access, staff grades, surface access, permissions | GitHub Orgs/Teams | `supabase/supabase` | Supabase Auth + Postgres RLS | role vs permission, team membership, least privilege, grant/revoke |
+| **RB-03 SCOREBOARD** | Admin Scoreboard, mentor mini-scoreboard, targets, later analytics | HubSpot Reporting | `PostHog/posthog` | shadcn Charts + Recharts | real metrics, filters, date ranges, segmentation, drill-down, trends |
+| **RB-04 NOTIFICATIONS** | Ops + Student Notifications, Activity entry points | Linear Inbox | `chatwoot/chatwoot` | Supabase Realtime + shadcn/ui | recipient inbox, unread, deep links, prioritization, event context |
+| **RB-05 COMMENTS** | Student ↔ mentor comments/replies | Intercom Inbox | `chatwoot/chatwoot` | Supabase Realtime + shadcn/ui | threading, replies, assignment/context, notifications, chronological events |
+| **RB-06 LOOPBOARD** | #PGS Loopboard, Kanban, Current Work, Future Tasks | Linear | `makeplane/plane` | dnd-kit + shadcn/ui | board/list state, ordering, move history, due dates, DnD a11y |
+| **RB-07 REVIEW WORK** | Review Queue, Pending Work, Important Alerts | Linear | `makeplane/plane` | shadcn/ui; dnd-kit only if ordering needed | work queues, priorities, status, actionable lists, compact workflow |
+| **RB-08 DOCUMENTS** | Upload Your Docs, staff review, document tracker | Google Drive | `paperless-ngx/paperless-ngx` | Existing Phase 4D + Supabase Storage | organization, versions, metadata, status/history, searchability — **not** storage architecture |
+| **RB-09 CMS CORE** | pages, resources, universities, courses, events, FAQs, testimonials | Contentful | `payloadcms/payload` | shadcn/ui + React Hook Form + Zod | structured modeling, field editing, validation, relationships, role-aware editing |
+| **RB-10 CMS PUBLISHING** | draft/publish/preview/version history | Contentful | `payloadcms/payload` | Next.js Draft Mode | draft vs published truth, versions, preview, publish authority, rollback |
+| **RB-11 CMS RICH CONTENT** | Rich text only where existing PGS content requires it | Contentful | `payloadcms/payload` | Lexical | structured rich text, embeds, editor UX — **never** a page builder |
+| **RB-12 ADVANCED ANALYTICS** | Advanced Search/Analytics after core system | PostHog | `PostHog/posthog` | shadcn Charts + Recharts | segmentation, events, funnels/trends only with real PGS event truth |
+| **RB-13 OBSERVABILITY** | final hardening, runtime errors, performance | Sentry | `getsentry/sentry` | Sentry SDK / OpenTelemetry + Playwright | errors, traces, performance, debugging — **not** product `audit_events` |
+| **RB-14 GUARDIAN** | future Parent/Guardian Portal | Canvas parent-portal patterns | Moodle family — study only | Supabase Auth/RLS + shadcn/ui | linked-child scope, limited visibility, guardian UX. **Provisional until Guardian phase.** |
+| **RB-15 AI ANALYST** | future AI analysis layer | locked later | locked later | locked later | **Do not choose an AI stack.** Freeze only when core operational data is complete. |
+
+## PGS CORE — already locked
+
+Next.js App Router · React · TypeScript · Supabase Postgres/Auth/Storage/RLS/RPCs · Vercel · Tailwind CSS 4 (internal/ops with shadcn; do not replace student/public retained CSS)
+
+| Concern | Locked choice |
+|---|---|
+| UI | shadcn/ui + Lucide |
+| Large operational tables | TanStack Table |
+| Kanban / sortable UI | dnd-kit |
+| Real charts | shadcn Chart → Recharts |
+| Forms | React Hook Form + Zod |
+| Live comments / notifications | Supabase Realtime **only** when live delivery materially improves the workflow |
+| CMS preview | Next.js Draft Mode |
+| CMS rich text | Lexical **only** where actual PGS content requires rich text |
+| Testing | Playwright + existing unit/type/lint/security suites |
+| Observability | Sentry SDK; OpenTelemetry where justified |
