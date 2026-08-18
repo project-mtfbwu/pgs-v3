@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import { operationsRoboto } from "@/lib/operations-font";
 import styles from "./operations-login.module.css";
 
-export function OperationsLogin({ redirectPath }: { redirectPath: string }) {
+export function OperationsLogin({ redirectPath, guardianSurface = false }: { redirectPath: string; guardianSurface?: boolean }) {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -38,13 +38,13 @@ export function OperationsLogin({ redirectPath }: { redirectPath: string }) {
           <span aria-hidden="true">P</span>
           <div>
             <strong>Purple Guide</strong>
-            <small>Operations</small>
+            <small>{guardianSurface ? "Parent / Guardian Portal" : "Operations"}</small>
           </div>
         </div>
         <div className={styles.intro}>
-          <p>Internal staff access</p>
-          <h1 id="operations-login-title">Sign in to Operations</h1>
-          <span>Use your authorized PGS staff identity to continue.</span>
+          <p>{guardianSurface ? "Guardian access" : "Internal staff access"}</p>
+          <h1 id="operations-login-title">{guardianSurface ? "Sign in to Guardian Portal" : "Sign in to Operations"}</h1>
+          <span>{guardianSurface ? "Sign in with your invited guardian identity to continue." : "Use your authorized PGS staff identity to continue."}</span>
         </div>
         <form onSubmit={submit} className={styles.form}>
           <label>
@@ -60,7 +60,7 @@ export function OperationsLogin({ redirectPath }: { redirectPath: string }) {
             {submitting ? "Signing in…" : "Sign in"}
           </button>
         </form>
-        <p className={styles.help}>Access is permission-controlled and recorded in the PGS audit system.</p>
+        <p className={styles.help}>{guardianSurface ? "Access is invitation-only. You can only view the specific student information PGS has authorized for guardians." : "Access is permission-controlled and recorded in the PGS audit system."}</p>
       </section>
     </main>
   );

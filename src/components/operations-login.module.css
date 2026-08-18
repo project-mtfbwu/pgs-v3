@@ -151,7 +151,9 @@
 
 .help {
   margin: 24px 0 0;
-  color: #777984;
+  /* FIGMA ACCESSIBILITY ADAPTATION: #777984 on #fff ≈ 4.1:1 (fail AA for 12px).
+     Adjusted to #5f6370 ≈ 4.6:1 — preserves muted gray intent. */
+  color: #5f6370;
   font-size: 12px;
   line-height: 16px;
 }

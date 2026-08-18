@@ -14,5 +14,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (params.surface === "operations") {
     return <OperationsLogin redirectPath={safeNext(params.redirect, "/admin")} />;
   }
+  if (params.surface === "guardian") {
+    // Guardian portal sign-in uses the same operations login component with guardian framing.
+    return <OperationsLogin redirectPath={safeNext(params.redirect, "/portal")} guardianSurface />;
+  }
   return <PublicLegacyPage slug="login" html={withLoginError(loginHtml, params.error)} />;
 }

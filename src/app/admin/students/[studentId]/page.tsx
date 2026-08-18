@@ -4,12 +4,14 @@ import { StaffKanbanBoard } from "@/components/staff-kanban-board";
 import { StaffWorkspaceControls } from "@/components/staff-workspace-controls";
 import { StaffWorkspacePanels } from "@/components/staff-workspace-panels";
 import { StudentCrmIdentityPanel } from "@/components/student-crm-identity-panel";
+import { StudentGuardiansPanel } from "@/components/student-guardians-panel";
 import { loadStaffStudentCrmProfile, loadStudentCrmTags } from "@/lib/operations-student-crm-server";
 import { registryShowsOpenColumn } from "@/lib/operations-student-registry-server";
 import { loadPremiumWorkspace, WorkspaceAccessError } from "@/lib/premium-workspace";
 import { can, requireStaffPermission } from "@/lib/staff-auth";
 import { canViewStudent, requireStudentViewer } from "@/lib/student-access";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { staffListStudentGuardians } from "@/lib/guardian-portal-server";
 
 export default async function AdminStudentWorkspace({ params }: { params: Promise<{ studentId: string }> }) {
   const { studentId } = await params;
@@ -60,6 +62,10 @@ export default async function AdminStudentWorkspace({ params }: { params: Promis
   }
   if (workspace?.profile?.full_name) authorLabels[studentId] = workspace.profile.full_name;
 
+  const canManageGuardians = can(context, "student_workspace.manage_all");
+  const guardiansResult = await staffListStudentGuardians(studentId);
+  const guardians = "rows" in guardiansResult ? guardiansResult.rows : [];
+
   return <main className="ops-page">
     <AdminPageHeader
       eyebrow={workspace ? "Student workspace" : "Student"}
@@ -74,6 +80,11 @@ export default async function AdminStudentWorkspace({ params }: { params: Promis
       availableTags={availableTags}
       canCreateTags={can(context, "student_workspace.manage_all")}
       profile={crm}
+    />
+    <StudentGuardiansPanel
+      studentId={studentId}
+      initialGuardians={guardians}
+      canManage={canManageGuardians}
     />
     {workspace ? (
       <>

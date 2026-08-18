@@ -46,6 +46,21 @@ export async function GET(request: Request) {
           }
         }
       }
+
+      // Guardian invite acceptance: check user_metadata for guardian context hint
+      // (set during guardian invite). This avoids an extra resolveActorContext call
+      // for all other auth flows, preserving existing OAuth test invariants.
+      // Note: user_metadata is not used for authorization; the RPC itself validates
+      // active guardian relationship by auth.uid() + email match.
+      const pgsContext = data.user.user_metadata?.pgs_context as string | undefined;
+      if (pgsContext === "guardian") {
+        await supabase.rpc("accept_pending_guardian_relationships");
+        const safeRedirect = next === "/portal" || next.startsWith("/portal/") ? next : "/portal";
+        const response = NextResponse.redirect(new URL(safeRedirect, origin));
+        response.headers.set("Cache-Control", "private, no-store");
+        return consumeStudentOAuthIntent(response);
+      }
+
       const response=NextResponse.redirect(new URL(next,origin));
       if(next==="/reset_password"){
         const grant=hasOtpAuthenticationMethod(data.session.access_token)?createRecoveryGrant(data.user.id,data.session.access_token):null;
