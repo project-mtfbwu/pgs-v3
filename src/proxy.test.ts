@@ -23,6 +23,11 @@ describe("canonical Operations product routing", () => {
     expect(response.headers.get("location")).toBeNull();
   });
 
+  it("lets the merged dashboard alias reach its canonical route redirect", async () => {
+    const response = await proxy(request("/dashboard"));
+    expect(response.headers.get("location")).toBeNull();
+  });
+
   it("routes unauthenticated Operations requests to staff login with the exact return URL", async () => {
     const response = await proxy(request("/ops/students?premium=active&mentor=actor-1"));
     const location = new URL(response.headers.get("location")!);

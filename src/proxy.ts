@@ -31,7 +31,7 @@ const exactLegacyRoutes: Record<string, string> = {
 // Feed, progress, and document routes intentionally expose anonymous locked frames;
 // the underlying resources remain independently protected by server Auth/RLS.
 const protectedPaths = ["/student", "/saved", "/notifications", "/singup", "/change_password", "/dashboard", "/mentor", "/admin", "/ops", "/cms", "/portal"];
-const anonymousPreviewPaths = new Set(["/student/dashboard"]);
+const anonymousPreviewPaths = new Set(["/student/dashboard", "/dashboard"]);
 
 function isOperationsPath(pathname: string): boolean {
   return pathname === "/ops" || pathname.startsWith("/ops/");
