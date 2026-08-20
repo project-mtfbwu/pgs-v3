@@ -1,0 +1,39 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "30 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    name: Playwright Role Matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: Preview
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm
+      - name: Skip or run nightly
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL }}
+          PLAYWRIGHT_PROTECTION_BYPASS: ${{ secrets.PLAYWRIGHT_PROTECTION_BYPASS }}
+          PLAYWRIGHT_SUPER_ADMIN_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_SUPER_ADMIN_STORAGE_STATE }}
+          PLAYWRIGHT_ADMIN_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_ADMIN_STORAGE_STATE }}
+          PLAYWRIGHT_MENTOR_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_MENTOR_STORAGE_STATE }}
+          PLAYWRIGHT_READ_ONLY_STAFF_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_READ_ONLY_STAFF_STORAGE_STATE }}
+          PLAYWRIGHT_PREMIUM_STUDENT_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_PREMIUM_STUDENT_STORAGE_STATE }}
+          PLAYWRIGHT_STANDARD_STUDENT_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_STANDARD_STUDENT_STORAGE_STATE }}
+        run: |
+          if [ -z "${PLAYWRIGHT_BASE_URL}" ]; then
+            echo "Preview role-matrix secrets unavailable; nightly skipped."
+            exit 0
+          fi
+          pnpm exec playwright install --with-deps chromium
+          pnpm test:e2e -- --project=desktop
+      - name: Production-dependency audit
+        continue-on-error: true
+        run: pnpm audit --prod

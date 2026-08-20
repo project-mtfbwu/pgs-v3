@@ -1,0 +1,40 @@
+.next
+out
+dist
+coverage
+playwright-report
+test-results
+blob-report
+node_modules
+.pnpm-store
+.vercel
+.auth
+supabase/.temp
+pnpm-lock.yaml
+public
+*.min.css
+*.min.js
+
+# Owner-approved ENT-01V screenshots and mockup HTML — do not reflow
+docs/pgs-v3-implementation/ent-01v-mockups/
+
+# Historic implementation docs — format only when a later commit edits them for content
+docs/pgs-v3-implementation/ent-00-enterprise-ops-cms-plan.md
+docs/pgs-v3-implementation/ent-01-ops-cms-visual-interaction-plan.md
+docs/pgs-v3-implementation/ent-01v-owner-visual-review.md
+docs/pgs-v3-implementation/phase3-frontend-restoration.md
+docs/pgs-v3-implementation/phase36-canonical-frontend-and-premium-validity.md
+docs/pgs-v3-implementation/phase4d-pre-go-live-blocker.md
+docs/pgs-v3-implementation/sec-00-github-ci-security-plan.md
+
+# Historic application tree stays unformatted until a dedicated format PR
+src
+tests
+scripts
+workers
+supabase
+playwright.config.ts
+eslint.config.mjs
+next.config.ts
+tsconfig.json
+vitest.config.ts

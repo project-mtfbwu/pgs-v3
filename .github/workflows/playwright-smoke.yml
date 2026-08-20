@@ -1,0 +1,29 @@
+name: Playwright Smoke
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Playwright Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: Preview
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm
+      - name: Skip or run smoke
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL }}
+          PLAYWRIGHT_PROTECTION_BYPASS: ${{ secrets.PLAYWRIGHT_PROTECTION_BYPASS }}
+        run: |
+          if [ -z "${PLAYWRIGHT_BASE_URL}" ]; then
+            echo "Preview fixtures unavailable; Playwright smoke is not a required check."
+            exit 0
+          fi
+          pnpm exec playwright install --with-deps chromium
+          pnpm exec playwright test tests/e2e/smoke.spec.ts --project=desktop

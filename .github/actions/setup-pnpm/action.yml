@@ -1,0 +1,16 @@
+name: "Setup pnpm and Node 22"
+description: "Corepack pnpm from packageManager, Node 22, frozen lockfile"
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+      with:
+        run_install: false
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+        cache: pnpm
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile

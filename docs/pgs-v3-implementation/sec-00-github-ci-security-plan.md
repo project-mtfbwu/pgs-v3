@@ -1,6 +1,6 @@
 # SEC-00 — GitHub CI and certification plan
 
-Status: **design only**. This document does not add workflows, Dependabot files, Prettier config, GitHub settings, Vercel settings, or application code.
+Status: **implemented in SEC-01** (repository files + GHAS enablement). Companion evidence: [`sec-01-github-ci-security.md`](sec-01-github-ci-security.md). This file remains the design record. Branch protection is **not** enabled.
 
 Companion: [`ent-00-enterprise-ops-cms-plan.md`](ent-00-enterprise-ops-cms-plan.md), [`ent-01-ops-cms-visual-interaction-plan.md`](ent-01-ops-cms-visual-interaction-plan.md).
 
