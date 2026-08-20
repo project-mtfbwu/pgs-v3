@@ -12,28 +12,28 @@ vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: vi.fn() })
 vi.mock("@/lib/actor-context", () => ({ resolveActorContext: vi.fn() }));
 import { classifyStudentExperience } from "@/lib/student-experience";
 
-const dashboard = readFileSync("src/app/dashboard/page.tsx", "utf8");
+const dashboardAlias = readFileSync("src/app/dashboard/page.tsx", "utf8");
 const feed = readFileSync("src/app/student/dashboard/page.tsx", "utf8");
 const progress = readFileSync("src/app/feed_track_progress/page.tsx", "utf8");
 const documents = readFileSync("src/app/upload_your_doc/page.tsx", "utf8");
 const home = readFileSync("src/app/page.tsx", "utf8");
 
 describe("PRE-OPS05 student frontend state mapping is still the page contract", () => {
-  it("keeps #feed /student/dashboard on recovered HTML unless Premium, which redirects to /dashboard", () => {
-    expect(feed).toContain('if(state.kind==="authenticated_premium")redirect("/dashboard")');
+  it("keeps all three #feed states on the canonical /student/dashboard route", () => {
     expect(feed).toContain('page="student-dashboard"');
+    expect(feed).toContain('if (state.kind !== "authenticated_premium")');
+    expect(feed).toContain("await requirePremiumActor()");
+    expect(feed).toContain("loadPremiumWorkspace(user.id)");
+    expect(feed).toContain('active="feed"');
+    expect(feed).toContain("<RetainedStudentFooter");
+    expect(feed).not.toContain('redirect("/dashboard")');
     expect(feed).not.toContain("if (!state.preview)");
     expect(feed).not.toContain("loadPremiumWorkspaceForSubject");
   });
 
-  it("keeps /dashboard on the existing Premium dashboard unless kind is not Premium", () => {
-    expect(dashboard).toContain('if (state.kind!=="authenticated_premium") return <RecoveredStudentLegacyPage html={studentDashboardHtml} page="dashboard-locked"');
-    expect(dashboard).toContain("await requirePremiumActor()");
-    expect(dashboard).toContain("loadPremiumWorkspace(user.id)");
-    expect(dashboard).not.toContain("if (!state.preview)");
-    expect(dashboard).not.toContain("loadPremiumWorkspaceForSubject");
-    expect(dashboard).toContain("preview={state.preview}");
-    expect(dashboard).toContain("readOnly={Boolean(state.preview)}");
+  it("keeps /dashboard as a merged compatibility alias", () => {
+    expect(dashboardAlias).toContain('redirect("/student/dashboard")');
+    expect(dashboardAlias).not.toContain("loadPremiumWorkspace");
   });
 
   it("keeps Track Your Progress locked for anonymous/Standard and PremiumProgressBoard for Premium", () => {

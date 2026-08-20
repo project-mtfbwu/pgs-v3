@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const dashboard = readFileSync("src/app/dashboard/page.tsx", "utf8");
+const dashboard = readFileSync("src/app/student/dashboard/page.tsx", "utf8");
+const premiumDashboard = readFileSync("src/components/premium-student-dashboard.tsx", "utf8");
+const dashboardAlias = readFileSync("src/app/dashboard/page.tsx", "utf8");
 const migration = readFileSync("supabase/migrations/20260817035326_recover_premium_frontend_contract.sql", "utf8");
 const workspaceApi = readFileSync("src/app/api/staff/students/[studentId]/workspace/[resource]/route.ts", "utf8");
 const documentAccess = readFileSync("src/lib/document-access.ts", "utf8");
@@ -9,13 +11,22 @@ const documentAccess = readFileSync("src/lib/document-access.ts", "utf8");
 describe("Premium frontend recovery contract", () => {
   it("restores original dashboard regions without the invented replacements", () => {
     for (const section of [
-      "quick-dashboard-overview", "top-picks", "dashboard-notes-actions", "where-you-stand",
-      "finalized-universities", "currently-working-on", "future-tasks", "Upcoming Events"
-    ]) expect(dashboard).toContain(section);
+      "premium-dashboard-stage", "premium-profile-card", "quick-dashboard-overview", "top-picks",
+      "premium-notes-actions", "where-you-stand", "premium-stand-card", "premium-check-card",
+      "finalized-universities", "premium-finalized-board", "currently-working-on",
+      "future-tasks", "premium-task-board", "PremiumComments", "dashboard-calendar-card",
+      "grid-box-style-2 dashboard-events-board", "Upcoming Events"
+    ]) expect(premiumDashboard).toContain(section);
+    expect(premiumDashboard).not.toContain("counsellor <br /> page for");
+    expect(dashboard).toContain("PremiumStudentDashboard");
     expect(dashboard).not.toContain("premium-mentor-card");
     expect(dashboard).not.toContain("StudentKanbanBoard");
     expect(dashboard).not.toContain("premiumCalendarEvents");
     expect(dashboard).not.toContain("Documents<br />Ready");
+    expect(dashboard).not.toContain("canonical-prep-grid");
+    expect(dashboard).not.toContain("dashboard-lower-callout");
+    expect(dashboard).toContain("RetainedStudentFooter");
+    expect(dashboardAlias).toContain('redirect("/student/dashboard")');
   });
 
   it("adds only the approved authored dashboard fields", () => {

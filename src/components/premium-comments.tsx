@@ -1,15 +1,115 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
-export function PremiumComments({ comments, studentId, readOnly = false }: { comments: Array<{ id: string; parent_id: string | null; author_id: string; body: string; created_at: string }>; studentId: string; readOnly?: boolean }) {
-  const [body, setBody] = useState(""); const [message, setMessage] = useState(""); const [busy, setBusy] = useState(false); const [replyTo, setReplyTo] = useState<string | null>(null);
+type PremiumComment = {
+  id: string;
+  parent_id: string | null;
+  author_id: string;
+  body: string;
+  created_at: string;
+};
+
+export function PremiumComments({
+  avatarUrl,
+  comments,
+  name,
+  readOnly = false,
+  studentId
+}: {
+  avatarUrl: string;
+  comments: PremiumComment[];
+  name: string;
+  readOnly?: boolean;
+  studentId: string;
+}) {
+  const [body, setBody] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+
   async function submit(event: React.FormEvent) {
-    event.preventDefault(); setBusy(true); setMessage("");
-    const response = await fetch("/api/premium/comments", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ body, parent_id: replyTo }) });
-    const result = await response.json(); setBusy(false);
-    if (!response.ok) return setMessage(result.message ?? "Unable to add comment.");
+    event.preventDefault();
+    setBusy(true);
+    setMessage("");
+    const response = await fetch("/api/premium/comments", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ body, parent_id: null })
+    });
+    const result = await response.json();
+    setBusy(false);
+    if (!response.ok) {
+      setMessage(result.message ?? "Unable to add comment.");
+      return;
+    }
     window.location.reload();
   }
-  return <section className="premium-comments comment-box-grid" id="comments"><h2 className="fnt-family">Comments</h2><p>Got a quick doubt? Drop it in the comments. Your conversation continues here with your counselor and mentor.</p><div className="premium-comment-list" id="commentsList">{comments.map((comment) => <article key={comment.id} className={`comment-item ${comment.author_id === studentId ? "is-student" : "is-mentor"}${comment.parent_id ? " is-reply" : ""}`}><div className="comment-author"><strong>{comment.author_id === studentId ? "You" : "PGS Team"}</strong></div><p className="comment-content">{comment.body}</p><div className="comment-footer"><time>{new Date(comment.created_at).toLocaleString("en-GB")}</time>{!readOnly ? <button type="button" onClick={() => setReplyTo(comment.id)}>Reply</button> : null}</div></article>)}{!comments.length && <p>No comments yet. Start the conversation when you need help.</p>}</div>{readOnly ? null : <form onSubmit={submit} className="comment-input upload-group-textare">{replyTo && <p>Replying to a comment <button type="button" onClick={() => setReplyTo(null)}>Cancel</button></p>}<label>Add a comment<textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={4000} required /></label><button className="comment-btn btn" disabled={busy}>{busy ? "Posting…" : replyTo ? "Post reply" : "Comment"}</button><span role="status">{message}</span></form>}</section>;
+
+  return (
+    <div className="premium-comments comment-box-grid" id="comments">
+      <h3>Comments</h3>
+      {readOnly ? null : (
+        <div className="comment-input">
+          <div className="comment-header">
+            <Image src={avatarUrl} alt="" width={35} height={35} unoptimized />
+            <span>{name}</span>
+          </div>
+          <form id="addCommentForm" onSubmit={submit}>
+            <div className="comment-text">
+              <textarea
+                className="form-control"
+                id="commentText"
+                maxLength={4000}
+                onChange={(event) => setBody(event.target.value)}
+                placeholder="Hey I am facing difficulty with my SOP can you help me out?"
+                required
+                value={body}
+              />
+            </div>
+            <div className="comment-actions">
+              <div className="vote-btns" aria-hidden="true" />
+              <button className="comment-btn btn" disabled={busy} id="submitCommentBtn">
+                {busy ? "Posting…" : "Comment"}
+              </button>
+            </div>
+            <span className="premium-comment-status" role="status">{message}</span>
+          </form>
+        </div>
+      )}
+
+      <div id="commentsList">
+        {(showAll ? comments : comments.slice(0, 5)).map((comment) => {
+          const studentComment = comment.author_id === studentId;
+          return (
+            <article
+              className={`comment-item${studentComment ? " is-student" : " is-mentor"}${comment.parent_id ? " admin-reply is-reply" : ""}`}
+              key={comment.id}
+            >
+              <div className="comment-author">
+                <Image src={studentComment ? avatarUrl : "/assets/img/default-avatar.png"} alt="" width={35} height={35} unoptimized />
+                <h4>{studentComment ? name : "PGS Team"}</h4>
+              </div>
+              <p className="comment-content">{comment.body}</p>
+              <div className="comment-footer">
+                <span><time dateTime={comment.created_at}>{new Date(comment.created_at).toLocaleString("en-GB")}</time></span>
+              </div>
+            </article>
+          );
+        })}
+        {comments.length > 5 ? (
+          <button
+            aria-expanded={showAll}
+            className="btn btn-link w-100 comments-toggle"
+            onClick={() => setShowAll((current) => !current)}
+            type="button"
+          >
+            {showAll ? "Show less" : `Show ${comments.length - 5} more`}
+          </button>
+        ) : null}
+        {!comments.length ? <div className="text-muted text-center p-4">No comments yet. Be the first to comment!</div> : null}
+      </div>
+    </div>
+  );
 }

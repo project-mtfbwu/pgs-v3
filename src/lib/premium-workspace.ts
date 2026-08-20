@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getPublicCatalogCards, getPublicEvents, type PublicCatalogCard, type PublicEvent } from "@/lib/public-catalog";
 import { getActiveStudentPreviewTargetId } from "@/lib/staff-preview-server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -63,8 +64,8 @@ export type PremiumWorkspace = {
   universities: Array<{ id: string; stage: string; sort_order: number; universities: { id: number; name: string; slug: string } | null }>;
 };
 export type PremiumDashboardCatalog = {
-  events: Array<{ id: number; title: string; slug: string; summary: string; starts_at: string | null; booking_url: string | null }>;
-  courses: Array<{ id: number; title: string; slug: string; short_description: string }>;
+  events: PublicEvent[];
+  courses: PublicCatalogCard[];
 };
 
 export async function getPremiumStatus(studentId: string): Promise<PremiumStatus> {
@@ -128,18 +129,14 @@ export async function loadPremiumWorkspace(studentId: string): Promise<PremiumWo
 }
 
 export async function loadPremiumDashboardCatalog(): Promise<PremiumDashboardCatalog> {
-  const client = await createSupabaseServerClient();
-  const now = new Date().toISOString();
-  const [upcoming, courses] = await Promise.all([
-    client.from("events").select("id,title,slug,summary,starts_at,booking_url").eq("published", true).gte("starts_at", now).order("starts_at").limit(12),
-    client.from("courses").select("id,title,slug,short_description").eq("published", true).eq("featured", true).order("updated_at", { ascending: false }).limit(5)
+  const [publishedEvents, courses] = await Promise.all([
+    getPublicEvents(),
+    getPublicCatalogCards("courses", undefined, true)
   ]);
-  let events = upcoming.data ?? [];
-  if (!events.length) {
-    const fallback = await client.from("events").select("id,title,slug,summary,starts_at,booking_url").eq("published", true).order("starts_at", { ascending: false }).limit(12);
-    events = fallback.data ?? [];
-  }
-  return { events, courses: courses.data ?? [] } as PremiumDashboardCatalog;
+  const now = Date.now();
+  const upcoming = publishedEvents.filter((event) => event.startsAt && new Date(event.startsAt).getTime() >= now);
+  const events = (upcoming.length ? upcoming : [...publishedEvents].reverse()).slice(0, 12);
+  return { events, courses: courses.slice(0, 5) };
 }
 
 export function cleanWorkspaceText(value: unknown, max: number): string {
