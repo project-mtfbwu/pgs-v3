@@ -11,16 +11,16 @@ This is a Gate 2.5B execution map, not implementation. It separates approved pre
 | Home/feed `/` | anonymous `17027:15373`; standard `17027:17252`; Premium `17098:12263` | `1:12`, `1:13`, `1:14` | retained page-specific generated HTML/CSS/assets through `src/components/legacy-page.tsx` | auth shell transforms/state adapter | **KEEP retained presentation; RECONNECT** exact three-state substitutions |
 | Login `/login` | `17027:22143` | `2:71`, onboarding `2:99` | legacy login markup; secure V3 Auth API | retained React-adapted page | **KEEP/RECONNECT** secure behavior into approved frame |
 | Signup/profile completion `/singup` | `17027:22731`, profile build `17038:12492` | `2:99`, `2:114`, `2:123` | legacy profile/account patterns | `StudentShell` + `ProfileForm` | **REMOVE GENERATED SHELL; MERGE** validation/data/avatar logic into approved UI |
-| Student dashboard `/student/dashboard` | default `18375:10685`; standard `17961:10662`; Premium `17041:10191` | `3:214`, `3:298` | legacy `application/views/user_dashboard.php` | `PremiumWorkspaceShell`, generated welcome, four `DashboardCard`s, completion callout, lock panels | **RESTORE ORIGINAL / APPROVED FIGMA; REMOVE GENERATED PRESENTATION; MERGE** counts/profile/state logic |
+| Student dashboard `/student/dashboard` | default `18375:10685`; standard `17961:10662`; Premium `17041:10191` | `3:214`, `3:298` | standard/default `application/views/user_dashboard.php`; paid `application/controllers/Dashboard.php` + `application/views/dashboard.php` | retained standard/default composition plus page-specific React port `PremiumStudentDashboard` for entitled students | **PORTED** PHP presentation to React; **MERGED** secure V3 entitlement/workspace/catalog/comments; `/dashboard` remains alias only |
 | Profile `/student/profile` | `17038:12492` | `2:156`, selected `2:575` | legacy profile markup/account shell | `StudentShell` + `ProfileForm` | **RESTORE/RECONNECT** shell and hierarchy; keep schema, validation, uploads, actions |
 | Saved `/saved` | `17040:13505` | `2:565`, selected `2:580` | legacy saved/account navigation evidence | `StudentShell` + `SavedList` | **RESTORE/RECONNECT** frame; keep loaders, ownership and remove/save actions |
 | Notifications `/notifications` | no standalone frame | no destination node | retained desktop/mobile notification menu markup | `StudentShell` + `NotificationList` | **BLOCKED / OWNER DECISION** for full-page presentation; **KEEP** APIs, unread/read/delete logic |
 | Student Resources `/studentresources` | `17057:15890` | `2:373`, selected `2:381` | retained page-specific HTML/CSS/assets | `PublicLegacyPage` and state transform | **KEEP/RECONNECT** to approved shell/state evidence |
 | Purple Premium `/purplepremiumhome` | `17052:7386` | `2:43`, `6:1199` | retained Premium landing | owner-rule transform | **KEEP presentation; RECONNECT** anonymous/standard/Premium CTA logic; never restore application/approval semantics |
-| Premium dashboard `/dashboard` | Premium feed/workspace `17041:10191`; linked V6 Premium family | unlocked Flow `3:298` | legacy `application/views/dashboard.php` | `PremiumWorkspaceShell`, secure aggregation, comments/board | **RESTORE ORIGINAL / MERGE BACKEND LOGIC**; remove generated shell |
+| Dashboard alias `/dashboard` | Premium feed/workspace `17041:10191`; linked V6 Premium family | unlocked Flow `3:298` | legacy `application/views/dashboard.php` | compatibility redirect; secure aggregation and workspace are composed at `/student/dashboard` | **MERGED** into canonical `/student/dashboard`; retain alias only for old links |
 | Progress `/feed_track_progress` | locked `17041:12619`; active `17041:14026` | `3:268`, `3:312` | legacy `application/views/feed_track_progress.php` | condensed meter, alerts, reviews, notes, `StudentKanbanBoard` | **RESTORE approved hierarchy; RECONNECT** relational data/permissions |
 | Documents `/upload_your_doc` | non-signed `18375:11615`; auth variants `17041:15265`, `17041:15941` | `2:404`, selected `2:405` | legacy `application/views/upload-your-doc.php` | `DocumentWorkspace` static tables/native input | **RESTORE approved present states; MERGE** private upload/view/delete logic. Finder-like expansion remains blocked without designs/security lifecycle completion |
-| PurpleBoard `/purpleboard` | `17046:8403` | `2:396`, `2:397`; feed board nodes `3:282`, `3:307` | retained catalog view plus legacy board evidence | public catalog and private `StudentKanbanBoard` are separate renderers | **RECONNECT** public frame; **KEEP** one relational board dataset; owner must settle private-board presentation |
+| PurpleBoard `/purpleboard` | `17046:8403` | `2:396`, `2:397`; feed board nodes `3:282`, `3:307` | retained catalog view plus legacy board evidence | public catalog and private `StudentKanbanBoard` are separate renderers | **RECONNECT** public catalog/Weekly Wall; private Kanban remains under `/feed_track_progress` |
 | Finance `/finance` | `17041:17378` | `2:415`, `2:479` | retained page-specific view | retained route | **KEEP/RECONNECT** |
 | Scholarship `/scholarship` | `17041:18349` | `2:444`, `2:423` | retained page-specific view | retained route | **KEEP/RECONNECT** |
 | CV-ready `/cvreadyprogram` | `17046:9805` | `2:449`, `2:466`, header `6:1159` | retained page-specific view | retained route | **KEEP/RECONNECT** |
@@ -51,12 +51,12 @@ The following are still unapproved even though Figma access now works. No inspec
 | Profile | `src/app/student/profile/page.tsx`, `src/components/profile-form.tsx` |
 | Saved | `src/app/saved/page.tsx`, `src/components/saved-list.tsx` |
 | Notifications | `src/app/notifications/page.tsx`, `src/components/notification-list.tsx` |
-| Premium dashboard | `src/app/dashboard/page.tsx`, `src/components/premium-comments.tsx`, `src/components/student-kanban-board.tsx` |
+| Premium feed/workspace | `src/app/student/dashboard/page.tsx`, `src/components/premium-student-dashboard.tsx`, `src/components/premium-comments.tsx`; `/dashboard` is only the merged alias |
 | Progress | `src/app/feed_track_progress/page.tsx`, `src/components/student-kanban-board.tsx` |
 | Documents | `src/app/upload_your_doc/page.tsx`, `src/components/document-workspace.tsx` |
 | Retained public composition/state adapter | `src/components/legacy-page.tsx`, `src/lib/account-shell.ts` |
 
-The directly matched read-only legacy sources are `application/views/user_dashboard.php`, `application/views/dashboard.php`, `application/views/feed_track_progress.php`, and `application/views/upload-your-doc.php` in `project-mtfbwu/purpleguide`. These sources guide markup and behavior but do not override the owner-rejected Premium application/approval semantics or V3 security rules.
+The directly matched read-only legacy sources are `application/views/user_dashboard.php`, `application/controllers/Dashboard.php`, `application/views/dashboard.php`, `application/views/feed_track_progress.php`, and `application/views/upload-your-doc.php` in `project-mtfbwu/purpleguide`. The paid dashboard port retains the `dashboard.php` section order, class names, comments, data-driven picks and calendar/event structure while translating PHP loops/conditions into typed React. These sources guide markup and behavior but do not override the owner-rejected Premium application/approval semantics or V3 security rules.
 
 ## Reusable backend/state/auth inventory
 
@@ -80,5 +80,5 @@ The directly matched read-only legacy sources are `application/views/user_dashbo
 2. Decide whether `/notifications` remains a standalone page and provide its frame, or consolidate it into the retained header notification menu.
 3. Identify which of `17041:15265` and `17041:15941` represents standard versus Premium document state.
 4. Specify trigger, overlay-dismiss, Escape, focus-return, and close behavior for V6 Popup sets; visible close icons alone do not define interaction wiring.
-5. Resolve the public PurpleBoard catalog versus private shared Kanban presentation/routing while retaining one backend dataset.
+5. **RESOLVED 2026-08-20:** public PurpleBoard remains `/purpleboard`; the private shared Kanban remains `/feed_track_progress`.
 6. Map any desired Finder-like document grid/list/inspector/mobile workflow to actual frames; the current V6 document nodes do not evidence that expanded IA.

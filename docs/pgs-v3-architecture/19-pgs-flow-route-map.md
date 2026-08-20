@@ -17,7 +17,7 @@
 | edit profile `2:147` → profile `2:156` → edit `2:168` via `2:158`, `2:196` | profile | V6 `17038:12492` | `/student/profile` | **EXPLICIT** |
 | profile edit `2:168` → change-password click `2:187` → page `2:176` via `2:204`, `2:208` | change password | V6 `17040:12674` | `/change_password` | **EXPLICIT** |
 | user opens dashboard `3:209` → locked dashboard `3:214` via `3:219` | standard student feed/dashboard | V6 `17961:10662` (`logged in - feed + no premium`) | `/student/dashboard` | **EXPLICIT**; route naming differs from design label |
-| user opens dashboard `3:209` → feed `3:298` via `3:300` | Premium student feed/dashboard | V6 `17041:10191` (`logged in + premium`) | `/student/dashboard`; Premium workspace entry `/dashboard` | **EXPLICIT**, with route split resolved in implementation |
+| user opens dashboard `3:209` → feed `3:298` via `3:300` | Premium student feed/dashboard | V6 `17041:10191` (`logged in + premium`) | `/student/dashboard`; `/dashboard` is a **MERGED** compatibility redirect | **EXPLICIT**; Premium is a state of the same feed route |
 | locked dashboard `3:214` → locked progress `3:268` via `3:284` | Track Your Progress locked | V6 `17041:12619` | `/feed_track_progress` | **EXPLICIT** |
 | feed `3:298` → progress `3:312` via `3:327` | Track Your Progress active | V6 `17041:14026` | `/feed_track_progress` | **EXPLICIT** |
 | expanded sidebar `2:316` → resource `2:373` via `2:362`; routing hub `2:487` → selected resource `2:381` via `2:519` | Student Resources | V6 `17057:15890` | `/studentresources` | **EXPLICIT** |
@@ -47,7 +47,7 @@
 | Popups/modals from student routes | PGS Flow contains route boxes but does not link student route origins to V6 Popup nodes | **OWNER DECISION REQUIRED** |
 | Comment interaction origin/close | Comment sections exist inside V6 feed roots: standard `17961:10951`, anonymous/default `18375:10975`, Premium `17041:10446`; no prototype trigger/close reactions were returned | **SHARED/INLINE STATE, interaction NOT DEFINED** |
 | Mobile student navigation | no private student mobile flow/frame relationship found | **NOT DEFINED** |
-| Private Kanban versus public PurpleBoard | Flow `3:214` links to locked `#purplebaord` `3:282`; feed `3:298` links to `3:307`, while sidebar routes to V6 public `#purplebaord` `17046:8403` | **OWNER DECISION REQUIRED** for presentation/route distinction; keep the one-board backend rule |
+| Private Kanban versus public PurpleBoard | Flow `3:214` links to locked `#purplebaord` `3:282`; feed `3:298` links to `3:307`, while sidebar routes to V6 public `#purplebaord` `17046:8403` | **OWNER RESOLVED 2026-08-20**: private Kanban stays in `/feed_track_progress`; `/purpleboard` stays the public catalog/Weekly Wall |
 
 ## Three-state Figma evidence
 
