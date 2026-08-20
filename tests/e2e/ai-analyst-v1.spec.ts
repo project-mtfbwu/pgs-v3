@@ -274,7 +274,7 @@ test.describe("Premium Student Ask Purple Guide — authenticated", () => {
     if (!premiumAuthState) {
       testInfo.skip(true, "Supply PLAYWRIGHT_PREMIUM_STUDENT_STORAGE_STATE to run student AI tests.");
     }
-    await page.goto("/dashboard");
+    await page.goto("/student/dashboard");
   });
 
   test("Ask Purple Guide floating button is visible on Premium dashboard", async ({ page }) => {

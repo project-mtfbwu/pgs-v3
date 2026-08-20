@@ -250,7 +250,7 @@ export async function getAiOwnStudentContext(userId: string): Promise<string | n
     if (notes.length) {
       lines.push(`Counselor notes: ${notes.slice(0, 3).map((n) => n.body.slice(0, 200)).join(" | ")}`);
     }
-    lines.push(`[Link: /dashboard]`);
+    lines.push(`[Link: /student/dashboard]`);
 
     return truncateContext(lines.join("\n"));
   } catch (error) {

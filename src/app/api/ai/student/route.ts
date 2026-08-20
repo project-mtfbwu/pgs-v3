@@ -54,13 +54,13 @@ export async function POST(request: Request) {
         answer: {
           facts: [],
           summary: "Your Purple Guide workspace data is not available yet. Please check back once your account has been set up.",
-          sources: [{ label: "Dashboard", href: "/dashboard" }],
+          sources: [{ label: "Dashboard", href: "/student/dashboard" }],
         } satisfies AiAnswer,
       });
     }
 
     const systemPrompt = buildStudentSystemPrompt();
-    const sourceLinksContext = `\n\nAVAILABLE SOURCE LINKS (use these in your "sources" array, do not invent other hrefs):\n- My Dashboard: /dashboard\n- My Loopboard: /purpleboard\n- Upload Documents: /upload_your_doc\n- Upcoming Events: /purpleevents\n- Courses: /programsfull`;
+    const sourceLinksContext = `\n\nAVAILABLE SOURCE LINKS (use these in your "sources" array, do not invent other hrefs):\n- My Dashboard: /student/dashboard\n- My Loopboard: /feed_track_progress\n- PurpleBoard courses and Weekly Wall: /purpleboard\n- Upload Documents: /upload_your_doc\n- Upcoming Events: /purpleevents\n- Courses: /programsfull`;
     const userPrompt = buildStudentUserPrompt(question, studentCtx + sourceLinksContext);
 
     // Call AI provider.
