@@ -36,6 +36,7 @@ type Props = {
   children: ReactNode;
   contentClassName?: string;
   preview?: StudentPreviewState;
+  urgentAlert?: string;
 };
 
 export function DeveloperStudentShell({
@@ -48,13 +49,15 @@ export function DeveloperStudentShell({
   active,
   children,
   contentClassName = "",
-  preview
+  preview,
+  urgentAlert
 }: Props) {
   const { open: sidebarOpen, toggle: toggleSidebarState } = useStudentSidebarState();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const authenticated = stateKind !== "anonymous";
+  const premium = stateKind === "authenticated_premium";
   const premiumHref = premiumShellDestination(stateKind);
 
   async function logout() {
@@ -78,11 +81,17 @@ export function DeveloperStudentShell({
   const savedHref = authenticated ? "/saved" : "/login?redirect=%2Fsaved";
 
   return (
-    <div className="developer-student-shell" data-student-state={stateKind}>
+    <div className={`developer-student-shell${premium ? " developer-premium-shell" : ""}`} data-student-state={stateKind}>
       {preview ? (
         <StaffPreviewBanner actorName={preview.actorName} mode="student" targetName={preview.targetName} />
       ) : null}
       <header className="developer-student-header">
+        {premium ? (
+          <div className="developer-premium-alert" role="status">
+            <span>{urgentAlert || "Urgent: MCAT Registration closes in 7 days - Don't miss out!"}</span>
+            <Image src="/assets/img/premium-urgent-clock.gif" alt="" width={40} height={40} unoptimized />
+          </div>
+        ) : null}
         <div className="mobile-none">
           <nav className="navbar navbar-expand-lg header-light header-transparent bg-transparent disable-fixed">
             <div className="container-fluid">
@@ -90,16 +99,16 @@ export function DeveloperStudentShell({
                 <Image src="/assets/img/logo.png" alt="#PGS" width={173} height={35} unoptimized />
               </Link>
               <ul className="header-tab-top">
-                <li><Link className={active === "feed" ? "active-tab" : ""} href="/student/dashboard">#feed</Link></li>
-                <li><details className="developer-header-dropdown"><summary className={active === "premium" ? "active-tab" : ""}>#purplePremium</summary><div><Link href={premiumHref}>Premium dashboard</Link><Link href="/home/purplepremium_overview">Overview</Link><Link href="/purplenonmedical">STEM &amp; MBA pathways</Link><Link href="/purpleusme">USMLE</Link><Link href="/purpleplab">PLAB</Link><Link href="/purpleamc">AMC</Link></div></details></li>
+                <li><Link className={!premium && active === "feed" ? "active-tab" : ""} href="/student/dashboard">#feed</Link></li>
+                <li><details className="developer-header-dropdown"><summary className={premium || active === "premium" ? "active-tab" : ""}>#purplePremium</summary><div><Link href={premiumHref}>Premium dashboard</Link><Link href="/home/purplepremium_overview">Overview</Link><Link href="/purplenonmedical">STEM &amp; MBA pathways</Link><Link href="/purpleusme">USMLE</Link><Link href="/purpleplab">PLAB</Link><Link href="/purpleamc">AMC</Link></div></details></li>
                 <li><Link className={active === "cv" ? "active-tab" : ""} href="/cvreadyprogram">#cvReadyPrograms</Link></li>
               </ul>
               <div className="developer-header-links">
                 <Link href="/usmlerotation">#USMLERotation</Link>
                 <details className="developer-header-dropdown"><summary>#exploreCountries</summary><div><Link href="/explorecountries">Explore all</Link><Link href="/countriesusa">USA</Link><Link href="/countriesuk">UK</Link><Link href="/countriescanada">Canada</Link><Link href="/countriesaus">Australia</Link><Link href="/countrieseurope">Europe</Link></div></details>
-                <StudentNotificationDropdown initialItems={notifications} unreadCount={unreadCount} readOnly={Boolean(preview)} />
+                {premium ? null : <StudentNotificationDropdown initialItems={notifications} unreadCount={unreadCount} readOnly={Boolean(preview)} />}
                 {authenticated
-                  ? <Link className="btn btn-login pgs-auth-account" data-student-state={stateKind} href="/student/dashboard">{name}</Link>
+                  ? <Link className="btn btn-login pgs-auth-account" data-student-state={stateKind} href="/student/dashboard">{premium ? "login" : name}</Link>
                   : <Link className="btn btn-login" href="/login">Login</Link>}
               </div>
             </div>
@@ -121,11 +130,11 @@ export function DeveloperStudentShell({
       </header>
 
       <section className="developer-student-tools">
-        <div className="avatar-box">
+        <div className="avatar-box" hidden={premium}>
           <div className="avatar-img"><Image src={avatarUrl} alt="" width={36} height={36} unoptimized /></div>
           <div><h5>Hello <span aria-hidden="true">👋</span></h5><h4>{name || "Aspirant"}</h4></div>
         </div>
-        <Link className="developer-univ-meet" href="/programsfull"><span>#univMeet</span></Link>
+        <Link className="developer-univ-meet" href="/programsfull"><span>#univMeet</span>{premium ? <span className="developer-univ-dates"><b>31<small>Mar</small></b><b>31<small>Mar</small></b></span> : null}</Link>
         <label className="search-box"><span className="sr-only">Search programs and events</span><input className="search-control" type="search" placeholder="Search programs & events…" /></label>
       </section>
 
@@ -216,7 +225,7 @@ export function DeveloperStudentIdentityCard({
           <div className="title-info"><h5>#purplePremium</h5><h6>{pathway || "STUDENT"} PATHWAY</h6></div>
         </div>
         <div className="avatar-heading-right-box">
-          <h4>{premiumActive ? <Link href="/dashboard">#PURPLEPREMIUM</Link> : <span>Yet to Unlock<br />Full Access</span>}</h4>
+          <h4>{premiumActive ? <Link href="/student/dashboard">#PURPLEPREMIUM</Link> : <span>Yet to Unlock<br />Full Access</span>}</h4>
         </div>
       </div>
     </section>

@@ -22,7 +22,7 @@ describe("recovered developer student shell", () => {
     expect(html).toContain("/assets/img/logout.png");
     expect(html).toContain(">Logout</span>");
     expect(html).not.toContain("mt-30");
-    expect(html).toContain(stateKind === "authenticated_premium" ? 'href="/dashboard"' : 'href="/purplepremiumhome"');
+    expect(html).toContain(stateKind === "authenticated_premium" ? 'href="/student/dashboard"' : 'href="/purplepremiumhome"');
   });
 
   it("keeps PurpleBoard public and routes private anonymous actions through login", () => {
@@ -38,8 +38,14 @@ describe("recovered developer student shell", () => {
     const standard = renderToStaticMarkup(<DeveloperStudentIdentityCard name="Student" email="student@example.test" avatarUrl="/assets/img/default-avatar.png" pathway="STEM" premiumActive={false} />);
     const premium = renderToStaticMarkup(<DeveloperStudentIdentityCard name="Student" email="student@example.test" avatarUrl="/assets/img/default-avatar.png" pathway="STEM" premiumActive />);
     expect(standard).toContain("Yet to Unlock");
-    expect(standard).not.toContain('href="/dashboard"');
+    expect(standard).not.toContain('href="/student/dashboard"');
     expect(premium).toContain("#PURPLEPREMIUM");
-    expect(premium).toContain('href="/dashboard"');
+    expect(premium).toContain('href="/student/dashboard"');
+  });
+
+  it("gives PurpleBoard its own selected-navigation identity", () => {
+    const html = renderToStaticMarkup(<DeveloperStudentShell name="Student" avatarUrl="/assets/img/default-avatar.png" stateKind="authenticated_premium" active="purpleboard"><p>Page content</p></DeveloperStudentShell>);
+    expect(html).toMatch(/aria-current="page" href="\/purpleboard"/);
+    expect(html).not.toMatch(/aria-current="page" href="\/student\/dashboard"/);
   });
 });

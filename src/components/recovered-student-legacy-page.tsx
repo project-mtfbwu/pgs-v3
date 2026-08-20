@@ -2,7 +2,10 @@ import { LegacyPage } from "@/components/legacy-page";
 import { StaffPreviewBanner } from "@/components/staff-preview-banner";
 import { applyAuthenticatedShell } from "@/lib/account-shell";
 import { applyPremiumBusinessRule } from "@/lib/premium-business-rule";
+import { keepPurpleBoardPublic } from "@/lib/student-legacy-navigation";
 import type { StudentExperience } from "@/lib/student-experience";
+
+export { keepPurpleBoardPublic } from "@/lib/student-legacy-navigation";
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>'"]/g, (character) => ({
@@ -12,17 +15,6 @@ function escapeHtml(value: string): string {
     "'": "&#39;",
     '"': "&quot;"
   })[character] ?? character);
-}
-
-export function keepPurpleBoardPublic(html: string): string {
-  return html.replace(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi, (anchor, attributes: string, inner: string) => {
-    const text = inner.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
-    if (text !== "#purpleboard") return anchor;
-    const nextAttributes = /\shref=/i.test(attributes)
-      ? attributes.replace(/(\shref\s*=\s*)(["'])[^"']*\2/i, '$1"/purpleboard"')
-      : `${attributes} href="/purpleboard"`;
-    return `<a${nextAttributes}>${inner}</a>`;
-  });
 }
 
 export function normalizeLegacyAssetPaths(html: string): string {

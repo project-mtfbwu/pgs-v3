@@ -14,6 +14,13 @@ describe("recovered student legacy access rules", () => {
     expect(recovered).toContain('<a href="/upload_your_doc">Upload Your Docs</a>');
   });
 
+  it("marks PurpleBoard as the current retained destination on its own page", () => {
+    const recovered = keepPurpleBoardPublic('<a href="#"><span><img src="/board.png"></span>#purpleboard</a>', true);
+    expect(recovered).toContain('href="/purpleboard"');
+    expect(recovered).toContain('aria-current="page"');
+    expect(recovered).toContain('class="active-tab"');
+  });
+
   it("keeps recovered assets rooted when a page lives under a nested route", () => {
     const recovered = normalizeLegacyAssetPaths(
       '<img src="./assets/img/student.jpg"><video poster="../pgs_admin/assets/poster.png"></video><div style="background:url(\'assets/img/card.png\')"></div>'

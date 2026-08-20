@@ -25,11 +25,11 @@ describe("authenticated legacy shell", () => {
     expect(standard).toContain('class="premium-entitlement-locked"');
     expect(standard).not.toContain('href="/purplepremiumhome#purchase"');
     const premium = applyAuthenticatedShell(html, { name: "Premium Student", unreadCount: 0, premium: true });
-    expect(premium).toContain('href="/dashboard"');
+    expect(premium).toContain('href="/student/dashboard"');
     expect(premium).toContain("Open Your <br> Premium <br> Dashboard");
     expect(premium).not.toContain("Yet to");
     const finalizedPremium = applyPremiumBusinessRule(premium);
-    expect(finalizedPremium).toContain('href="/dashboard"');
+    expect(finalizedPremium).toContain('href="/student/dashboard"');
     expect(finalizedPremium).toContain("Open Your <br> Premium <br> Dashboard");
   });
 

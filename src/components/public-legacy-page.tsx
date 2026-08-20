@@ -3,6 +3,7 @@ import { ContentPreviewBanner } from "@/components/content-preview-banner";
 import { StaffPreviewBanner } from "@/components/staff-preview-banner";
 import { applyPublicContent, getPublicContent, type PublicContentSlug } from "@/lib/public-content";
 import { applyPremiumBusinessRule } from "@/lib/premium-business-rule";
+import { keepPurpleBoardPublic } from "@/lib/student-legacy-navigation";
 import { applyAuthenticatedShell } from "@/lib/account-shell";
 import { resolveActorContext } from "@/lib/actor-context";
 import { resolveStudentExperience } from "@/lib/student-experience";
@@ -19,6 +20,7 @@ type Props<TSlug extends PublicContentSlug> = {
 export async function PublicLegacyPage<TSlug extends PublicContentSlug>({ slug, html, catalogDetail, eventId, authenticatedActorFallback=false }: Props<TSlug>) {
   const content = await getPublicContent(slug);
   let rendered = applyPublicContent(slug, html, content);
+  if (slug === "purpleboard") rendered = keepPurpleBoardPublic(rendered, true);
   const state = await resolveStudentExperience();
   const studentState=state?.kind??"anonymous";
   if(slug==="cvreadyprogram"||slug==="purpleboard"){
