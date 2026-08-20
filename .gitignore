@@ -16,5 +16,6 @@ test-results/
 !.env.example
 .vercel/
 supabase/.temp/
+/tmp/
 *.log
 *.tsbuildinfo
