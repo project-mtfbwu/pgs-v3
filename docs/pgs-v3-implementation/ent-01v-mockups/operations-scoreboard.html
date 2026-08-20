@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operations Scoreboard — ENT-01V mockup</title>
+  <link rel="stylesheet" href="mockups.css">
+</head>
+<body>
+  <div class="mock-banner">ENT-01V documentation mockup · Asia/Kolkata · fictional fixtures · not live data · <a href="index.html">All screens</a></div>
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="operations-scoreboard.html"><b>PGS</b><span>Operations</span></a>
+      <nav class="switcher" aria-label="Workspace">
+        <a href="operations-scoreboard.html" aria-current="page">Operations</a>
+        <a href="cms-dashboard.html">CMS</a>
+      </nav>
+      <label class="search"><span class="sr">Search Operations</span>
+        <input type="search" placeholder="Search students, leads, work" aria-label="Search Operations">
+      </label>
+      <a class="icon-btn demo-focus" href="operations-inbox.html" aria-label="Inbox, 6 unread">Inbox<span class="badge">6</span></a>
+      <button class="user" type="button" aria-haspopup="menu" aria-label="Account menu for Priya Shah">
+        <span class="avatar" aria-hidden="true">PS</span>
+        <span>Priya Shah<small>Admin · one account</small></span>
+      </button>
+    </header>
+    <div class="mobile-nav" aria-label="Operations on small screens">
+      <a href="operations-scoreboard.html" aria-current="page">Scoreboard</a>
+      <a href="student-detail.html">Students</a>
+      <a href="operations-inbox.html">Inbox</a>
+      <a href="#states">More</a>
+    </div>
+    <div class="body">
+      <nav class="nav" aria-label="Operations">
+        <p>Operations</p>
+        <a href="operations-scoreboard.html" aria-current="page"><span>Scoreboard</span></a>
+        <a href="student-detail.html"><span>Students</span></a>
+        <a href="operations-inbox.html"><span>Inbox</span><span class="count">6</span></a>
+        <a href="#leads"><span>Leads</span></a>
+        <a href="#work"><span>Work</span></a>
+        <a href="#docs"><span>Documents</span></a>
+        <a href="#team"><span>Team</span></a>
+        <a href="#activity"><span>Activity</span></a>
+      </nav>
+      <main class="main">
+        <p class="crumbs"><a href="operations-scoreboard.html">Operations</a> / Scoreboard</p>
+        <div class="row">
+          <div>
+            <h1>Scoreboard</h1>
+            <p class="lede">Urgent work first, then organization health, then the join trend, then recent authorized activity. Every number opens a filtered queue. Times shown in Asia/Kolkata. Restricted records are omitted, not zeroed.</p>
+          </div>
+          <p class="caption">Thursday 20 Aug 2026, 22:01 IST</p>
+        </div>
+
+        <section class="attention" aria-labelledby="attn">
+          <h2 id="attn">Operational attention</h2>
+          <div class="attention-grid">
+            <a class="card metric-link" href="operations-inbox.html">
+              <p class="card-title">Conversations needing reply</p>
+              <p class="kpi">4</p>
+              <p class="caption">Assigned students only for mentors</p>
+              <span class="drill">Open Inbox → Conversations</span>
+            </a>
+            <a class="card metric-link" href="#inquiries">
+              <p class="card-title">Inquiry SLA overdue</p>
+              <p class="kpi">2</p>
+              <p class="caption">24 calendar hours from created time</p>
+              <span class="drill">Open Inbox → Inquiries</span>
+            </a>
+            <a class="card metric-link" href="#docs">
+              <p class="card-title">Document QC waiting</p>
+              <p class="kpi">3</p>
+              <p class="caption">Scan clean only · Phase 4D</p>
+              <span class="drill">Open Documents queue</span>
+            </a>
+            <a class="card metric-link" href="student-detail.html">
+              <p class="card-title">Premium awaiting mentor</p>
+              <p class="kpi">1</p>
+              <p class="caption">Application workflow, not entitlement</p>
+              <span class="drill">Open Students · plan=premium · unassigned</span>
+            </a>
+          </div>
+        </section>
+
+        <h2 class="section-title">Organization health</h2>
+        <div class="kpi-grid">
+          <a class="card metric-link" href="student-detail.html">
+            <p class="card-title">Premium entitlement</p>
+            <p class="kpi">18</p>
+            <p class="caption">Active access · not application status</p>
+            <span class="drill">Students · entitlement=active</span>
+          </a>
+          <a class="card metric-link" href="student-detail.html">
+            <p class="card-title">Standard students</p>
+            <p class="kpi">41</p>
+            <p class="caption">No Premium access</p>
+            <span class="drill">Students · plan=standard</span>
+          </a>
+          <a class="card metric-link" href="student-detail.html">
+            <p class="card-title">Assignment health</p>
+            <p class="kpi">6</p>
+            <p class="caption">Unassigned in authorized scope</p>
+            <span class="drill">Students · mentor=unassigned</span>
+          </a>
+          <a class="card metric-link" href="#work">
+            <p class="card-title">Work / target health</p>
+            <p class="kpi">5</p>
+            <p class="caption">Open staff targets · 2 overdue</p>
+            <span class="drill">Work · status=open</span>
+          </a>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:16px">
+          <article class="card">
+            <p class="card-title">Join trend</p>
+            <p class="caption">Only chart on this board · students joined · last 8 weeks · Asia/Kolkata weeks</p>
+            <div class="chart" role="img" aria-label="Join counts by week: 2, 4, 3, 6, 5, 8, 4, 7">
+              <div class="bar" style="height:25%"></div>
+              <div class="bar" style="height:50%"></div>
+              <div class="bar" style="height:38%"></div>
+              <div class="bar" style="height:75%"></div>
+              <div class="bar" style="height:63%"></div>
+              <div class="bar" style="height:100%"></div>
+              <div class="bar" style="height:50%"></div>
+              <div class="bar" style="height:88%"></div>
+            </div>
+            <p class="chart-axis"><span>25 Jun</span><span>13 Aug</span></p>
+            <a class="drill" href="student-detail.html">Open Students · joined=last-8-weeks</a>
+          </article>
+          <div class="stack">
+            <a class="card metric-link" href="operations-inbox.html">
+              <p class="card-title">Inquiry response</p>
+              <p class="kpi">7</p>
+              <p class="caption">Open · 3 due soon · 2 overdue · 2 responded</p>
+              <span class="drill">Inbox → Inquiries</span>
+            </a>
+            <a class="card metric-link" href="#docs">
+              <p class="card-title">Documents not previewable</p>
+              <p class="kpi">4</p>
+              <p class="caption">Scan pending, blocked, or failed · fail closed</p>
+              <span class="drill">Documents · scan≠clean</span>
+            </a>
+            <a class="card metric-link" href="operations-inbox.html">
+              <p class="card-title">Applications in review</p>
+              <p class="kpi">2</p>
+              <p class="caption">Premium application workflow only</p>
+              <span class="drill">Inbox → Applications</span>
+            </a>
+          </div>
+        </div>
+
+        <section id="activity" class="panel" aria-labelledby="act">
+          <div class="row" style="padding:12px 16px 0;margin:0">
+            <h2 id="act" class="section-title">Recent authorized activity</h2>
+            <a class="btn-ghost" href="#activity">Open Activity</a>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">When (IST)</th>
+                  <th scope="col">Actor</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Record</th>
+                  <th scope="col">Outcome</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>20 Aug 21:48</td>
+                  <td>Alex Nair</td>
+                  <td>document.qc.approve</td>
+                  <td>Riley Sen · Passport v3</td>
+                  <td><span class="status status-ok">Succeeded</span></td>
+                </tr>
+                <tr>
+                  <td>20 Aug 18:12</td>
+                  <td>Sam Okonkwo</td>
+                  <td>comment.reply</td>
+                  <td>Jordan Cole · SOP draft</td>
+                  <td><span class="status status-ok">Succeeded</span></td>
+                </tr>
+                <tr>
+                  <td>20 Aug 16:04</td>
+                  <td>Priya Shah</td>
+                  <td>cms.publish</td>
+                  <td>USA destination page</td>
+                  <td><span class="status status-ok">Succeeded</span></td>
+                </tr>
+                <tr>
+                  <td>19 Aug 11:22</td>
+                  <td>Priya Shah</td>
+                  <td>entitlement.revoke</td>
+                  <td>Casey Wu · Premium access</td>
+                  <td><span class="status status-warn">Pending confirmation</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="states" id="states" aria-labelledby="st">
+          <h2 id="st">Required states (documentation)</h2>
+          <p class="lede">Treatments for later implementation. Primary screen above is the populated Admin view.</p>
+          <div class="states-grid">
+            <article class="card">
+              <p class="card-title">Loading</p>
+              <p class="caption">Skeleton matching queues. No fake numbers.</p>
+              <div class="skeleton"></div>
+              <div class="skeleton" style="width:70%"></div>
+              <div class="skeleton" style="width:40%"></div>
+            </article>
+            <article class="card">
+              <p class="card-title">Empty</p>
+              <div class="empty">
+                <h3>No urgent work in your scope</h3>
+                <p class="caption">When items arrive they appear in Operational attention.</p>
+              </div>
+            </article>
+            <article class="card">
+              <p class="card-title">Error</p>
+              <div class="error-box">Scoreboard could not load. Retry. Student totals were not shown as zero.</div>
+            </article>
+            <article class="card">
+              <p class="card-title">Read-only / restricted</p>
+              <p class="caption">Mentor Sam Okonkwo sees assigned students only. Unassigned org totals are omitted, not shown as 0.</p>
+              <button class="btn btn-disabled" type="button" disabled>Grant Premium access</button>
+              <p class="caption">Permission-disabled: visible label, not tooltip-only.</p>
+            </article>
+            <article class="card">
+              <p class="card-title">Long content / overflow</p>
+              <p class="clip" title="University of California, Los Angeles — College of Letters and Science — transfer pathway note">University of California, Los Angeles — College of Letters and Science — transfer pathway note</p>
+              <p class="caption">Ellipsis plus full title. Tables scroll horizontally when needed.</p>
+            </article>
+            <article class="card">
+              <p class="card-title">Keyboard focus</p>
+              <p class="caption">Inbox control above uses the visible 3px ring. Tab order: switcher → search → inbox → account → nav → metrics as links.</p>
+              <a class="btn demo-focus" href="operations-inbox.html">Focused link example</a>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

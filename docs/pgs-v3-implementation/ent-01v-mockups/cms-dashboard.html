@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CMS Dashboard — ENT-01V mockup</title>
+  <link rel="stylesheet" href="mockups.css">
+</head>
+<body>
+  <div class="mock-banner">ENT-01V documentation mockup · CMS workspace · content health only · no student KPIs · <a href="index.html">All screens</a></div>
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="cms-dashboard.html"><b>PGS</b><span>CMS</span></a>
+      <nav class="switcher" aria-label="Workspace">
+        <a href="operations-scoreboard.html">Operations</a>
+        <a href="cms-dashboard.html" aria-current="page">CMS</a>
+      </nav>
+      <label class="search"><span class="sr">Search CMS</span>
+        <input type="search" placeholder="Search pages, catalog, media" aria-label="Search CMS">
+      </label>
+      <a class="icon-btn" href="operations-inbox.html" aria-label="Inbox, 6 unread">Inbox<span class="badge">6</span></a>
+      <button class="user" type="button" aria-haspopup="menu" aria-label="Account menu for Priya Shah">
+        <span class="avatar" aria-hidden="true">PS</span>
+        <span>Priya Shah<small>Admin · one account</small></span>
+      </button>
+    </header>
+    <div class="mobile-nav" aria-label="CMS on small screens">
+      <a href="cms-dashboard.html" aria-current="page">Dashboard</a>
+      <a href="cms-content-editor.html">Pages</a>
+      <a href="#review">Review</a>
+      <a href="#states">More</a>
+    </div>
+    <div class="body">
+      <nav class="nav" aria-label="CMS">
+        <p>CMS</p>
+        <a href="cms-dashboard.html" aria-current="page"><span>Dashboard</span></a>
+        <a href="cms-content-editor.html"><span>Pages</span></a>
+        <a href="#uni"><span>Universities</span></a>
+        <a href="#courses"><span>Courses</span></a>
+        <a href="#programs"><span>Programs</span></a>
+        <a href="#events"><span>Events</span></a>
+        <a href="#resources"><span>Resources</span></a>
+        <a href="#faqs"><span>FAQs</span></a>
+        <a href="#testimonials"><span>Testimonials</span></a>
+        <a href="#dates"><span>Dates</span></a>
+        <a href="#media"><span>Media</span></a>
+        <a href="#seo"><span>SEO</span></a>
+        <a href="#redirects"><span>Redirects</span></a>
+      </nav>
+      <main class="main">
+        <p class="crumbs"><a href="cms-dashboard.html">CMS</a> / Dashboard</p>
+        <div class="row">
+          <div>
+            <h1>CMS dashboard</h1>
+            <p class="lede">Content health for publishing work. Student, Premium, and assignment metrics stay in Operations. Preview remains distinct from Publish.</p>
+          </div>
+          <a class="btn" href="cms-content-editor.html">Open editor</a>
+        </div>
+
+        <h2 class="section-title">Content health</h2>
+        <div class="kpi-grid">
+          <a class="card metric-link" href="cms-content-editor.html">
+            <p class="card-title">Drafts awaiting review</p>
+            <p class="kpi">5</p>
+            <p class="caption">One reviewer for MVP</p>
+            <span class="drill">Open review queue</span>
+          </a>
+          <a class="card metric-link" href="#published">
+            <p class="card-title">Recently published</p>
+            <p class="kpi">3</p>
+            <p class="caption">Last 7 days · Asia/Kolkata</p>
+            <span class="drill">Open published list</span>
+          </a>
+          <a class="card metric-link" href="#seo">
+            <p class="card-title">Missing SEO</p>
+            <p class="kpi">4</p>
+            <p class="caption">Title, description, canonical, or index state</p>
+            <span class="drill">Open SEO warnings</span>
+          </a>
+          <a class="card metric-link" href="#links">
+            <p class="card-title">Broken links</p>
+            <p class="kpi">2</p>
+            <p class="caption">Public pages and catalog only</p>
+            <span class="drill">Open link report</span>
+          </a>
+        </div>
+
+        <div class="queue-grid">
+          <a class="card metric-link" href="#dates">
+            <p class="card-title">Upcoming events / dates</p>
+            <p class="kpi">3</p>
+            <p class="caption">Next 30 days</p>
+            <span class="drill">Open Dates and Events</span>
+          </a>
+          <a class="card metric-link" href="#media">
+            <p class="card-title">Media issues</p>
+            <p class="kpi">6</p>
+            <p class="caption">Missing alt · unused assets · public CMS media only</p>
+            <span class="drill">Open Media</span>
+          </a>
+          <article class="card">
+            <p class="card-title">Redirect warnings</p>
+            <p class="kpi">1</p>
+            <p class="caption">301/302 exact rules · loop or conflict</p>
+            <a class="drill" href="#redirects">Open Redirects</a>
+          </article>
+          <article class="card">
+            <p class="card-title">Resources</p>
+            <p class="caption">External links and CMS-managed public files. Never private student documents (Phase 4D).</p>
+            <a class="drill" href="#resources">Open Resources</a>
+          </article>
+        </div>
+
+        <section class="panel" id="published" aria-labelledby="pub">
+          <div class="row" style="padding:12px 16px 0;margin:0">
+            <h2 id="pub" class="section-title">Recently published</h2>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Title</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Published (IST)</th>
+                  <th scope="col">Publisher</th>
+                  <th scope="col">State</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><a href="cms-content-editor.html">USA destination</a></td>
+                  <td>Page</td>
+                  <td>20 Aug 16:04</td>
+                  <td>Priya Shah</td>
+                  <td><span class="status status-ok">Published</span></td>
+                </tr>
+                <tr>
+                  <td>UK application dates</td>
+                  <td>Dates</td>
+                  <td>18 Aug 11:20</td>
+                  <td>Alex Nair</td>
+                  <td><span class="status status-ok">Published</span></td>
+                </tr>
+                <tr>
+                  <td>Fall webinar</td>
+                  <td>Event</td>
+                  <td>17 Aug 09:02</td>
+                  <td>Priya Shah</td>
+                  <td><span class="status status-ok">Published</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel" style="margin-top:16px" aria-labelledby="cact">
+          <div class="row" style="padding:12px 16px 0;margin:0">
+            <h2 id="cact" class="section-title">Recent authorized content activity</h2>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">When (IST)</th>
+                  <th scope="col">Actor</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Record</th>
+                  <th scope="col">Outcome</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>20 Aug 19:10</td>
+                  <td>Alex Nair</td>
+                  <td>cms.review.request</td>
+                  <td>Homepage hero copy</td>
+                  <td><span class="status status-pending">Pending approval</span></td>
+                </tr>
+                <tr>
+                  <td>20 Aug 16:04</td>
+                  <td>Priya Shah</td>
+                  <td>cms.publish</td>
+                  <td>USA destination</td>
+                  <td><span class="status status-ok">Succeeded</span></td>
+                </tr>
+                <tr>
+                  <td>19 Aug 13:44</td>
+                  <td>Priya Shah</td>
+                  <td>cms.unpublish</td>
+                  <td>Expired scholarship blurb</td>
+                  <td><span class="status status-warn">Confirmed</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="states" id="states">
+          <h2>Required states</h2>
+          <div class="states-grid">
+            <article class="card">
+              <p class="card-title">Loading</p>
+              <div class="skeleton"></div>
+              <div class="skeleton" style="width:60%"></div>
+            </article>
+            <article class="card">
+              <p class="card-title">Empty</p>
+              <div class="empty">
+                <h3>No drafts awaiting review</h3>
+                <p class="caption">Save Draft, then Request Review from the editor.</p>
+              </div>
+            </article>
+            <article class="card">
+              <p class="card-title">Error</p>
+              <div class="error-box">Content health failed to load. Student KPIs were not substituted.</div>
+            </article>
+            <article class="card">
+              <p class="card-title">Read-only / unauthorized workspace</p>
+              <p class="caption">If CMS is not granted, the CMS switcher option is omitted. It is not shown disabled as a tease.</p>
+              <button class="btn btn-disabled" type="button" disabled>Publish (view only)</button>
+            </article>
+            <article class="card">
+              <p class="card-title">Mobile</p>
+              <p class="caption">Review, preview, approval, small field corrections. Full complex editing stays desktop-first.</p>
+            </article>
+            <article class="card">
+              <p class="card-title">Keyboard focus</p>
+              <a class="btn demo-focus" href="cms-content-editor.html">Open editor</a>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

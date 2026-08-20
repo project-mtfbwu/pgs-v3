@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student detail — ENT-01V mockup</title>
+  <link rel="stylesheet" href="mockups.css">
+</head>
+<body>
+  <div class="mock-banner">ENT-01V documentation mockup · staff operational record · not the student dashboard · <a href="index.html">All screens</a></div>
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="operations-scoreboard.html"><b>PGS</b><span>Operations</span></a>
+      <nav class="switcher" aria-label="Workspace">
+        <a href="operations-scoreboard.html" aria-current="page">Operations</a>
+        <a href="cms-dashboard.html">CMS</a>
+      </nav>
+      <label class="search"><span class="sr">Search</span>
+        <input type="search" placeholder="Search students" aria-label="Search Operations">
+      </label>
+      <a class="icon-btn" href="operations-inbox.html" aria-label="Inbox, 6 unread">Inbox<span class="badge">6</span></a>
+      <button class="user" type="button" aria-haspopup="menu" aria-label="Account menu for Priya Shah">
+        <span class="avatar" aria-hidden="true">PS</span>
+        <span>Priya Shah<small>Admin · one account</small></span>
+      </button>
+    </header>
+    <div class="mobile-nav" aria-label="Operations on small screens">
+      <a href="operations-scoreboard.html">Scoreboard</a>
+      <a href="student-detail.html" aria-current="page">Students</a>
+      <a href="operations-inbox.html">Inbox</a>
+      <a href="#states">More</a>
+    </div>
+    <div class="body">
+      <nav class="nav" aria-label="Operations">
+        <p>Operations</p>
+        <a href="operations-scoreboard.html"><span>Scoreboard</span></a>
+        <a href="student-detail.html" aria-current="page"><span>Students</span></a>
+        <a href="operations-inbox.html"><span>Inbox</span><span class="count">6</span></a>
+        <a href="#leads"><span>Leads</span></a>
+        <a href="#work"><span>Work</span></a>
+        <a href="#docs"><span>Documents</span></a>
+        <a href="#team"><span>Team</span></a>
+        <a href="#activity"><span>Activity</span></a>
+      </nav>
+      <main class="main">
+        <p class="crumbs"><a href="operations-scoreboard.html">Operations</a> / <a href="student-detail.html">Students</a> / Jordan Cole</p>
+
+        <section class="panel" style="padding:16px;margin-bottom:16px">
+          <div class="identity">
+            <span class="avatar" style="width:48px;height:48px;font-size:16px" aria-hidden="true">JC</span>
+            <div style="flex:1">
+              <h1>Jordan Cole</h1>
+              <p class="caption">Staff operational record. This is not the student-facing dashboard.</p>
+              <div class="meta">
+                <span class="chip">PGS261118</span>
+                <span class="status status-ok">Premium entitlement: Active</span>
+                <span class="status status-pending">Application: Approved</span>
+                <span class="chip">Assigned · Sam Okonkwo</span>
+                <span class="chip">Stream · STEM</span>
+                <span class="chip">Target year · 2027</span>
+                <span class="chip">Tag · SOP</span>
+                <span class="chip">Tag · Visa</span>
+              </div>
+              <p class="note">Approved application is not the same as entitlement access. They are two labeled truths.</p>
+            </div>
+            <div class="actions">
+              <a class="btn" href="#view-as">View as Student</a>
+              <a class="btn btn-secondary" href="#assign">Manage assignment</a>
+            </div>
+          </div>
+        </section>
+
+        <nav class="tabs" aria-label="Student record">
+          <a href="student-detail.html" aria-current="page">Overview</a>
+          <a href="#work">Work</a>
+          <a href="#conversations">Conversations</a>
+          <a href="#documents">Documents</a>
+          <a href="#premium">Premium</a>
+          <a href="#activity">Activity</a>
+        </nav>
+
+        <div class="grid-2">
+          <div class="stack">
+            <section class="card" aria-labelledby="next">
+              <h2 id="next" class="card-title">Current next actions</h2>
+              <ul>
+                <li>Reply to SOP draft (Inbox · Conversations)</li>
+                <li>QC Passport v3 after scan clean (Documents)</li>
+                <li>Confirm 2027 target mix (Work)</li>
+              </ul>
+            </section>
+            <section class="two-truths" id="premium">
+              <article class="card">
+                <h2 class="card-title">Premium application</h2>
+                <p class="caption">Workflow only</p>
+                <p><span class="status status-pending">Approved</span></p>
+                <p class="caption">Submitted 02 Jun 2026 · reviewed by Priya Shah</p>
+                <p class="caption">Does not grant dashboard access by itself.</p>
+              </article>
+              <article class="card">
+                <h2 class="card-title">Premium entitlement</h2>
+                <p class="caption">Access truth · premium_entitlement</p>
+                <p><span class="status status-ok">Active</span></p>
+                <p class="caption">Plan Purple Premium · starts 03 Jun 2026 · ends 03 Jun 2027 · IST</p>
+                <div class="actions">
+                  <button class="btn btn-danger" type="button">Change entitlement</button>
+                </div>
+              </article>
+            </section>
+            <section class="card" id="assign">
+              <h2 class="card-title">Assignment summary</h2>
+              <p>Mentor <strong>Sam Okonkwo</strong> · assigned 04 Jun 2026, 10:15 IST</p>
+              <p class="caption">Assignment-focused management stays on Students (filter mentor=). This Overview block is the summary only.</p>
+              <a class="drill" href="student-detail.html">Open Students · this mentor</a>
+            </section>
+          </div>
+          <div class="stack">
+            <section class="card" aria-labelledby="perm">
+              <h2 id="perm" class="card-title">Permission-shaped actions</h2>
+              <div class="legend">
+                <span class="status status-ok">Allowed mutation</span>
+                <span class="status status-muted">Read-only</span>
+                <span class="status status-danger">Destructive</span>
+                <span class="status status-warn">Pending approval</span>
+                <span class="status status-danger">Failed</span>
+                <span class="status status-muted">Restricted</span>
+              </div>
+              <div class="actions" style="margin-top:10px">
+                <button class="btn" type="button">Reply</button>
+                <button class="btn btn-secondary" type="button">Reassign work</button>
+                <button class="btn btn-secondary" type="button" disabled>Preview document (scan pending)</button>
+                <button class="btn btn-danger" type="button">Reject document</button>
+                <button class="btn btn-disabled" type="button" disabled>Suspend staff</button>
+              </div>
+              <p class="caption">Preview is disabled until scan_status = clean. Suspend staff is not in student scope — shown disabled with reason.</p>
+            </section>
+            <section class="card" id="activity">
+              <h2 class="card-title">Recent activity</h2>
+              <p class="caption">20 Aug 18:12 IST · Sam Okonkwo replied on SOP draft</p>
+              <p class="caption">19 Aug 14:03 IST · Jordan Cole uploaded Passport v3 · scan pending</p>
+              <p class="caption">03 Jun 09:40 IST · Priya Shah granted entitlement</p>
+              <a class="drill" href="#activity">Open Activity for this student</a>
+            </section>
+          </div>
+        </div>
+
+        <section class="states" id="states">
+          <h2>Required states and high-risk confirmations</h2>
+          <div class="states-grid">
+            <article class="card" id="view-as">
+              <p class="preview-banner">View as Student preview · read-only · Jordan Cole · PGS261118 · not the real student session</p>
+              <p class="caption">Opens the actual student frontend with a short-lived staff preview. Mutations blocked. Audit start/end. Never asks for the student password.</p>
+              <div class="confirm" style="margin-top:10px">
+                <p class="card-title">Confirm View as Student</p>
+                <p>You will preview Jordan Cole’s existing student app as read-only. This does not become the student.</p>
+                <div class="actions">
+                  <button class="btn" type="button">Start preview</button>
+                  <button class="btn btn-secondary" type="button">Cancel</button>
+                </div>
+              </div>
+            </article>
+            <article class="card">
+              <div class="confirm">
+                <p class="card-title">Confirm change Premium entitlement</p>
+                <p>Revoking access is separate from application status. Application remains Approved. Access becomes Inactive. Reason required in implementation.</p>
+                <label class="field"><span class="lbl">Reason</span><input type="text" value="Owner example — not a live mutation"></label>
+                <div class="actions">
+                  <button class="btn btn-danger" type="button">Revoke access</button>
+                  <button class="btn btn-secondary" type="button">Cancel</button>
+                </div>
+              </div>
+            </article>
+            <article class="card">
+              <p class="card-title">Loading / empty / error</p>
+              <div class="skeleton"></div>
+              <div class="empty"><h3>No documents in QC</h3><p class="caption">Uploads appear after scan.</p></div>
+              <div class="error-box">Workspace comments failed to load.</div>
+            </article>
+            <article class="card">
+              <p class="card-title">Read-only staff</p>
+              <p class="caption">View only · mutations omitted or disabled.</p>
+              <button class="btn btn-disabled" type="button" disabled>Change entitlement (view only)</button>
+            </article>
+            <article class="card">
+              <div class="confirm">
+                <p class="card-title">Confirm reject document</p>
+                <p>Riley Sen · Passport v3. Scan is clean. Reject is a QC decision, not a scan-status forge. Student is notified in implementation.</p>
+                <div class="actions">
+                  <button class="btn btn-danger" type="button">Reject document</button>
+                  <button class="btn btn-secondary" type="button">Cancel</button>
+                </div>
+              </div>
+            </article>
+            <article class="card">
+              <div class="confirm">
+                <p class="card-title">Confirm suspend staff</p>
+                <p>Team action, not a student-record action. Shown here as the high-risk pattern. Suspends Sam Okonkwo’s staff access. Assignments remain until reassigned.</p>
+                <div class="actions">
+                  <button class="btn btn-danger" type="button">Suspend staff</button>
+                  <button class="btn btn-secondary" type="button">Cancel</button>
+                </div>
+              </div>
+            </article>
+            <article class="card">
+              <p class="card-title">Failed action</p>
+              <div class="error-box">Reject document failed. Scan status was not clean. No signed URL was issued.</div>
+            </article>
+            <article class="card">
+              <p class="card-title">Restricted record</p>
+              <p>A mentor without this assignment does not see Jordan Cole. Direct URL follows existing 401/403/not found. The name is not listed then hidden.</p>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CMS content editor — ENT-01V mockup</title>
+  <link rel="stylesheet" href="mockups.css">
+</head>
+<body>
+  <div class="mock-banner">ENT-01V documentation mockup · explicit Save Draft · no autosave · no scheduling · one reviewer · <a href="index.html">All screens</a></div>
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="cms-dashboard.html"><b>PGS</b><span>CMS</span></a>
+      <nav class="switcher" aria-label="Workspace">
+        <a href="operations-scoreboard.html">Operations</a>
+        <a href="cms-dashboard.html" aria-current="page">CMS</a>
+      </nav>
+      <label class="search"><span class="sr">Search CMS</span>
+        <input type="search" placeholder="Search pages" aria-label="Search CMS">
+      </label>
+      <a class="icon-btn" href="operations-inbox.html" aria-label="Inbox, 6 unread">Inbox<span class="badge">6</span></a>
+      <button class="user" type="button" aria-haspopup="menu" aria-label="Account menu for Priya Shah">
+        <span class="avatar" aria-hidden="true">PS</span>
+        <span>Priya Shah<small>Admin · one account</small></span>
+      </button>
+    </header>
+    <div class="mobile-nav" aria-label="CMS on small screens">
+      <a href="cms-dashboard.html">Dashboard</a>
+      <a href="cms-content-editor.html" aria-current="page">Review</a>
+      <a href="#preview">Preview</a>
+      <a href="#states">More</a>
+    </div>
+    <div class="body">
+      <nav class="nav" aria-label="CMS">
+        <p>CMS</p>
+        <a href="cms-dashboard.html"><span>Dashboard</span></a>
+        <a href="cms-content-editor.html" aria-current="page"><span>Pages</span></a>
+        <a href="#uni"><span>Universities</span></a>
+        <a href="#courses"><span>Courses</span></a>
+        <a href="#programs"><span>Programs</span></a>
+        <a href="#events"><span>Events</span></a>
+        <a href="#resources"><span>Resources</span></a>
+        <a href="#faqs"><span>FAQs</span></a>
+        <a href="#testimonials"><span>Testimonials</span></a>
+        <a href="#dates"><span>Dates</span></a>
+        <a href="#media"><span>Media</span></a>
+        <a href="#seo"><span>SEO</span></a>
+        <a href="#redirects"><span>Redirects</span></a>
+      </nav>
+      <main class="main">
+        <p class="crumbs"><a href="cms-dashboard.html">CMS</a> / <a href="cms-content-editor.html">Pages</a> / USA destination</p>
+        <div class="row">
+          <div>
+            <h1>USA destination</h1>
+            <p class="lede">Page · typed slots, not a page builder. Rich text only where this page already needs it. <span class="unsaved">Unsaved changes</span></p>
+          </div>
+          <div class="actions sticky-actions">
+            <button class="btn btn-secondary" type="button">Save Draft</button>
+            <button class="btn btn-secondary" type="button" id="preview">Preview</button>
+            <button class="btn" type="button">Request Review</button>
+            <button class="btn btn-disabled" type="button" disabled>Publish (needs review)</button>
+          </div>
+        </div>
+
+        <div class="editor">
+          <section class="canvas panel" style="padding:16px" aria-labelledby="canvas">
+            <h2 id="canvas" class="sr">Editing canvas</h2>
+            <div class="field">
+              <label for="title">Content title</label>
+              <input id="title" value="Study in the USA">
+            </div>
+            <div class="field">
+              <label for="type">Content type</label>
+              <select id="type">
+                <option selected>Page · destination</option>
+                <option>Resource · external link</option>
+                <option>Resource · public CMS file</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="hero">Hero heading</label>
+              <input id="hero" value="Undergraduate pathways in the United States">
+            </div>
+            <div class="field">
+              <label for="summary">Summary</label>
+              <textarea id="summary">Structured field. Keep destination layout; CMS edits approved content, not the student/public shell.</textarea>
+            </div>
+            <div class="field">
+              <span class="lbl" id="body-lbl">Body (rich text where this page already requires it)</span>
+              <div class="toolbar" role="toolbar" aria-label="Rich text">
+                <button type="button" aria-label="Bold">B</button>
+                <button type="button" aria-label="Italic">I</button>
+                <button type="button" aria-label="Link">Link</button>
+              </div>
+              <div class="rich" role="textbox" aria-labelledby="body-lbl" contenteditable="false">
+                <p>Public destination copy. Do not mix this media with private student documents.</p>
+              </div>
+            </div>
+            <div class="field field-error">
+              <label for="cta">Primary CTA URL</label>
+              <input id="cta" value="javascript:alert(1)" aria-invalid="true" aria-describedby="cta-err">
+              <p class="err" id="cta-err">Invalid URL. Use an https public link. This field is not a private document path.</p>
+            </div>
+          </section>
+
+          <aside class="side" aria-label="Status, SEO, review, and publish">
+            <section class="card">
+              <h2 class="card-title">Status</h2>
+              <p><span class="status status-pending">Draft · unsaved changes</span></p>
+              <p class="caption">Explicit Save Draft for MVP. Autosave is later, after conflict and version handling.</p>
+              <p class="caption">Last saved 20 Aug 2026, 15:41 IST by Alex Nair</p>
+            </section>
+            <section class="card">
+              <h2 class="card-title">SEO</h2>
+              <div class="field">
+                <label for="seo-title">SEO title</label>
+                <input id="seo-title" value="Study in the USA | Purple Guide">
+              </div>
+              <div class="field field-error">
+                <label for="meta">Meta description</label>
+                <textarea id="meta" aria-invalid="true" aria-describedby="meta-err"></textarea>
+                <p class="err" id="meta-err">Missing meta description.</p>
+              </div>
+              <div class="field">
+                <label for="canon">Canonical URL</label>
+                <input id="canon" value="https://www.example.invalid/usa">
+              </div>
+              <div class="field">
+                <label for="robots">Index state</label>
+                <select id="robots">
+                  <option selected>index</option>
+                  <option>noindex</option>
+                </select>
+              </div>
+              <p class="caption">Social preview: title + description + public image. No structured-data builder in MVP.</p>
+            </section>
+            <section class="card">
+              <h2 class="card-title">Review and publish</h2>
+              <p>One reviewer for MVP. Multi-step approval later. Scheduling later.</p>
+              <p><span class="status status-pending">Pending approval</span> · reviewer Priya Shah</p>
+              <p class="caption">Preview is not Publish.</p>
+              <div class="actions">
+                <button class="btn btn-secondary" type="button">Open preview</button>
+                <button class="btn" type="button">Approve and publish</button>
+              </div>
+            </section>
+            <section class="card">
+              <h2 class="card-title">Version / history</h2>
+              <p class="caption">v12 · 20 Aug 16:04 IST · published USA destination</p>
+              <p class="caption">v11 · 19 Aug 12:10 IST · draft</p>
+              <a class="drill" href="#history">Open version history</a>
+              <p class="caption">Do not claim one-click rollback until verified. Unpublish exists.</p>
+            </section>
+          </aside>
+        </div>
+
+        <section class="states" id="states">
+          <h2>Required states, mobile review, and destructive confirm</h2>
+          <p class="lede">On screens under 800px the editing canvas hides. Review, Preview, and Request changes stay available. Full complex editing remains desktop-first.</p>
+          <div class="states-grid">
+            <article class="card">
+              <p class="card-title">Mobile / review</p>
+              <p><strong>USA destination</strong> · Draft · unsaved on desktop only</p>
+              <p class="caption">Reviewer sees status, SEO warnings, and publish controls.</p>
+              <div class="actions sticky-actions">
+                <button class="btn" type="button">Approve</button>
+                <button class="btn btn-secondary" type="button">Preview</button>
+                <button class="btn btn-secondary" type="button">Request changes</button>
+              </div>
+            </article>
+            <article class="card">
+              <div class="confirm">
+                <p class="card-title">Confirm unpublish</p>
+                <p>Unpublish removes this page from the public site. Draft remains. This is not a student document action.</p>
+                <div class="actions">
+                  <button class="btn btn-danger" type="button">Unpublish</button>
+                  <button class="btn btn-secondary" type="button">Cancel</button>
+                </div>
+              </div>
+            </article>
+            <article class="card">
+              <p class="card-title">Loading / empty / error</p>
+              <div class="skeleton"></div>
+              <div class="empty"><h3>No version history yet</h3><p class="caption">Save Draft to create the first revision.</p></div>
+              <div class="error-box">Publish failed. Review is still pending. The live page was not changed.</div>
+            </article>
+            <article class="card">
+              <p class="card-title">Read-only catalog editor</p>
+              <button class="btn btn-disabled" type="button" disabled>Save Draft (view only)</button>
+              <p class="caption">Publish requires cms.publish. Preview remains available.</p>
+            </article>
+            <article class="card">
+              <p class="card-title">Unsaved-change warning</p>
+              <p>Leave this page? Save Draft is explicit. Changes are not autosaved.</p>
+              <div class="actions">
+                <button class="btn" type="button">Stay</button>
+                <button class="btn btn-secondary" type="button">Discard</button>
+              </div>
+            </article>
+            <article class="card">
+              <p class="card-title">Keyboard focus</p>
+              <button class="btn btn-secondary demo-focus" type="button">Save Draft</button>
+              <p class="caption">Redirects (elsewhere): 301, 302, exact source-to-destination, loop/conflict warnings. Conditionals later.</p>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

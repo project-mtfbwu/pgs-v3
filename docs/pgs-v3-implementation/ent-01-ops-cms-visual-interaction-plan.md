@@ -6,7 +6,7 @@ Baseline: `af91bb7` / enterprise `43f9d4f`. Locked decisions from the SEC-00 + E
 
 Student/public shell is **out of scope**. Guardian V1 is unchanged. Hostinger is not re-scouted.
 
-No safe non-`public/` documentation-preview convention exists in this repository. Screens are specified with region diagrams and tables. Do not add HTML mockups under `public/`.
+Owner-reviewable static mockups (not application routes): [`ent-01v-mockups/`](ent-01v-mockups/index.html) and [`ent-01v-owner-visual-review.md`](ent-01v-owner-visual-review.md). Do not add HTML mockups under `public/`.
 
 Verified current limits (do not claim they exist):
 

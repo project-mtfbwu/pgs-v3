@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operations Inbox — ENT-01V mockup</title>
+  <link rel="stylesheet" href="mockups.css">
+</head>
+<body>
+  <div class="mock-banner">ENT-01V documentation mockup · Asia/Kolkata · Conversations is the initial tab · no inbox_items table · <a href="index.html">All screens</a></div>
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="operations-scoreboard.html"><b>PGS</b><span>Operations</span></a>
+      <nav class="switcher" aria-label="Workspace">
+        <a href="operations-scoreboard.html" aria-current="page">Operations</a>
+        <a href="cms-dashboard.html">CMS</a>
+      </nav>
+      <label class="search"><span class="sr">Search Inbox</span>
+        <input type="search" placeholder="Search inbox" aria-label="Search Inbox" value="SOP">
+      </label>
+      <a class="icon-btn" href="operations-inbox.html" aria-label="Inbox, 6 unread">Inbox<span class="badge">6</span></a>
+      <button class="user" type="button" aria-haspopup="menu" aria-label="Account menu for Priya Shah">
+        <span class="avatar" aria-hidden="true">PS</span>
+        <span>Priya Shah<small>Admin · one account</small></span>
+      </button>
+    </header>
+    <div class="mobile-nav" aria-label="Operations on small screens">
+      <a href="operations-scoreboard.html">Scoreboard</a>
+      <a href="student-detail.html">Students</a>
+      <a href="operations-inbox.html" aria-current="page">Inbox</a>
+      <a href="#states">More</a>
+    </div>
+    <div class="body">
+      <nav class="nav" aria-label="Operations">
+        <p>Operations</p>
+        <a href="operations-scoreboard.html"><span>Scoreboard</span></a>
+        <a href="student-detail.html"><span>Students</span></a>
+        <a href="operations-inbox.html" aria-current="page"><span>Inbox</span><span class="count">6</span></a>
+        <a href="#leads"><span>Leads</span></a>
+        <a href="#work"><span>Work</span></a>
+        <a href="#docs"><span>Documents</span></a>
+        <a href="#team"><span>Team</span></a>
+        <a href="#activity"><span>Activity</span></a>
+      </nav>
+      <main class="main">
+        <p class="crumbs"><a href="operations-scoreboard.html">Operations</a> / Inbox</p>
+        <div class="row">
+          <div>
+            <h1>Inbox</h1>
+            <p class="lede">Shared work surface over four existing domains. Not one inbox table. Conversations is first. Reply happens on the student record. This mockup is static — rows do not mutate data.</p>
+          </div>
+        </div>
+
+        <nav class="tabs" aria-label="Inbox types">
+          <a href="operations-inbox.html" aria-current="page">Conversations <span class="chip">4</span></a>
+          <a href="#applications">Applications <span class="chip">2</span></a>
+          <a href="#inquiries">Inquiries <span class="chip">7</span></a>
+          <a href="#notifications">Notifications <span class="chip">6</span></a>
+        </nav>
+
+        <div class="filters">
+          <label>Status
+            <select aria-label="Status">
+              <option>Needs reply</option>
+              <option>Waiting on student</option>
+              <option>All</option>
+            </select>
+          </label>
+          <label>Assignee
+            <select aria-label="Assignee">
+              <option>Anyone</option>
+              <option selected>Sam Okonkwo</option>
+              <option>Priya Shah</option>
+            </select>
+          </label>
+          <label>Student / lead
+            <select aria-label="Student or lead">
+              <option>All in scope</option>
+              <option selected>Jordan Cole</option>
+              <option>Riley Sen</option>
+            </select>
+          </label>
+          <label>Age / SLA
+            <select aria-label="Age or SLA">
+              <option>Any</option>
+              <option>Due soon</option>
+              <option>Overdue</option>
+              <option>Responded</option>
+            </select>
+          </label>
+          <label>Priority
+            <select aria-label="Priority">
+              <option>Any</option>
+              <option>High</option>
+              <option>Normal</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="split">
+          <section class="panel" aria-labelledby="list">
+            <h2 id="list" class="sr">Conversation list</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Conversation</th>
+                    <th scope="col">Preview</th>
+                    <th scope="col">Assignee</th>
+                    <th scope="col">Student</th>
+                    <th scope="col">Priority</th>
+                    <th scope="col">Age / SLA</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr aria-selected="true">
+                    <td>SOP draft review</td>
+                    <td class="clip">Can we keep the research paragraph shorter?</td>
+                    <td>Sam Okonkwo</td>
+                    <td><a href="student-detail.html">Jordan Cole</a></td>
+                    <td>High</td>
+                    <td>18h · Due soon</td>
+                    <td><span class="status status-warn">Needs reply</span></td>
+                  </tr>
+                  <tr>
+                    <td>Document list question</td>
+                    <td class="clip">Passport v3 is uploaded — is QC next?</td>
+                    <td>Alex Nair</td>
+                    <td>Riley Sen</td>
+                    <td>Normal</td>
+                    <td>6h</td>
+                    <td><span class="status status-warn">Needs reply</span></td>
+                  </tr>
+                  <tr>
+                    <td>Target university mix</td>
+                    <td class="clip">Waiting on student shortlist</td>
+                    <td>Sam Okonkwo</td>
+                    <td>Casey Wu</td>
+                    <td>Normal</td>
+                    <td>2d · Responded</td>
+                    <td><span class="status status-ok">Waiting on student</span></td>
+                  </tr>
+                  <tr>
+                    <td>Interview prep notes</td>
+                    <td class="clip" title="Long overflow example: the student pasted a full essay draft that should not wrap the row into unreadably tiny type">Long overflow example: the student pasted a full essay draft that should not wrap the row into unreadably tiny type</td>
+                    <td>Priya Shah</td>
+                    <td>Morgan Patel</td>
+                    <td>High</td>
+                    <td>26h · Overdue</td>
+                    <td><span class="status status-danger">Needs reply</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <aside class="panel" aria-labelledby="detail">
+            <div class="thread">
+              <h2 id="detail" class="card-title">SOP draft review</h2>
+              <p class="caption">Jordan Cole · PGS261118 · assigned to Sam Okonkwo · created 19 Aug 2026, 22:40 IST</p>
+              <div class="msg">
+                <p><strong>Jordan Cole</strong> · 19 Aug 22:40 IST</p>
+                <p>Updated the SOP draft. Can we keep the research paragraph shorter?</p>
+              </div>
+              <div class="msg staff">
+                <p><strong>Sam Okonkwo</strong> · 20 Aug 09:12 IST</p>
+                <p>Yes — cut the second citation. Reply lives on the student Conversations tab.</p>
+              </div>
+              <div class="actions">
+                <a class="btn" href="student-detail.html">Open student Conversations</a>
+                <button class="btn btn-secondary" type="button">Reassign</button>
+                <button class="btn btn-disabled" type="button" disabled title="Read-only in this mockup">Reply here</button>
+              </div>
+              <p class="callout">Read-only note: Inbox is a queue. Canonical thread and mutations stay on the student record. This static mockup does not send replies.</p>
+            </div>
+          </aside>
+        </div>
+
+        <section id="inquiries" class="panel" style="margin-top:16px;padding:12px 16px">
+          <h2 class="section-title">Inquiry SLA chips (same surface, different tab)</h2>
+          <p class="caption">Created time is preserved. First-response time is stored later and never reset. Display timezone Asia/Kolkata. Initial SLA: 24 calendar hours.</p>
+          <p>
+            <span class="status status-warn">Due soon</span>
+            <span class="status status-danger">Overdue</span>
+            <span class="status status-ok">Responded</span>
+          </p>
+        </section>
+
+        <section class="states" id="states">
+          <h2>Required states (documentation)</h2>
+          <div class="states-grid">
+            <article class="card">
+              <p class="card-title">Empty — Notifications tab example</p>
+              <div class="empty">
+                <h3>No notifications waiting</h3>
+                <p class="caption">Staff notifications appear here. This is not the audit log.</p>
+              </div>
+            </article>
+            <article class="card">
+              <p class="card-title">Loading</p>
+              <div class="skeleton"></div>
+              <div class="skeleton"></div>
+              <div class="skeleton" style="width:55%"></div>
+            </article>
+            <article class="card">
+              <p class="card-title">Error</p>
+              <div class="error-box">Conversations list failed. Retry. Partial rows were not shown as complete.</div>
+            </article>
+            <article class="card">
+              <p class="card-title">Read-only / restricted</p>
+              <p class="caption">Mentor without manage: Open student is allowed; Reply and Reassign are disabled with a visible “View only” label.</p>
+              <button class="btn btn-disabled" type="button" disabled>Reply (view only)</button>
+            </article>
+            <article class="card">
+              <p class="card-title">Mobile adaptation</p>
+              <p class="caption">Queue triage: Conversation, Student, Age/SLA, Status. Preview, Assignee, and Priority hide under 800px. Search is in the sheet. Open student is the primary action.</p>
+            </article>
+            <article class="card">
+              <p class="card-title">Keyboard focus</p>
+              <a class="btn btn-secondary demo-focus" href="student-detail.html">Open student Conversations</a>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
