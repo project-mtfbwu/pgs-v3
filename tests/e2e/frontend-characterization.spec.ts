@@ -410,20 +410,24 @@ test.describe("Batch 1 responsive and accessibility characterization", () => {
   });
 });
 
-function authenticatedCharacterization(label: "Standard" | "Premium", storageState: string | undefined, startRoute: string, expectedState: string) {
+function authenticatedCharacterization(label: "Standard" | "Premium", storageState: string | undefined, expectedState: string) {
   test.describe(`Batch 1 ${label} student characterization`, () => {
     test.use({ storageState: storageState ?? emptyState });
     test.skip(!storageState, `BLOCKED: PLAYWRIGHT_${label === "Standard" ? "STANDARD" : "PREMIUM"}_STUDENT_STORAGE_STATE is not supplied.`);
 
-    test("renders the existing student shell without mutating student data", async ({ page }) => {
-      await page.goto(startRoute, { waitUntil: "domcontentloaded" });
+    test("renders the canonical student feed without mutating student data", async ({ page }) => {
+      await page.goto("/student/dashboard", { waitUntil: "domcontentloaded" });
+      await expect(page).toHaveURL(/\/student\/dashboard$/);
       const selector = expectedState === "authenticated_premium"
         ? `.developer-student-shell[data-student-state="${expectedState}"]`
         : '[data-legacy-page="student-dashboard"][data-student-state="authenticated_standard"]';
       await expect(page.locator(selector)).toBeVisible();
+      if (expectedState === "authenticated_premium") {
+        await expect(page.locator("#where-you-stand")).toBeVisible();
+      }
     });
   });
 }
 
-authenticatedCharacterization("Standard", process.env.PLAYWRIGHT_STANDARD_STUDENT_STORAGE_STATE, "/student/dashboard", "authenticated_standard");
-authenticatedCharacterization("Premium", process.env.PLAYWRIGHT_PREMIUM_STUDENT_STORAGE_STATE, "/dashboard", "authenticated_premium");
+authenticatedCharacterization("Standard", process.env.PLAYWRIGHT_STANDARD_STUDENT_STORAGE_STATE, "authenticated_standard");
+authenticatedCharacterization("Premium", process.env.PLAYWRIGHT_PREMIUM_STUDENT_STORAGE_STATE, "authenticated_premium");

@@ -1,5 +1,228 @@
 # Frontend Batch 1 parity and accessibility characterization
 
+## Frontend control v2 reconciliation
+
+This report now distinguishes two evidence points:
+
+- the original Batch 1 characterization at
+  `af91bb7f6164d353dce11ecbef1b977185e01cba`; and
+- the reconciled characterization at accepted technical frontend baseline
+  `b51fba53d9d38ba12353b06707274583e495fc7e` on
+  `cursor/public-student-frontend-control-v2`.
+
+The original Batch 1 commit was replayed without rewriting it as
+`07d4e22d5b9d797b1d0c07ee690869abbb202a00`. Reconciliation changes only this
+report and the Batch 1 route/actor expectations in
+`frontend-characterization.helpers.ts` and `frontend-characterization.spec.ts`.
+No production component, route, generated markup, CSS, asset, API, proxy,
+workspace, dependency, lockfile, reference PNG, backend, Operations, or CMS file
+was changed during reconciliation.
+
+The authoritative browser run used the isolated local production build at
+`http://127.0.0.1:3100`. A first attempt on port 3000 is excluded: a pre-existing
+server in the primary worktree served stale HTML whose Next.js CSS/JS assets
+returned 500, so hydration never ran and no visual metrics were produced. That
+process was left untouched. No Preview or Production deployment was made.
+
+### Reconciled route and actor expectations
+
+The inventory remains 46 public/student routes plus application not-found. All
+47 anonymous surfaces passed status, final-URL, stable-identity, one-`main`, and
+no-client-error checks.
+
+| Route/state | Anonymous result | Standard result | Premium result | Reconciliation status |
+| --- | --- | --- | --- | --- |
+| `/student/dashboard` | retained anonymous student feed | fixture required | canonical Premium feed/workspace | anonymous PASS; authenticated **BLOCKED** |
+| `/dashboard` | redirects to `/student/dashboard`, then renders anonymous feed | expected compatibility redirect; fixture required | expected compatibility redirect; fixture required | anonymous observed; behavior **OWNER DECISION REQUIRED** |
+| `/feed_track_progress` | retained locked progress | fixture required | active Premium composition plus retained footer; fixture required | anonymous PASS; authenticated **BLOCKED** |
+| `/purpleboard` | public retained route, no Premium lock | same intended public route | same intended public route | route PASS; relational catalog content **BLOCKED** without configured data source |
+
+The existing `auth-student.spec.ts` still expects anonymous `/dashboard` to enter
+the login gate and now fails on desktop and mobile. It was not changed or skipped;
+the mismatch is retained as owner-review evidence for the proxy/auth-boundary
+decision.
+
+### Reconciled Tier A visual results
+
+All 16 approved SHA-256 pins remain exact. The pixelmatch per-pixel threshold
+remains `0.2`, and the changed-area ceiling remains `6%`. All comparisons are
+anonymous first-fold viewport captures only: desktop `1440x1000` and mobile
+`390x844`. They are not full-page, tablet, authenticated, Preview, or Production
+certification.
+
+| Route | Original desktop result at `af91bb7` | Reconciled desktop result at `b51fba53` | New bounds/repeat | Verdict |
+| --- | ---: | ---: | --- | --- |
+| `/` | 212,216 (14.73722%) | 3,827 (0.265764%) | `(292,546)-(574,614)`; repeat 424 (0.029444%) | PASS; open-sidebar region removed, animated headline remains |
+| `/countriesusa` | 191,565 (13.30313%) | 3,819 (0.265208%) | `(923,30)-(1405,64)`; repeat 0 | PASS; remaining header raster difference |
+| `/about` | 216,836 (15.05806%) | 1,231 (0.085486%) | `(923,30)-(1405,64)`; repeat 0 | PASS; remaining header raster difference |
+| `/countriescanada` | 188,822 (13.11264%) | 1,070 (0.074306%) | `(923,36)-(1405,64)`; repeat 0 | PASS; remaining header raster difference |
+| `/cvreadyprogram` | 217,471 (15.10215%) | 1,232 (0.085556%) | `(923,30)-(1405,64)`; repeat 0 | PASS; open-sidebar region removed |
+| `/purpleevents` | 135,616 (9.41778%) | 3,810 (0.264583%) | `(335,30)-(1405,368)`; repeat 8 (0.000556%) | PASS; header plus bounded hero variance |
+| `/scholarship` | 211,430 (14.68264%) | 3,818 (0.265139%) | `(923,30)-(1405,64)`; repeat 0 | PASS; remaining header raster difference |
+| `/usmlerotation` | 215,994 (14.99958%) | 3,818 (0.265139%) | `(923,30)-(1405,64)`; repeat 0 | PASS; open-sidebar region removed |
+
+Desktop changed pixels fell by 97.19%-99.43%. The former broad left/sidebar
+regions disappeared, confirming that the restored closed-by-default desktop
+sidebar resolves FE-B1-001. Any remaining visible difference still requires
+owner review before production UI changes.
+
+| Route | Reconciled mobile result | Repeat | Verdict |
+| --- | ---: | ---: | --- |
+| `/` | 509 (0.154636%) | 0 | PASS within bounded comparator |
+| `/countriesusa` | 65 (0.019747%) | 0 | PASS within bounded comparator |
+| `/about` | 65 (0.019747%) | 0 | PASS within bounded comparator |
+| `/countriescanada` | 65 (0.019747%) | 0 | PASS within bounded comparator |
+| `/cvreadyprogram` | 65 (0.019747%) | 0 | PASS within bounded comparator |
+| `/purpleevents` | 364 (0.110585%) | 4 (0.001215%) | PASS within bounded comparator |
+| `/scholarship` | 65 (0.019747%) | 0 | PASS within bounded comparator |
+| `/usmlerotation` | 433 (0.131547%) | 0 | PASS within bounded comparator |
+
+### Reconciled interaction and responsive results
+
+| Interaction | Reconciled result |
+| --- | --- |
+| Public navigation, browser history, Canada filter, scholarship accordion | PASS |
+| Search/autocomplete transport | PASS: one intercepted GET with `q=char`, result visible, no external request |
+| Account forms and logout confirmation | PASS structurally; no submission/logout triggered by characterization |
+| Retained sidebar pointer controls | PASS |
+| Retained sidebar keyboard controls | FAIL: nameless `div` does not activate with Enter/Space; image close is unnamed/unfocusable |
+| Retained mobile drawer | pointer/body-lock PASS; Escape, role, expanded state, focus entry/return FAIL |
+| Scholarship modal | pointer/body-lock PASS; opener, role/name, focus, Escape/return FAIL |
+| Retained notification dropdown | pointer PASS; disclosure/menu semantics and Escape FAIL |
+| Saved/notification authenticated runtime | BLOCKED by missing authorized fixtures; mutations NOT TESTED |
+
+| Viewport | `/` | USA | CV Ready | Login | Anonymous student dashboard |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Laptop `1366x768` | fits | +14 px | fits | fits | fits |
+| Tablet portrait `768x1024` | +240 px | +209 px | +194 px | +126 px | +98 px |
+| Tablet landscape `1024x768` | +16 px | +14 px | fits | fits | fits |
+| Mobile `390x844` | fits | fits | +4 px | fits | +4 px |
+| Practical 200% equivalent `720x500` | fits | fits | not sampled | fits | fits |
+
+The practical 200% equivalent found no horizontal overflow or clipped first focus
+target on its four representatives. It is not native browser-zoom certification.
+
+### Reconciled accessibility results
+
+Axe used `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, and `wcag22aa`. The rule
+categories persist; the hidden initial sidebar reduced visible missing-alt nodes.
+
+| Surface | Desktop violations | Mobile violations |
+| --- | --- | --- |
+| `/` | command 1, button 1, contrast 13, image alt 27, link 7, target size 20 | command 1, button 2, contrast 9, image alt 29, link 7, target size 23 |
+| USA | command 1, ARIA child 1, ARIA parent 1, button 1, contrast 10, image alt 20, link 7, list 1 | same structural rules; button 2, contrast 8, image alt 22, target size 3 |
+| Login | command 1, button 1, contrast 7, image alt 24, label 5, link 7 | command 1, button 2, contrast 5, image alt 26, label 5, link 7, target size 3 |
+| Anonymous student dashboard | command 1, button 7, contrast 5, image alt 38, label 10, link 7 | command 1, button 8, contrast 5, image alt 42, label 10, link 7, target size 3 |
+| Logout confirmation | zero configured-rule violations | zero configured-rule violations |
+
+Manual runtime evidence remains FAIL for visible focus, retained drawer/modal/menu
+keyboard contracts, retained landmark ownership, form labels, heading hierarchy,
+duplicate IDs, and reduced motion. With `prefers-reduced-motion: reduce`, one visible
+animation remained running and advancing; the sampled navbar focus outline remained
+`none`.
+
+Authenticated Standard/Premium runtime accessibility, the Developer drawer,
+Premium comments, Premium footer/headings, Ask Purple Guide, and authenticated
+responsive/visual coverage remain **BLOCKED** because authorized storage-state
+fixtures were not supplied.
+
+### Reconciled FE-B1-001 through FE-B1-022 ledger
+
+| ID | `b51fba53` status | Reconciled evidence |
+| --- | --- | --- |
+| FE-B1-001 | **RESOLVED BY RESTORATION WORK** | closed initial desktop sidebar removes broad 9.42%-15.10% diffs; all eight desktop first folds now pass at 0.07%-0.27% |
+| FE-B1-002 | **STILL PRESENT** | country family remains 14 px wide at desktop/laptop |
+| FE-B1-003 | **STILL PRESENT** | all five `768x1024` representatives overflow; USA changed slightly from +211 to +209 px |
+| FE-B1-004 | **STILL PRESENT** | home +16 px and USA +14 px at `1024x768` |
+| FE-B1-005 | **STILL PRESENT** | CV Ready and anonymous student dashboard remain +4 px at `390x844` |
+| FE-B1-006 | **STILL PRESENT** | retained sidebar toggle/close keyboard and naming failures reproduced |
+| FE-B1-007 | **STILL PRESENT** | retained mobile drawer Escape/focus/semantics failures reproduced |
+| FE-B1-008 | **STILL PRESENT** | scholarship retained modal focus/dialog failures reproduced |
+| FE-B1-009 | **STILL PRESENT** | retained notification disclosure/menu/Escape failures reproduced |
+| FE-B1-010 | **STILL PRESENT** | GET/result pass; combobox/listbox/Arrow/Escape/announcement model remains absent |
+| FE-B1-011 | **STILL PRESENT** | sampled navbar focus still computes `outline-style: none` |
+| FE-B1-012 | **CHANGED** | retained animation still advances under reduced motion; new urgent GIF adds an unresolved motion source |
+| FE-B1-013 | **CHANGED** | retained `LegacyPage` still wraps header/footer inside `main`; Premium Developer header is outside `main`, but retained Premium footer is a non-semantic `div`; no skip link |
+| FE-B1-014 | **CHANGED** | same Axe naming/alt categories persist; hidden sidebar reduces desktop image-alt counts by 11 on each representative |
+| FE-B1-015 | **STILL PRESENT; PREMIUM BLOCKED** | retained anonymous heading defects persist; new Premium hierarchy requires fixture runtime |
+| FE-B1-016 | **CHANGED** | existing account/profile labels fail; new Premium comment textarea is also unlabeled |
+| FE-B1-017 | **STILL PRESENT** | USA invalid ARIA child/parent/list rules reproduced |
+| FE-B1-018 | **STILL PRESENT** | contrast and target-size rule failures reproduced; Premium CSS remains unaudited at runtime |
+| FE-B1-019 | **STILL PRESENT** | retained duplicate IDs remain in unchanged generated markup |
+| FE-B1-020 | **STILL PRESENT; RUNTIME BLOCKED** | Developer drawer still lacks Escape/focus containment/return/inert/body lock in source |
+| FE-B1-021 | **STILL PRESENT; RUNTIME BLOCKED** | profile labels remain unbound and Saved still discards available alt text |
+| FE-B1-022 | **STILL PRESENT; RUNTIME BLOCKED** | Ask Purple Guide focus/Escape/return/inert behavior unchanged; canonical route is now `/student/dashboard` |
+
+No existing defect was silently closed. FE-B1-001 is resolved by repeatable visual
+evidence; every other closure would require later implementation and rerun.
+
+### New reconciled baseline defects
+
+| ID | Surface | Type | Evidence | Status |
+| --- | --- | --- | --- | --- |
+| FE-B1-023 | Premium urgent alert | Accessibility/motion | `premium-urgent-clock.gif` contains 185 frames at 30 ms, loops indefinitely, is always rendered for Premium, and has no pause or reduced-motion alternative | **OWNER DECISION REQUIRED** |
+| FE-B1-024 | Premium comments | Accessibility | comment textarea has only placeholder text and no `label`, `aria-label`, or `aria-labelledby` | **STILL PRESENT; RUNTIME BLOCKED** |
+
+### Unresolved owner-review items
+
+| Item | Evidence/status |
+| --- | --- |
+| Premium comment replies | previous Reply/Cancel/reply-target behavior was removed; new posts force `parent_id: null` — **OWNER DECISION REQUIRED** |
+| `/dashboard` route behavior | every actor is redirected to `/student/dashboard`; anonymous runtime observed — **OWNER DECISION REQUIRED** |
+| Proxy/auth boundary | `/dashboard` is protected but anonymous-exempt; no anonymous Premium loader/data exposure was established, but policy acceptance is **OWNER DECISION REQUIRED** |
+| AI/API behavior | canonical link changes remain in accepted baseline but were not changed or approved by reconciliation — **OWNER DECISION REQUIRED** |
+| Workspace catalog behavior | server catalog loader/fallback changes remain; authenticated runtime unavailable — **OWNER DECISION REQUIRED** |
+| Urgent clock | infinite motion plus hardcoded fallback alert behavior — **OWNER DECISION REQUIRED** |
+| Remaining Tier A difference | all bounded comparisons pass, but every non-zero visual difference remains subject to owner review |
+| Visible accessibility adaptations | none were implemented; any later design-visible adaptation requires owner approval |
+| Premium account/notification/fallback presentation | source shows a visible desktop `login` account label for authenticated Premium, desktop notification omission, and synthetic Top Picks when catalog data is empty — **OWNER DECISION REQUIRED** |
+
+### Reconciliation verification
+
+| Check | Result |
+| --- | --- |
+| Source branch/base guards | PASS: both original branch tips matched origin; target branch/path were absent |
+| Cherry-pick boundary | PASS: exactly the four authorized Batch 1 paths; no conflict |
+| ESLint | PASS: zero warnings |
+| Strict TypeScript | PASS |
+| Unit tests | PASS: 67 files, 345 tests |
+| Production build | PASS: 217 authoritative assets; 72 static-page entries generated |
+| Characterization plus Tier A visual | PASS: 34 passed, 12 expected viewport/fixture skips |
+| Tier A references | PASS: 16/16; all hashes exact; no PNG or threshold changed |
+| Safe existing public/student selection | 48 passed, 15 expected fixture/viewport skips, 5 retained failures |
+| Retained failures | `/dashboard` auth expectation x2; missing PurpleBoard data x2; stale open-sidebar expectation x1 |
+| `git diff --check` | PASS |
+| Mutation safety | contact/scholarship submissions excluded; no characterization mutation; no configured Supabase, storage-state, service-role, or AI environment |
+| Generated-output review | Playwright, Next, dependency, and TypeScript outputs remain ignored |
+
+The safe existing selection did not convert its five failures into skips. Fixture-gated
+Premium/Standard, View-as-Student, AI, staff authoring, and entitlement-transition
+cases were not run because authorized disposable fixtures/storage states were absent.
+No user, password, entitlement, database row, document, Preview, or Production state
+was created or changed.
+
+### Reconciled Batch 2 recommendation
+
+Batch 2 should begin only after owner decisions for comment replies, `/dashboard`,
+proxy/auth policy, urgent motion, AI/API links, and workspace fallback behavior.
+Its implementation boundary should then be:
+
+1. Preserve the restored closed desktop sidebar and the 16 passing Tier A references.
+2. Repair shared retained landmarks, skip-link ownership, focus-visible styling,
+   sidebar/drawer controls, notification disclosure, search combobox behavior, and
+   retained modal focus/Escape/return without redesigning route bodies.
+3. Correct the measured tablet, country, and 4 px mobile overflow defects and rerun
+   the unchanged comparator at every approved viewport.
+4. Defer Premium dashboard/comments/footer/Ask implementation until disposable
+   Standard/Premium fixtures support runtime visual, responsive, keyboard, and Axe
+   evidence and the owner resolves the product-behavior questions above.
+
+## Historical Batch 1 report at `af91bb7`
+
+Everything below this heading is the original Batch 1 evidence at
+`af91bb7f6164d353dce11ecbef1b977185e01cba`. Its exact metrics and verdicts are
+retained for before/after traceability and are not the current `b51fba53` result.
+
 ## Status and boundary
 
 This report characterizes the public and student frontend at production-source commit

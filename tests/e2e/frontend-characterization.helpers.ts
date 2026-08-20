@@ -30,7 +30,7 @@ export const frontendRouteInventory: readonly FrontendRouteCharacterization[] = 
   { route: "/countriesuk", expectedPath: "/countriesuk", identitySelector: legacy("countriesuk"), tier: "B" },
   { route: "/countriesusa", expectedPath: "/countriesusa", identitySelector: legacy("countriesusa"), tier: "A" },
   { route: "/cvreadyprogram", expectedPath: "/cvreadyprogram", identitySelector: legacy("cvreadyprogram"), tier: "A" },
-  { route: "/dashboard", expectedPath: "/login", expectedQuery: "redirect=%2Fdashboard", identitySelector: legacy("login"), tier: "B" },
+  { route: "/dashboard", expectedPath: "/student/dashboard", identitySelector: legacy("student-dashboard"), tier: "B" },
   { route: "/error_404", expectedPath: "/error_404", identitySelector: legacy("error-404"), tier: "B" },
   { route: "/explorecountries", expectedPath: "/explorecountries", identitySelector: legacy("explorecountries"), tier: "B" },
   { route: "/feed_track_progress", expectedPath: "/feed_track_progress", identitySelector: legacy("progress-locked"), tier: "B" },
