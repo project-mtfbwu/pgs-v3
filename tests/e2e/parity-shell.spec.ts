@@ -51,7 +51,8 @@ test("anonymous Premium progress and documents render their resolved locked comp
   await expect(page.locator('[data-legacy-page="documents-locked"]')).toHaveAttribute("data-student-state","anonymous");
   await expect(page.locator(".lock-box-feed").first()).toBeVisible();
   await goto(page,"/dashboard");
-  await expect(page).toHaveURL(/\/login\?redirect=%2Fdashboard/);
+  await expect(page).toHaveURL(/\/student\/dashboard$/);
+  await expect(page.locator('[data-legacy-page="student-dashboard"]')).toHaveAttribute("data-student-state","anonymous");
 });
 
 test("developer Premium Overview remains a distinct recovered route",async({page})=>{

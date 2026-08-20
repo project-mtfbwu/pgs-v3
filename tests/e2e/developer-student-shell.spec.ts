@@ -115,7 +115,7 @@ const sharedSidebarRoutes = [
 for (const actor of [
   { name: "anonymous", start: "/student/dashboard", storageState: undefined },
   { name: "standard", start: "/student/dashboard", storageState: process.env.PLAYWRIGHT_STANDARD_STUDENT_STORAGE_STATE },
-  { name: "premium", start: "/dashboard", storageState: process.env.PLAYWRIGHT_PREMIUM_STUDENT_STORAGE_STATE }
+  { name: "premium", start: "/student/dashboard", storageState: process.env.PLAYWRIGHT_PREMIUM_STUDENT_STORAGE_STATE }
 ] as const) {
   test(`${actor.name} sidebar follows one cross-route viewport contract`, async ({ browser }, testInfo) => {
     test.setTimeout(240_000);

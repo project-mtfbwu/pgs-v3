@@ -14,7 +14,7 @@ test.describe("Premium frontend recovery runtime matrix", () => {
     const premiumContext = await browser.newContext({ storageState: premiumState });
     const premium = await premiumContext.newPage();
     await premium.goto("/student/dashboard");
-    await expect(premium).toHaveURL(/\/dashboard$/);
+    await expect(premium).toHaveURL(/\/student\/dashboard$/);
     await expect(premium.locator('.developer-student-shell[data-student-state="authenticated_premium"]')).toBeVisible();
     await expect(premium.getByText("Your Quick Dashboard overview", { exact: true })).toBeVisible();
     await expect(premium.getByRole("heading", { name: "Where You Stand" })).toBeVisible();
@@ -48,7 +48,8 @@ test.describe("Premium frontend recovery runtime matrix", () => {
     await standard.goto("/");
     await expect(standard.locator('[data-legacy-page="home"]')).toHaveAttribute("data-student-state", "authenticated_standard");
     await standard.goto("/dashboard");
-    await expect(standard.locator('[data-legacy-page="dashboard-locked"]')).toHaveAttribute("data-student-state", "authenticated_standard");
+    await expect(standard).toHaveURL(/\/student\/dashboard$/);
+    await expect(standard.locator('[data-legacy-page="student-dashboard"]')).toHaveAttribute("data-student-state", "authenticated_standard");
     await expect(standard.locator(".developer-premium-dashboard")).toHaveCount(0);
     for (const [route, page] of [["/feed_track_progress", "progress-locked"], ["/upload_your_doc", "documents-locked"]] as const) {
       await standard.goto(route);
@@ -83,6 +84,7 @@ test.describe("Premium frontend recovery runtime matrix", () => {
     await expect(staff.getByText("Update Premium dashboard", { exact: true })).toBeVisible();
 
     await premium.goto("/dashboard");
+    await expect(premium).toHaveURL(/\/student\/dashboard$/);
     await expect(premium.getByText("72%", { exact: true })).toBeVisible();
     await expect(premium.locator("#currently-working-on")).toContainText("Statement of Purpose");
     await expect(premium.getByText("Visa documents", { exact: true })).toBeVisible();
