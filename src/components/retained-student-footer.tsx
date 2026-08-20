@@ -20,6 +20,7 @@ export function RetainedStudentFooter({ studentState }: { studentState: StudentE
     <div
       data-retained-student-footer="true"
       data-student-state={studentState}
+      role="contentinfo"
       dangerouslySetInnerHTML={{ __html: retainedFooterHtml }}
     />
   );

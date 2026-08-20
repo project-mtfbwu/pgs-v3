@@ -1,0 +1,52 @@
+/*
+ * Project-owned public/student accessibility foundation.
+ * Retained vendor and legacy styles remain authoritative for normal presentation.
+ */
+.pgs-skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 12000;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: #150035;
+  color: #fff;
+  font: 700 14px/1.2 Arial, sans-serif;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 16px));
+}
+
+.pgs-skip-link:focus,
+.pgs-skip-link:focus-visible {
+  color: #fff;
+  outline: 5px solid #ffde7f !important;
+  outline-offset: 3px !important;
+  transform: translateY(0);
+}
+
+:where([data-legacy-page], .developer-student-shell, [data-retained-student-footer])
+  :where(a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 5px solid #135fbd !important;
+  outline-offset: 3px !important;
+}
+
+#pgs-main-content {
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pgs-skip-link,
+  :where([data-legacy-page], .developer-student-shell, [data-retained-student-footer]),
+  :where([data-legacy-page], .developer-student-shell, [data-retained-student-footer]) *,
+  .pgs-skip-link::before,
+  .pgs-skip-link::after,
+  :where([data-legacy-page], .developer-student-shell, [data-retained-student-footer]) *::before,
+  :where([data-legacy-page], .developer-student-shell, [data-retained-student-footer]) *::after {
+    scroll-behavior: auto !important;
+    animation-delay: 0s !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-delay: 0s !important;
+    transition-duration: 0.01ms !important;
+  }
+}

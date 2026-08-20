@@ -3,6 +3,7 @@ import Script from "next/script";
 import type { ReactNode } from "react";
 import { StudentSidebarStateProvider } from "@/components/student-sidebar-state-provider";
 import "./globals.css";
+import "./frontend-foundation.css";
 
 export const metadata: Metadata = {
   title: { default: "#PGS", template: "%s | #PGS" },

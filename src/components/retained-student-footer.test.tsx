@@ -7,6 +7,7 @@ describe("retained student footer", () => {
     const html = renderToStaticMarkup(<RetainedStudentFooter studentState="authenticated_premium" />);
 
     expect(html).toContain('data-retained-student-footer="true"');
+    expect(html).toContain('role="contentinfo"');
     expect(html).toContain('class="footer-bg"');
     expect(html).toContain('class="copyrght"');
     expect(html).not.toContain("premium-modal-overlay");

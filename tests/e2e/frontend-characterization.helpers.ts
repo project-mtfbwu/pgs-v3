@@ -12,7 +12,7 @@ export type FrontendRouteCharacterization = {
   expectedQuery?: string;
 };
 
-const legacy = (page: string) => `main[data-legacy-page="${page}"]`;
+const legacy = (page: string) => `div[data-legacy-page="${page}"]`;
 
 export const frontendRouteInventory: readonly FrontendRouteCharacterization[] = [
   { route: "/", expectedPath: "/", identitySelector: legacy("home"), tier: "A" },
@@ -104,13 +104,17 @@ export async function layoutObservation(page: Page) {
       };
     });
     return {
+      bannerCount: document.querySelectorAll("[data-legacy-page] > header, body > header, [role='banner']").length,
       bodyScrollLocked: document.body.classList.contains("overflow-hidden"),
       clientWidth: root.clientWidth,
+      complementaryCount: document.querySelectorAll("aside, [role='complementary']").length,
+      contentinfoCount: document.querySelectorAll("footer, [role='contentinfo']").length,
       headingCount: headings.length,
       headings,
       h1Count: headings.filter(({ level }) => level === 1).length,
       horizontalOverflow: root.scrollWidth > root.clientWidth + 1,
       mainCount: document.querySelectorAll("main").length,
+      navigationCount: document.querySelectorAll("nav, [role='navigation']").length,
       scrollWidth: root.scrollWidth,
       visibleH1Count: headings.filter(({ level, visible }) => level === 1 && visible).length,
       visibleHeadings: headings.filter(({ visible }) => visible)

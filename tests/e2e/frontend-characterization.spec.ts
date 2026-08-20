@@ -35,6 +35,11 @@ test.describe("Batch 1 route characterization", () => {
 
       const observation = await layoutObservation(page);
       expect(observation.mainCount, `${entry.route} primary landmark count`).toBe(1);
+      if (entry.route !== "/logout") {
+        expect(observation.bannerCount, `${entry.route} banner landmark count`).toBe(1);
+        expect(observation.contentinfoCount, `${entry.route} contentinfo landmark count`).toBe(1);
+        expect(observation.navigationCount, `${entry.route} navigation landmark count`).toBeGreaterThan(0);
+      }
       results.push({
         route: entry.route,
         tier: entry.tier,
@@ -271,11 +276,11 @@ test.describe("Batch 1 responsive and accessibility characterization", () => {
   test("representative route families render across laptop, tablet, and mobile viewports", async ({ browser }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop", "The explicit viewport matrix runs once.");
     const routes = [
-      { route: "/", identity: 'main[data-legacy-page="home"]' },
-      { route: "/countriesusa", identity: 'main[data-legacy-page="countriesusa"]' },
-      { route: "/cvreadyprogram", identity: 'main[data-legacy-page="cvreadyprogram"]' },
-      { route: "/login", identity: 'main[data-legacy-page="login"]' },
-      { route: "/student/dashboard", identity: 'main[data-legacy-page="student-dashboard"]' }
+      { route: "/", identity: 'div[data-legacy-page="home"]' },
+      { route: "/countriesusa", identity: 'div[data-legacy-page="countriesusa"]' },
+      { route: "/cvreadyprogram", identity: 'div[data-legacy-page="cvreadyprogram"]' },
+      { route: "/login", identity: 'div[data-legacy-page="login"]' },
+      { route: "/student/dashboard", identity: 'div[data-legacy-page="student-dashboard"]' }
     ] as const;
     const observations = [];
     for (const viewport of representativeViewports) {
@@ -324,8 +329,8 @@ test.describe("Batch 1 responsive and accessibility characterization", () => {
     });
   }
 
-  test("keyboard focus and reduced-motion settings are observable without claiming certification", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop", "One representative retained route records the shared CSS behavior.");
+  test("shared keyboard focus and reduced-motion settings are effective", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop", "One representative retained route verifies the shared CSS behavior.");
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await waitForFrontendReady(page);
@@ -366,6 +371,13 @@ test.describe("Batch 1 responsive and accessibility characterization", () => {
       };
     });
     await attachJson(testInfo, "focus-and-reduced-motion.json", observation);
+    expect(observation.reducedMotionMatches).toBe(true);
+    expect(observation.focusOutlineStyle).not.toBe("none");
+    expect(Number.parseFloat(observation.focusOutlineWidth ?? "0")).toBeGreaterThanOrEqual(3);
+    expect(observation.runningAnimationCount).toBe(0);
+    await expect(page.locator(".pgs-skip-link")).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#pgs-main-content")).toBeFocused();
   });
 
   test("practical 200% zoom-equivalent reflow records overflow and focused-control clipping", async ({ browser }, testInfo) => {
@@ -377,10 +389,10 @@ test.describe("Batch 1 responsive and accessibility characterization", () => {
     });
     const page = await context.newPage();
     const routes = [
-      { route: "/", identity: 'main[data-legacy-page="home"]' },
-      { route: "/countriesusa", identity: 'main[data-legacy-page="countriesusa"]' },
-      { route: "/login", identity: 'main[data-legacy-page="login"]' },
-      { route: "/student/dashboard", identity: 'main[data-legacy-page="student-dashboard"]' }
+      { route: "/", identity: 'div[data-legacy-page="home"]' },
+      { route: "/countriesusa", identity: 'div[data-legacy-page="countriesusa"]' },
+      { route: "/login", identity: 'div[data-legacy-page="login"]' },
+      { route: "/student/dashboard", identity: 'div[data-legacy-page="student-dashboard"]' }
     ] as const;
     const observations = [];
     for (const route of routes) {

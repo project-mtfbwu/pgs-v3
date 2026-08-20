@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { MouseEvent, ReactNode } from "react";
 import { useState } from "react";
+import { FRONTEND_MAIN_ID, FrontendSkipLink } from "@/components/frontend-skip-link";
 import { StaffPreviewBanner } from "@/components/staff-preview-banner";
 import { StudentNotificationDropdown } from "@/components/student-notification-dropdown";
 import { useStudentSidebarState } from "@/components/student-sidebar-state-provider";
@@ -82,6 +83,7 @@ export function DeveloperStudentShell({
 
   return (
     <div className={`developer-student-shell${premium ? " developer-premium-shell" : ""}`} data-student-state={stateKind}>
+      <FrontendSkipLink />
       {preview ? (
         <StaffPreviewBanner actorName={preview.actorName} mode="student" targetName={preview.targetName} />
       ) : null}
@@ -196,7 +198,7 @@ export function DeveloperStudentShell({
         </>
       )}
 
-      <main className={`wrapper-content developer-student-content ${contentClassName}`.trim()}>{children}</main>
+      <main id={FRONTEND_MAIN_ID} tabIndex={-1} className={`wrapper-content developer-student-content ${contentClassName}`.trim()}>{children}</main>
     </div>
   );
 }

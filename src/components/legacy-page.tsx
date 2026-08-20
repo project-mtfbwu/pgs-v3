@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { FrontendSkipLink } from "@/components/frontend-skip-link";
 import { useStudentSidebarState } from "@/components/student-sidebar-state-provider";
+import { structureLegacyPageHtml } from "@/lib/legacy-frontend-structure";
 import { signOutAndNavigate } from "@/lib/logout-navigation";
 
 type Props = { html: string; page: string; studentState?: "anonymous" | "authenticated_standard" | "authenticated_premium" };
@@ -224,7 +226,8 @@ async function manageLegacyNotification(target: HTMLElement) {
 export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
   const router = useRouter();
   const { open: sidebarOpen } = useStudentSidebarState();
-  const rootRef = useRef<HTMLElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const structuredHtml = useMemo(() => structureLegacyPageHtml(html, page), [html, page]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -440,5 +443,15 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
     };
   }, [page, router]);
 
-  return <main ref={rootRef} data-legacy-page={page} data-student-state={studentState} dangerouslySetInnerHTML={{ __html: html }} />;
+  return (
+    <>
+      <FrontendSkipLink />
+      <div
+        ref={rootRef}
+        data-legacy-page={page}
+        data-student-state={studentState}
+        dangerouslySetInnerHTML={{ __html: structuredHtml }}
+      />
+    </>
+  );
 }
