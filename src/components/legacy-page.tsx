@@ -146,8 +146,75 @@ function moveJourneyStep(button: HTMLButtonElement, direction: 1 | -1): boolean 
   current.style.display = "none";
   next.classList.remove("hidden");
   next.style.removeProperty("display");
+  steps.forEach((step, index) => {
+    const active = step === next;
+    step.setAttribute("aria-hidden", String(!active));
+    if (!step.id) step.id = `pgs-study-journey-step-${index + 1}`;
+  });
+  const nextIndex = steps.indexOf(next);
+  const progress = form.querySelector<HTMLElement>("[data-pgs-journey-progress='true'], [role='progressbar']");
+  progress?.setAttribute("aria-valuemin", "1");
+  progress?.setAttribute("aria-valuenow", String(nextIndex + 1));
+  progress?.setAttribute("aria-valuemax", String(steps.length));
+  progress?.setAttribute("aria-valuetext", `Step ${nextIndex + 1} of ${steps.length}`);
+  const counter = form.querySelector<HTMLElement>("[data-pgs-journey-counter='true'], #step-counter");
+  if (counter) counter.textContent = `Step ${nextIndex + 1} of ${steps.length}`;
   next.querySelector<HTMLElement>("input, select, textarea")?.focus();
   return true;
+}
+
+function prepareStudyJourneys(root: HTMLElement): void {
+  root.querySelectorAll<HTMLFormElement>("form[data-pgs-study-journey='true']").forEach((form) => {
+    const steps = Array.from(form.querySelectorAll<HTMLElement>(".step"));
+    if (steps.length < 2) return;
+    const foundVisibleIndex = steps.findIndex((step) => (
+      !step.classList.contains("hidden") && step.style.display !== "none"
+    ));
+    const visibleIndex = Math.max(0, foundVisibleIndex);
+    steps.forEach((step, index) => {
+      step.id ||= `pgs-study-journey-step-${index + 1}`;
+      step.setAttribute("aria-hidden", String(index !== visibleIndex));
+      step.querySelectorAll<HTMLButtonElement>("button.btn-back, button.btn-next").forEach((control) => {
+        const destinationIndex = control.classList.contains("btn-back") ? index - 1 : index + 1;
+        const destination = steps[destinationIndex];
+        if (destination) control.setAttribute("aria-controls", destination.id);
+      });
+    });
+    const progress = form.querySelector<HTMLElement>("[data-pgs-journey-progress='true'], [role='progressbar']");
+    progress?.setAttribute("aria-valuemin", "1");
+    progress?.setAttribute("aria-valuenow", String(visibleIndex + 1));
+    progress?.setAttribute("aria-valuemax", String(steps.length));
+    progress?.setAttribute("aria-valuetext", `Step ${visibleIndex + 1} of ${steps.length}`);
+    const counter = form.querySelector<HTMLElement>("[data-pgs-journey-counter='true'], #step-counter");
+    if (counter) counter.textContent = `Step ${visibleIndex + 1} of ${steps.length}`;
+  });
+}
+
+function prepareLegacyCollapses(root: HTMLElement): void {
+  root.querySelectorAll<HTMLElement>("[data-bs-toggle='collapse']").forEach((trigger) => {
+    const selector = trigger.dataset.bsTarget ?? trigger.getAttribute("href");
+    if (!selector?.startsWith("#")) return;
+    const panel = root.querySelector<HTMLElement>(`#${CSS.escape(selector.slice(1))}`);
+    if (!panel?.classList.contains("collapse")) return;
+    const open = panel.classList.contains("show");
+    trigger.setAttribute("aria-controls", panel.id);
+    trigger.setAttribute("aria-expanded", String(open));
+    if (!(trigger instanceof HTMLButtonElement)) {
+      trigger.setAttribute("role", "button");
+    }
+    if (!(trigger instanceof HTMLButtonElement) && !(trigger instanceof HTMLAnchorElement)) {
+      trigger.setAttribute("tabindex", "0");
+    }
+    panel.setAttribute("aria-hidden", String(!open));
+  });
+}
+
+function synchronizeLegacyCollapse(root: HTMLElement, panel: HTMLElement, open: boolean): void {
+  panel.setAttribute("aria-hidden", String(!open));
+  if (!panel.id) return;
+  root.querySelectorAll<HTMLElement>(`[aria-controls="${CSS.escape(panel.id)}"]`).forEach((trigger) => {
+    trigger.setAttribute("aria-expanded", String(open));
+  });
 }
 
 async function submitModalPanel(modal: HTMLElement, page: string, button: HTMLButtonElement) {
@@ -382,6 +449,8 @@ function prepareLegacyShell(root: HTMLElement, page: string): void {
   }
 
   prepareLegacyDisclosures(root, page);
+  prepareLegacyCollapses(root);
+  prepareStudyJourneys(root);
 }
 
 export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
@@ -404,6 +473,19 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
     root.dataset.interactionsReady = "true";
     prepareLegacyShell(root, page);
     document.dispatchEvent(new Event("pgs:frontend-ready"));
+
+    for (const [eventName, open] of [
+      ["show.bs.collapse", true],
+      ["shown.bs.collapse", true],
+      ["hide.bs.collapse", false],
+      ["hidden.bs.collapse", false]
+    ] as const) {
+      root.addEventListener(eventName, (event) => {
+        if (event.target instanceof HTMLElement && event.target.classList.contains("accordion-collapse")) {
+          synchronizeLegacyCollapse(root, event.target, open);
+        }
+      }, options);
+    }
 
     root.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
@@ -435,7 +517,7 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
 
       if (!["Enter", " "].includes(event.key)) return;
       if (target.matches(
-        "#toggleBtn, #close_Btn, .graidant-border.cursor-pointer, #premiumVideoOverlay, [data-pgs-disclosure-trigger='true']"
+        "#toggleBtn, #close_Btn, .graidant-border.cursor-pointer, #premiumVideoOverlay, [data-pgs-disclosure-trigger='true'], [data-pgs-route-link='true'], [data-pgs-dialog-trigger='true'], [data-bs-toggle='collapse']"
       )) {
         event.preventDefault();
         target.click();
@@ -505,6 +587,27 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
         }
       }
 
+      const routeControl = target.closest<HTMLElement>("[data-pgs-route-link='true']");
+      if (routeControl) {
+        const destination = routeControl.dataset.href;
+        if (destination?.startsWith("/") && !destination.startsWith("//")) {
+          event.preventDefault();
+          router.push(destination);
+        }
+        return;
+      }
+
+      const dialogTrigger = target.closest<HTMLElement>("[data-pgs-dialog-trigger='true']");
+      if (dialogTrigger) {
+        const controlledId = dialogTrigger.getAttribute("aria-controls");
+        const dialog = controlledId ? root.querySelector<HTMLElement>(`#${CSS.escape(controlledId)}`) : null;
+        if (dialog) {
+          event.preventDefault();
+          openLegacyLayer(dialog, dialogTrigger);
+        }
+        return;
+      }
+
       if (button?.querySelector('img[src*="toggle-lines"]')) {
         event.preventDefault();
         const drawer = uniqueElement(root, "#drawer");
@@ -570,7 +673,21 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
         if (controlled) {
           if (controlled.classList.contains("collapse")) {
             event.preventDefault();
+            event.stopPropagation();
             const open = !controlled.classList.contains("show");
+            const parentSelector = controlled.dataset.bsParent;
+            if (open && parentSelector?.startsWith("#")) {
+              const parent = root.querySelector<HTMLElement>(`#${CSS.escape(parentSelector.slice(1))}`);
+              parent?.querySelectorAll<HTMLElement>(".collapse.show").forEach((sibling) => {
+                if (sibling === controlled) return;
+                sibling.classList.remove("show");
+                sibling.style.display = "none";
+                sibling.setAttribute("aria-hidden", "true");
+                root.querySelectorAll<HTMLElement>(`[aria-controls="${CSS.escape(sibling.id)}"]`).forEach((trigger) => {
+                  trigger.setAttribute("aria-expanded", "false");
+                });
+              });
+            }
             controlled.classList.toggle("show", open);
             controlled.style.display = open ? "block" : "none";
             controlled.setAttribute("aria-hidden", String(!open));

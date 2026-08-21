@@ -1,4 +1,5 @@
 import { FRONTEND_MAIN_ID } from "@/components/frontend-skip-link";
+import { structurePublicInformationPageHtml } from "@/lib/public-information-structure";
 
 const headerClosePattern = /<\/header\s*>/i;
 const footerOpenPattern = /<div\b[^>]*\bclass=(['"])[^'"]*\bfooter-bg\b[^'"]*\1[^>]*>/i;
@@ -17,30 +18,31 @@ function addAttributes(openingTag: string, attributes: Readonly<Record<string, s
 }
 
 export function structureLegacyPageHtml(html: string, page: string): string {
-  const headerClose = headerClosePattern.exec(html);
+  const informationHtml = structurePublicInformationPageHtml(html, page);
+  const headerClose = headerClosePattern.exec(informationHtml);
   if (!headerClose || headerClose.index === undefined) {
     throw new Error(`Legacy frontend structure is missing its header boundary: ${page}`);
   }
 
   const mainStart = headerClose.index + headerClose[0].length;
-  const footerMarker = html.indexOf("<!-- Footer -->", mainStart);
+  const footerMarker = informationHtml.indexOf("<!-- Footer -->", mainStart);
   const footerSearchStart = footerMarker >= 0 ? footerMarker : mainStart;
-  const footerOpen = footerOpenPattern.exec(html.slice(footerSearchStart));
+  const footerOpen = footerOpenPattern.exec(informationHtml.slice(footerSearchStart));
   if (!footerOpen || footerOpen.index === undefined) {
     throw new Error(`Legacy frontend structure is missing its footer boundary: ${page}`);
   }
 
   const footerStart = footerSearchStart + footerOpen.index;
   const footerTag = addAttribute(footerOpen[0], "role", "contentinfo");
-  const beforeMain = html.slice(0, mainStart);
-  const mainContent = html.slice(mainStart, footerStart).replace(
+  const beforeMain = informationHtml.slice(0, mainStart);
+  const mainContent = informationHtml.slice(mainStart, footerStart).replace(
     sidebarOpenPattern,
     (tag) => addAttributes(tag, {
       role: "complementary",
       "aria-label": "Student tools"
     })
   );
-  const afterFooterOpen = html.slice(footerStart + footerOpen[0].length);
+  const afterFooterOpen = informationHtml.slice(footerStart + footerOpen[0].length);
 
   return `${beforeMain}<main id="${FRONTEND_MAIN_ID}" tabindex="-1">${mainContent}</main>${footerTag}${afterFooterOpen}`;
 }
