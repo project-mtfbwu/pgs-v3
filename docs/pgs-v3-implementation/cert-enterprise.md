@@ -1,40 +1,27 @@
 # Enterprise certification evidence (CERT-00–03)
 
-Start SHA: `be7129f`. Branch: `cursor/enterprise-ops-cms`.
+Start SHA: `be7129f`. Follow-up local execution used Colima Docker and marker-limited fixtures.
 
-This phase added certification infrastructure only. ENT-03 product work was not started. No schema migration was created.
+This phase is certification infrastructure and local execution. ENT-03 product work was not started. No schema migration was created or applied remotely.
 
-## Local checks
+## Local database
 
-| Check                          | Result                                                                               |
-| ------------------------------ | ------------------------------------------------------------------------------------ |
-| format                         | PASS                                                                                 |
-| ESLint                         | PASS                                                                                 |
-| TypeScript                     | PASS                                                                                 |
-| unit                           | PASS (349)                                                                           |
-| security scan                  | PASS                                                                                 |
-| RLS static                     | PASS                                                                                 |
-| production build               | PASS                                                                                 |
-| git diff --check               | PASS                                                                                 |
-| local Playwright smoke         | PASS (3/3 desktop)                                                                   |
-| local Playwright @cert         | PASS 13 / SKIP 33 / FAIL 0                                                           |
-| live local migration apply     | UNAVAILABLE (Docker not installed)                                                   |
-| live pgTAP                     | UNAVAILABLE (Docker not installed)                                                   |
-| schema diff                    | UNAVAILABLE (no local database)                                                      |
-| Preview Playwright role matrix | UNAVAILABLE (Preview identity not proven; GitHub Preview environment has no secrets) |
-| visual baselines               | SKIPPED (`PGS_CERT_VISUAL` unset; no baselines captured)                             |
-| authenticated axe surfaces     | SKIPPED (no local fixture storage states)                                            |
-| CodeQL                         | runs on GitHub after push                                                            |
-| Dependency Review              | PR-only                                                                              |
+Clean migration apply from zero on local Supabase: **PASS**.
+
+Live pgTAP: **FAIL overall**. Passing files included `001`–`004`, `007`–`011`, `013`, repaired `014`, `016`, `024`, `026`. Remaining failures are classified in the final chat report.
+
+Local `service_role` lacked table GRANTs that hosted Supabase typically provides. Local-only GRANTs were applied in the running database so fixtures could run. **No migration was committed.**
 
 ## Preview identity
 
-Vercel Preview for `anjay-s-projects/pgs-v3` has a `NEXT_PUBLIC_SUPABASE_URL` env var, but `vercel env pull` did not yield a parseable `https` hostname, so the Preview project ref could not be positively verified. Production Vercel env list was empty. GitHub environment `Preview` has `secrets_url: null`. Remote fixture provisioning, remote migrations, and Preview Playwright were therefore not executed.
+Preview deployment CSP includes hostname `prmepeqfatkcyejhblob.supabase.co`. Production alias `pgs-v3.vercel.app` returns HTTP 404 with no CSP/Supabase host. They differ. Vercel Sensitive env values could not be decrypted, so Preview fixture provisioning and authenticated Preview Playwright remain **UNAVAILABLE**.
+
+GitHub Preview secret `PLAYWRIGHT_BASE_URL` was set to the public git-branch Preview URL only.
+
+## Local Playwright `@cert` desktop
+
+Authenticated fixtures: **42 passed**, **3 skipped** (ENT-03 future_scope). Anonymous home visual is unstable across frames; snapshots were not committed. Student dashboard axe is **not treated as clean**: it pins known retained-shell rule IDs.
 
 ## Migrations
 
-None. No remote application.
-
-## Production blockers unchanged
-
-ClamAV remains deferred. Hostinger and Production were not touched.
+None committed. None applied remotely.

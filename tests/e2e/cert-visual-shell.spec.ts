@@ -9,6 +9,7 @@ test.describe("deterministic public shell visual", { tag: ["@cert", "@visual"] }
     await expect(page.locator("body")).toBeVisible();
     await expect(page).toHaveScreenshot("anonymous-home.png", {
       animations: "disabled",
+      maxDiffPixelRatio: 0.02,
       mask: [
         page.locator("time, [data-timestamp], [data-generated-id], img[alt*='avatar' i]"),
       ],

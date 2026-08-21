@@ -7,7 +7,7 @@ as $phase4d$
 begin
   return next plan(29);
   return next has_table('public','document_upload_sessions','staged upload sessions exist');
-  return next hasnt_table('public','document_shares','phase 4E sharing tables are not created');
+  return next has_table('public','document_shares','phase 4E sharing tables exist after later sharing migration');
   return next has_function('public','create_document_upload_session',
     array['uuid','text','text','bigint']);
   return next has_function('public','finalize_student_document',

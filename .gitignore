@@ -18,3 +18,5 @@ test-results/
 supabase/.temp/
 *.log
 *.tsbuildinfo
+
+supabase/.branches/

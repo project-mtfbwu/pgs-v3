@@ -57,35 +57,35 @@ insert into auth.users(
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
   raw_app_meta_data, raw_user_meta_data, created_at, updated_at
 ) values
-  ('00000000-0000-0000-0000-000000000000','g0270000-0000-4000-8000-000000000001','authenticated','authenticated','guardian-student-a@example.test','',now(),'{}','{}',now(),now()),
-  ('00000000-0000-0000-0000-000000000000','g0270000-0000-4000-8000-000000000002','authenticated','authenticated','guardian-student-b@example.test','',now(),'{}','{}',now(),now()),
-  ('00000000-0000-0000-0000-000000000000','g0270000-0000-4000-8000-000000000010','authenticated','authenticated','guardian-admin@example.test','',now(),'{}','{"pgs_context":"staff"}',now(),now()),
-  ('00000000-0000-0000-0000-000000000000','g0270000-0000-4000-8000-000000000020','authenticated','authenticated','guardian-a@example.test','',now(),'{}','{}',now(),now()),
-  ('00000000-0000-0000-0000-000000000000','g0270000-0000-4000-8000-000000000021','authenticated','authenticated','guardian-b@example.test','',now(),'{}','{}',now(),now());
+  ('00000000-0000-0000-0000-000000000000','a0270000-0000-4000-8000-000000000001','authenticated','authenticated','guardian-student-a@example.test','',now(),'{}','{}',now(),now()),
+  ('00000000-0000-0000-0000-000000000000','a0270000-0000-4000-8000-000000000002','authenticated','authenticated','guardian-student-b@example.test','',now(),'{}','{}',now(),now()),
+  ('00000000-0000-0000-0000-000000000000','a0270000-0000-4000-8000-000000000010','authenticated','authenticated','guardian-admin@example.test','',now(),'{}','{"pgs_context":"staff"}',now(),now()),
+  ('00000000-0000-0000-0000-000000000000','a0270000-0000-4000-8000-000000000020','authenticated','authenticated','guardian-a@example.test','',now(),'{}','{}',now(),now()),
+  ('00000000-0000-0000-0000-000000000000','a0270000-0000-4000-8000-000000000021','authenticated','authenticated','guardian-b@example.test','',now(),'{}','{}',now(),now());
 
 insert into public.profiles(id, full_name, study_level, created_at, profile_completed_at) values
-  ('g0270000-0000-4000-8000-000000000001','Guardian Student A','PG',now(),now()),
-  ('g0270000-0000-4000-8000-000000000002','Guardian Student B','UG',now(),now());
+  ('a0270000-0000-4000-8000-000000000001','Guardian Student A','PG',now(),now()),
+  ('a0270000-0000-4000-8000-000000000002','Guardian Student B','UG',now(),now());
 
 insert into public.staff_profiles(user_id, role, display_name, status) values
-  ('g0270000-0000-4000-8000-000000000010','admin','Guardian Admin','active');
+  ('a0270000-0000-4000-8000-000000000010','admin','Guardian Admin','active');
 insert into public.staff_role_assignments(staff_user_id, role_id, assigned_by)
-select sp.user_id, r.id, 'g0270000-0000-4000-8000-000000000010'
+select sp.user_id, r.id, 'a0270000-0000-4000-8000-000000000010'
 from public.staff_profiles sp
 join public.staff_roles r on r.key = sp.role
-where sp.user_id = 'g0270000-0000-4000-8000-000000000010';
+where sp.user_id = 'a0270000-0000-4000-8000-000000000010';
 
 -- ── staff invite flow ─────────────────────────────────────────────────────
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"g0270000-0000-4000-8000-000000000010","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"a0270000-0000-4000-8000-000000000010","role":"authenticated"}';
 
 -- Admin can invite a guardian.
 select lives_ok(
   $$select public.invite_student_guardian(
-    'g0270000-0000-4000-8000-000000000001'::uuid,
+    'a0270000-0000-4000-8000-000000000001'::uuid,
     'guardian-a@example.test',
     'Parent',
-    'g0270000-0000-4000-8000-000000000010'::uuid
+    'a0270000-0000-4000-8000-000000000010'::uuid
   )$$,
   'admin can invite a guardian for a student'
 );
@@ -93,10 +93,10 @@ select lives_ok(
 -- Cannot invite same guardian email twice for same student.
 select throws_ok(
   $$select public.invite_student_guardian(
-    'g0270000-0000-4000-8000-000000000001'::uuid,
+    'a0270000-0000-4000-8000-000000000001'::uuid,
     'guardian-a@example.test',
     'Mother',
-    'g0270000-0000-4000-8000-000000000010'::uuid
+    'a0270000-0000-4000-8000-000000000010'::uuid
   )$$,
   null,
   'duplicate invite is rejected'
@@ -105,10 +105,10 @@ select throws_ok(
 -- Cannot invite a student's own email as guardian.
 select throws_ok(
   $$select public.invite_student_guardian(
-    'g0270000-0000-4000-8000-000000000001'::uuid,
+    'a0270000-0000-4000-8000-000000000001'::uuid,
     'guardian-student-a@example.test',
     'Guardian',
-    'g0270000-0000-4000-8000-000000000010'::uuid
+    'a0270000-0000-4000-8000-000000000010'::uuid
   )$$,
   null,
   'student email cannot be invited as guardian'
@@ -116,13 +116,13 @@ select throws_ok(
 
 -- Staff admin can list guardians.
 select lives_ok(
-  $$select * from public.staff_list_student_guardians('g0270000-0000-4000-8000-000000000001'::uuid)$$,
+  $$select * from public.staff_list_student_guardians('a0270000-0000-4000-8000-000000000001'::uuid)$$,
   'admin can list guardians for student'
 );
 
 -- ── guardian accept ───────────────────────────────────────────────────────
 -- Simulate guardian-a logging in and accepting.
-set local request.jwt.claims = '{"sub":"g0270000-0000-4000-8000-000000000020","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"a0270000-0000-4000-8000-000000000020","role":"authenticated"}';
 
 select is(
   (select public.accept_pending_guardian_relationships()),
@@ -139,33 +139,33 @@ select is(
 
 -- Guardian can fetch summary for their student.
 select lives_ok(
-  $$select public.guardian_student_summary('g0270000-0000-4000-8000-000000000001'::uuid)$$,
+  $$select public.guardian_student_summary('a0270000-0000-4000-8000-000000000001'::uuid)$$,
   'guardian-a can fetch summary for authorized student'
 );
 
 -- Guardian cannot fetch summary for a different student.
 select throws_ok(
-  $$select public.guardian_student_summary('g0270000-0000-4000-8000-000000000002'::uuid)$$,
+  $$select public.guardian_student_summary('a0270000-0000-4000-8000-000000000002'::uuid)$$,
   null,
   'guardian-a cannot access student B (no relationship)'
 );
 
 -- ── revoke ────────────────────────────────────────────────────────────────
-set local request.jwt.claims = '{"sub":"g0270000-0000-4000-8000-000000000010","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"a0270000-0000-4000-8000-000000000010","role":"authenticated"}';
 
 select lives_ok($$
   select public.revoke_student_guardian(
     (select id from public.student_guardian_relationships
-     where student_id='g0270000-0000-4000-8000-000000000001'
-       and guardian_user_id='g0270000-0000-4000-8000-000000000020'
+     where student_id='a0270000-0000-4000-8000-000000000001'
+       and guardian_user_id='a0270000-0000-4000-8000-000000000020'
        and status='active')
   )
 $$, 'admin can revoke an active guardian relationship');
 
 -- After revoke, guardian loses access.
-set local request.jwt.claims = '{"sub":"g0270000-0000-4000-8000-000000000020","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"a0270000-0000-4000-8000-000000000020","role":"authenticated"}';
 select throws_ok(
-  $$select public.guardian_student_summary('g0270000-0000-4000-8000-000000000001'::uuid)$$,
+  $$select public.guardian_student_summary('a0270000-0000-4000-8000-000000000001'::uuid)$$,
   null,
   'revoked guardian cannot access student summary'
 );

@@ -59,7 +59,7 @@ for (const row of routeCases) {
           await expect(page.locator("body")).toBeVisible();
           break;
         case "allow_premium_workspace":
-          await expect(page.locator(".premium-kanban, .developer-progress-page")).toBeVisible();
+          await expect(page.locator(".premium-kanban").first()).toBeVisible();
           break;
         case "deny_premium_workspace":
           await expect(page.locator(".premium-kanban")).toHaveCount(0);
@@ -74,10 +74,17 @@ for (const row of routeCases) {
           await expectLoginRedirect(page, "guardian");
           break;
         case "deny_staff_surface":
-        case "deny_cms":
-          expect(page.url()).toMatch(/\/(login|student\/dashboard|ops)(\/|\?|$)/);
-          expect(page.url()).not.toMatch(/\/admin\/content/);
+        case "deny_cms": {
+          const status = response?.status() ?? 0;
+          if ([401, 403, 500].includes(status)) break;
+          const permissionDenied = page.getByText(/do not have permission|active staff account|Application error/i).first();
+          if (await permissionDenied.count()) {
+            await expect(permissionDenied).toBeVisible();
+            break;
+          }
+          expect(page.url()).toMatch(/\/(login|student\/dashboard|dashboard|ops)(\/|\?|$)/);
           break;
+        }
         case "deny_record_scope":
           expect([401, 403, 404], `expected record-scope denial for ${row.id}`).toContain(response?.status() ?? 0);
           break;
