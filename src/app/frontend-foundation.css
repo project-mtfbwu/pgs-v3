@@ -24,6 +24,14 @@
   transform: translateY(0);
 }
 
+pgs-legacy-page {
+  display: block;
+}
+
+[data-legacy-page] #premiumVideoOverlay[data-pgs-video-playing="true"] {
+  display: none !important;
+}
+
 :where([data-legacy-page], .developer-student-shell, [data-retained-student-footer])
   :where(a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
   outline: 5px solid #135fbd !important;

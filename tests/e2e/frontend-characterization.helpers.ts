@@ -12,7 +12,7 @@ export type FrontendRouteCharacterization = {
   expectedQuery?: string;
 };
 
-const legacy = (page: string) => `div[data-legacy-page="${page}"]`;
+const legacy = (page: string) => `pgs-legacy-page[data-legacy-page="${page}"]`;
 
 export const frontendRouteInventory: readonly FrontendRouteCharacterization[] = [
   { route: "/", expectedPath: "/", identitySelector: legacy("home"), tier: "A" },

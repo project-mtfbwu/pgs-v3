@@ -36,6 +36,13 @@ test.describe("Batch 1 route characterization", () => {
       const observation = await layoutObservation(page);
       expect(observation.mainCount, `${entry.route} primary landmark count`).toBe(1);
       if (entry.route !== "/logout") {
+        const retainedRoot = page.locator(entry.identitySelector);
+        await expect(retainedRoot.locator("header"), `${entry.route} retained banner ownership`).toHaveCount(1);
+        await expect(retainedRoot.locator("main"), `${entry.route} retained main ownership`).toHaveCount(1);
+        await expect(
+          retainedRoot.locator("footer, [role='contentinfo']"),
+          `${entry.route} retained contentinfo ownership`
+        ).toHaveCount(1);
         expect(observation.bannerCount, `${entry.route} banner landmark count`).toBe(1);
         expect(observation.contentinfoCount, `${entry.route} contentinfo landmark count`).toBe(1);
         expect(observation.navigationCount, `${entry.route} navigation landmark count`).toBeGreaterThan(0);
@@ -93,9 +100,17 @@ test.describe("Batch 1 safe interaction characterization", () => {
         body: JSON.stringify({ results: [{ type: "program", label: "Characterization result", url: "/cvreadyprogram" }] })
       });
     });
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/about", { waitUntil: "domcontentloaded" });
+    await waitForFrontendReady(page);
+    await expect(page.locator(".search-control:visible").first()).toHaveAttribute(
+      "data-pgs-autocomplete-ready",
+      "1"
+    );
+    await page.locator('header .mobile-none a[href="/"]').first().click();
+    await expect(page).toHaveURL(/\/$/);
     const search = page.locator("header .search-control:visible, .search-box .search-control:visible").first();
     await expect(search).toHaveAttribute("data-pgs-autocomplete", "1");
+    await expect(search).toHaveAttribute("data-pgs-autocomplete-ready", "1");
     await expect(page.locator(".pgs-autocomplete").first()).toBeAttached();
     await search.fill("char");
     await expect.poll(() => searchRequests.length, { message: "autocomplete GET request", timeout: 3_000 }).toBe(1);
@@ -149,21 +164,33 @@ test.describe("Batch 1 safe interaction characterization", () => {
     await toggle.focus();
     await page.keyboard.press("Enter");
     const openedWithEnter = await toggle.getAttribute("aria-expanded") === "true";
+    expect(openedWithEnter).toBe(true);
     await resetClosed();
     await toggle.focus();
     await page.keyboard.press("Space");
     const openedWithSpace = await toggle.getAttribute("aria-expanded") === "true";
+    expect(openedWithSpace).toBe(true);
     await resetClosed();
     await toggle.click();
     await expect(sidebar).toHaveClass(/active/);
+    await page.keyboard.press("Escape");
+    await expect(sidebar).not.toHaveClass(/active/);
+    await expect(toggle).toBeFocused();
+    await toggle.click();
     await close.click();
+    await expect(toggle).toBeFocused();
 
     const notificationTrigger = page.locator(".header-notification-wrapper");
     await notificationTrigger.click();
     const notificationMenu = page.locator("#siteNotificationMenuDesktop");
     await expect(notificationMenu).toHaveClass(/open/);
+    await expect(notificationMenu).toHaveAttribute("role", "region");
+    await expect(notificationTrigger).toHaveAttribute("aria-expanded", "true");
     await page.keyboard.press("Escape");
     const notificationOpenAfterEscape = await notificationMenu.evaluate((element) => element.classList.contains("open"));
+    expect(notificationOpenAfterEscape).toBe(false);
+    await expect(notificationTrigger).toHaveAttribute("aria-expanded", "false");
+    await expect(notificationTrigger).toBeFocused();
 
     await attachJson(testInfo, "retained-shell-keyboard-semantics.json", {
       closeControl: await close.evaluate((element) => ({
@@ -198,22 +225,46 @@ test.describe("Batch 1 safe interaction characterization", () => {
     await trigger.click();
     await expect(page.locator("#drawer")).toHaveClass(/active/);
     await expect(page.locator("#overlay")).toHaveClass(/active/);
+    await expect(page.locator("#overlay")).toHaveAttribute("aria-hidden", "true");
 
     const afterOpen = await page.evaluate(() => ({
       activeElement: document.activeElement?.outerHTML.slice(0, 200),
       bodyScrollLocked: document.body.classList.contains("overflow-hidden"),
+      drawerAriaModal: document.querySelector("#drawer")?.getAttribute("aria-modal"),
+      focusInside: document.querySelector("#drawer")?.contains(document.activeElement),
       drawerRole: document.querySelector("#drawer")?.getAttribute("role"),
       triggerExpanded: document.querySelector('button.btn-toggle-mobile:has(img[src*="toggle-lines"])')?.getAttribute("aria-expanded")
     }));
+    expect(afterOpen.bodyScrollLocked).toBe(true);
+    expect(afterOpen.drawerAriaModal).toBe("true");
+    expect(afterOpen.drawerRole).toBe("dialog");
+    expect(afterOpen.focusInside).toBe(true);
+    expect(afterOpen.triggerExpanded).toBe("true");
+
+    const mobilePremiumTrigger = page.locator("#mobilePpWrapper > [data-pgs-disclosure-trigger='true']");
+    await mobilePremiumTrigger.focus();
+    await page.keyboard.press("Enter");
+    await expect(mobilePremiumTrigger).toHaveAttribute("aria-expanded", "true");
+    await expect(page.locator("#mobilePpDropdown")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(mobilePremiumTrigger).toHaveAttribute("aria-expanded", "false");
+    await expect(mobilePremiumTrigger).toBeFocused();
+    await expect(page.locator("#drawer")).toHaveClass(/active/);
+
     await page.keyboard.press("Escape");
     const openAfterEscape = await page.locator("#drawer").evaluate((drawer) => drawer.classList.contains("active"));
-    if (!openAfterEscape) {
-      await trigger.click();
-      await expect(page.locator("#drawer")).toHaveClass(/active/);
-    }
+    expect(openAfterEscape).toBe(false);
+    await expect(trigger).toBeFocused();
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await trigger.click();
+    await expect(page.locator("#drawer")).toHaveClass(/active/);
+    await expect(mobilePremiumTrigger).toHaveAttribute("aria-expanded", "false");
+    await expect(page.locator("#mobilePpDropdown")).toBeHidden();
     await page.locator("#drawer .btn-toggle-mobile").click();
     await expect(page.locator("#drawer")).not.toHaveClass(/active/);
     const triggerFocusedAfterClose = await trigger.evaluate((element) => document.activeElement === element);
+    expect(triggerFocusedAfterClose).toBe(true);
+    await expect(page.locator("body")).not.toHaveClass(/overflow-hidden/);
 
     await attachJson(testInfo, "retained-mobile-drawer-accessibility.json", {
       ...afterOpen,
@@ -236,14 +287,21 @@ test.describe("Batch 1 safe interaction characterization", () => {
       labelledBy: element.getAttribute("aria-labelledby"),
       role: element.getAttribute("role")
     }));
+    expect(initial.ariaModal).toBe("true");
+    expect(initial.bodyScrollLocked).toBe(true);
+    expect(initial.focusInside).toBe(true);
+    expect(initial.labelledBy).toBeTruthy();
+    expect(initial.role).toBe("dialog");
     await page.keyboard.press("Escape");
     const openAfterEscape = await modal.evaluate((element) => getComputedStyle(element).display === "flex");
-    if (!openAfterEscape) {
-      await opener.click();
-      await expect(modal).toHaveCSS("display", "flex");
-    }
+    expect(openAfterEscape).toBe(false);
+    await expect(opener).toBeFocused();
+    await opener.click();
+    await expect(modal).toHaveCSS("display", "flex");
     await modal.locator(".close-btn:visible").first().click();
     const openerFocusedAfterClose = await opener.evaluate((element) => document.activeElement === element);
+    expect(openerFocusedAfterClose).toBe(true);
+    await expect(page.locator("body")).not.toHaveClass(/overflow-hidden/);
     await attachJson(testInfo, "retained-modal-accessibility.json", {
       ...initial,
       openAfterEscape,
@@ -251,36 +309,142 @@ test.describe("Batch 1 safe interaction characterization", () => {
       openerTag: await opener.evaluate((element) => element.tagName)
     });
   });
+
+  test("shared public navigation, footer, and header disclosures expose stable accessible controls", async ({ page }) => {
+    test.skip(test.info().project.name !== "desktop", "The desktop header exposes both shared disclosures.");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await waitForFrontendReady(page);
+
+    const homeLinks = page.locator('header a[href="/"], #drawer a[href="/"]');
+    await expect(homeLinks).toHaveCount(3);
+    expect(await homeLinks.evaluateAll((links) => links.map((link) => ({
+      alts: Array.from(link.querySelectorAll("img"), (image) => image.getAttribute("alt")),
+      label: link.getAttribute("aria-label")
+    })))).toEqual([
+      { alts: ["", "", ""], label: "PurpleGuide home" },
+      { alts: [""], label: "PurpleGuide home" },
+      { alts: [""], label: "PurpleGuide home" }
+    ]);
+
+    const socialLinks = page.locator(".footer-bg .social-img a");
+    await expect(socialLinks).toHaveCount(5);
+    expect(await socialLinks.evaluateAll((links) => links.map((link) => link.getAttribute("aria-label")))).toEqual([
+      "Instagram", "Facebook", "Threads", "YouTube", "LinkedIn"
+    ]);
+    expect(await socialLinks.locator("img").evaluateAll((images) => images.map((image) => image.getAttribute("alt")))).toEqual([
+      "", "", "", "", ""
+    ]);
+    const decorativeFooterImages = page.locator(
+      '.footer-bg .social-flex > img, .footer-bg img[src$="/mail.png"]'
+    );
+    await expect(decorativeFooterImages).toHaveCount(5);
+    expect(await decorativeFooterImages.evaluateAll((images) => images.map((image) => image.getAttribute("alt")))).toEqual([
+      "", "", "", "", ""
+    ]);
+
+    const exerciseDisclosure = async (triggerSelector: string) => {
+      const trigger = page.locator(triggerSelector);
+      const panelId = await trigger.getAttribute("aria-controls");
+      expect(panelId).toBeTruthy();
+      const panel = page.locator(`#${panelId}`);
+      await trigger.focus();
+      await page.keyboard.press("Enter");
+      await expect(trigger).toHaveAttribute("aria-expanded", "true");
+      await expect(panel).toHaveAttribute("aria-hidden", "false");
+      await expect(panel).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(trigger).toHaveAttribute("aria-expanded", "false");
+      await expect(panel).toHaveAttribute("aria-hidden", "true");
+      await expect(trigger).toBeFocused();
+    };
+
+    await exerciseDisclosure("#ppWrapper > [data-pgs-disclosure-trigger='true']");
+    await exerciseDisclosure("#exploreCountriesWrapper > [data-pgs-disclosure-trigger='true']");
+  });
+
+  test("shared anonymous save gate traps focus, closes on Escape, and restores its control", async ({ page }) => {
+    test.skip(test.info().project.name !== "desktop", "One visible anonymous save control verifies the shared login dialog.");
+    const writes: string[] = [];
+    page.on("request", (request) => {
+      if (!["GET", "HEAD", "OPTIONS"].includes(request.method())) {
+        writes.push(`${request.method()} ${new URL(request.url()).pathname}`);
+      }
+    });
+    await page.goto("/countriescanada", { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".pgs-auth-account")).toHaveCount(0);
+    const saveControl = page.locator("button:has(.bi-suit-heart-fill)").first();
+    await expect(saveControl).toBeVisible();
+    await saveControl.evaluate((element) => element.setAttribute("data-save-id", "characterization-only"));
+    await saveControl.focus();
+    await saveControl.dispatchEvent("click");
+
+    const popupOverlay = page.locator("#pgsLoginPopup");
+    const popupDialog = popupOverlay.getByRole("dialog");
+    await expect(popupOverlay).toHaveClass(/show/);
+    await expect(popupOverlay).toHaveAttribute("aria-hidden", "false");
+    await expect(popupDialog).toHaveAttribute("aria-modal", "true");
+    const popupClose = popupOverlay.locator(".pgs-login-popup-close");
+    const popupLogin = popupOverlay.locator(".pgs-login-popup-btn");
+    await expect(popupClose).toBeFocused();
+    await expect(page.locator("body")).toHaveClass(/overflow-hidden/);
+    await page.keyboard.press("Shift+Tab");
+    await expect(popupLogin).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(popupClose).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(popupOverlay).not.toHaveClass(/show/);
+    await expect(saveControl).toBeFocused();
+    await expect(page.locator("body")).not.toHaveClass(/overflow-hidden/);
+    expect(writes).toEqual([]);
+  });
+
+  test("shared Premium video overlay is keyboard-operable without changing its visual presentation", async ({ page }) => {
+    test.skip(test.info().project.name !== "desktop", "One viewport verifies the shared video control contract.");
+    await page.addInitScript(() => {
+      HTMLMediaElement.prototype.play = function play() {
+        this.dataset.pgsPlayRequested = "true";
+        return Promise.resolve();
+      };
+    });
+    await page.goto("/home/purplepremium_overview", { waitUntil: "domcontentloaded" });
+    await waitForFrontendReady(page);
+    const overlay = page.locator("#premiumVideoOverlay");
+    const video = page.locator("#premiumHeroVideo");
+    await expect(overlay).toHaveAttribute("role", "button");
+    await expect(overlay).toHaveAttribute("aria-label", "Play Purple Premium video");
+    await overlay.focus();
+    await page.keyboard.press("Enter");
+    await expect(video).toHaveAttribute("data-pgs-play-requested", "true");
+    await expect(overlay).toHaveAttribute("aria-hidden", "true");
+    await expect(overlay).toBeHidden();
+    await expect(video).toBeFocused();
+  });
 });
 
 test.describe("Batch 1 responsive and accessibility characterization", () => {
   test.use({ storageState: emptyState });
 
   const axeBaseline: Readonly<Record<string, readonly string[]>> = {
-    "desktop-home": ["aria-command-name", "button-name", "color-contrast", "image-alt", "link-name", "target-size"],
-    "mobile-home": ["aria-command-name", "button-name", "color-contrast", "image-alt", "link-name", "target-size"],
-    "desktop-USA": ["aria-command-name", "aria-required-parent", "button-name", "color-contrast", "image-alt", "link-name"],
-    "mobile-USA": ["aria-command-name", "aria-required-parent", "button-name", "color-contrast", "image-alt", "link-name"],
-    "desktop-login": ["aria-command-name", "button-name", "color-contrast", "image-alt", "label", "link-name"],
-    "mobile-login": ["aria-command-name", "button-name", "color-contrast", "image-alt", "label", "link-name", "target-size"],
-    "desktop-locked student dashboard": ["aria-command-name", "button-name", "color-contrast", "image-alt", "label", "link-name"],
-    "mobile-locked student dashboard": ["aria-command-name", "button-name", "color-contrast", "image-alt", "label", "link-name", "target-size"],
+    "desktop-home": ["color-contrast", "image-alt", "target-size"],
+    "mobile-home": ["color-contrast", "image-alt", "target-size"],
+    "desktop-USA": ["aria-required-children", "aria-required-parent", "color-contrast", "image-alt", "list"],
+    "mobile-USA": ["aria-required-children", "aria-required-parent", "color-contrast", "image-alt", "list", "target-size"],
+    "desktop-login": ["color-contrast", "image-alt", "label"],
+    "mobile-login": ["color-contrast", "image-alt", "label", "target-size"],
+    "desktop-locked student dashboard": ["button-name", "color-contrast", "image-alt", "label"],
+    "mobile-locked student dashboard": ["button-name", "color-contrast", "image-alt", "label", "target-size"],
     "desktop-logout confirmation": [],
     "mobile-logout confirmation": []
-  };
-  const axeAllowedRuleIds: Readonly<Record<string, readonly string[]>> = {
-    "desktop-USA": ["aria-command-name", "aria-required-children", "aria-required-parent", "button-name", "color-contrast", "image-alt", "link-name", "list", "scrollable-region-focusable", "target-size"],
-    "mobile-USA": ["aria-command-name", "aria-required-children", "aria-required-parent", "button-name", "color-contrast", "image-alt", "link-name", "list", "scrollable-region-focusable", "target-size"]
   };
 
   test("representative route families render across laptop, tablet, and mobile viewports", async ({ browser }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop", "The explicit viewport matrix runs once.");
     const routes = [
-      { route: "/", identity: 'div[data-legacy-page="home"]' },
-      { route: "/countriesusa", identity: 'div[data-legacy-page="countriesusa"]' },
-      { route: "/cvreadyprogram", identity: 'div[data-legacy-page="cvreadyprogram"]' },
-      { route: "/login", identity: 'div[data-legacy-page="login"]' },
-      { route: "/student/dashboard", identity: 'div[data-legacy-page="student-dashboard"]' }
+      { route: "/", identity: 'pgs-legacy-page[data-legacy-page="home"]' },
+      { route: "/countriesusa", identity: 'pgs-legacy-page[data-legacy-page="countriesusa"]' },
+      { route: "/cvreadyprogram", identity: 'pgs-legacy-page[data-legacy-page="cvreadyprogram"]' },
+      { route: "/login", identity: 'pgs-legacy-page[data-legacy-page="login"]' },
+      { route: "/student/dashboard", identity: 'pgs-legacy-page[data-legacy-page="student-dashboard"]' }
     ] as const;
     const observations = [];
     for (const viewport of representativeViewports) {
@@ -310,6 +474,15 @@ test.describe("Batch 1 responsive and accessibility characterization", () => {
     test(`${surface.name} records existing automated accessibility violations`, async ({ page }, testInfo) => {
       await page.goto(surface.route, { waitUntil: "domcontentloaded" });
       await waitForFrontendReady(page);
+      await page.evaluate(async () => {
+        const step = Math.max(window.innerHeight, 1);
+        const documentHeight = document.documentElement.scrollHeight;
+        for (let top = 0; top < documentHeight; top += step) {
+          window.scrollTo(0, top);
+          await new Promise((resolve) => window.setTimeout(resolve, 25));
+        }
+        window.scrollTo(0, 0);
+      });
       await page.waitForTimeout(250);
       const results = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
@@ -324,8 +497,7 @@ test.describe("Batch 1 responsive and accessibility characterization", () => {
       expect(results.testEngine.name).toBe("axe-core");
       const key = `${testInfo.project.name}-${surface.name}`;
       const observedRuleIds = summary.map(({ id }) => id);
-      expect(observedRuleIds).toEqual(expect.arrayContaining([...axeBaseline[key]]));
-      expect(observedRuleIds.filter((id) => !(axeAllowedRuleIds[key] ?? axeBaseline[key]).includes(id))).toEqual([]);
+      expect(observedRuleIds).toEqual(axeBaseline[key]);
     });
   }
 
@@ -389,10 +561,10 @@ test.describe("Batch 1 responsive and accessibility characterization", () => {
     });
     const page = await context.newPage();
     const routes = [
-      { route: "/", identity: 'div[data-legacy-page="home"]' },
-      { route: "/countriesusa", identity: 'div[data-legacy-page="countriesusa"]' },
-      { route: "/login", identity: 'div[data-legacy-page="login"]' },
-      { route: "/student/dashboard", identity: 'div[data-legacy-page="student-dashboard"]' }
+      { route: "/", identity: 'pgs-legacy-page[data-legacy-page="home"]' },
+      { route: "/countriesusa", identity: 'pgs-legacy-page[data-legacy-page="countriesusa"]' },
+      { route: "/login", identity: 'pgs-legacy-page[data-legacy-page="login"]' },
+      { route: "/student/dashboard", identity: 'pgs-legacy-page[data-legacy-page="student-dashboard"]' }
     ] as const;
     const observations = [];
     for (const route of routes) {

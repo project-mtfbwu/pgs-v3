@@ -85,9 +85,11 @@ export function StudentSidebarStateProvider({ children }: { children: ReactNode 
         ? trigger?.getAttribute("aria-expanded") !== "true"
         : false;
       sidebar?.classList.toggle("active", nextOpen);
+      if (sidebar) sidebar.inert = !nextOpen;
       sidebar?.setAttribute("aria-hidden", String(!nextOpen));
       trigger?.setAttribute("aria-expanded", String(nextOpen));
       setOpen(nextOpen);
+      if (!nextOpen) window.requestAnimationFrame(() => trigger?.focus());
     };
     document.addEventListener("click", ownSidebarClick, true);
     return () => document.removeEventListener("click", ownSidebarClick, true);

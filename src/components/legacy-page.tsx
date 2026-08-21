@@ -1,25 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { createElement, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { FrontendSkipLink } from "@/components/frontend-skip-link";
 import { useStudentSidebarState } from "@/components/student-sidebar-state-provider";
+import {
+  activeLegacyLayer,
+  closeLegacyLayersWithin,
+  closeLegacyLayer,
+  handleLegacyLayerKeydown,
+  openLegacyLayer,
+  prepareLegacyLayer,
+  replaceLegacyLayer,
+  setLegacyElementOpen
+} from "@/lib/legacy-accessibility";
 import { structureLegacyPageHtml } from "@/lib/legacy-frontend-structure";
 import { signOutAndNavigate } from "@/lib/logout-navigation";
 
 type Props = { html: string; page: string; studentState?: "anonymous" | "authenticated_standard" | "authenticated_premium" };
-
-function setOpen(element: HTMLElement | null, open: boolean) {
-  if (!element) return;
-  element.classList.toggle("open", open);
-  element.classList.toggle("active", open);
-  if (element.classList.contains("pgs-modal") || element.classList.contains("premium-modal-overlay")) {
-    element.style.display = open ? "flex" : "none";
-  }
-  if (element.classList.contains("drawer") || element.classList.contains("overlay") || element.classList.contains("premium-modal-overlay")) {
-    document.body.classList.toggle("overflow-hidden", open);
-  }
-}
 
 function uniqueElement(root:HTMLElement,selector:string):HTMLElement|null{
   const matches=root.querySelectorAll<HTMLElement>(selector);
@@ -31,13 +29,21 @@ function setSidebarPresentation(root: HTMLElement, open: boolean) {
   const toggle = uniqueElement(root,"#toggleBtn");
   if(!sidebar||!toggle)return;
   const icon = toggle?.querySelector("i");
+  const close = uniqueElement(root, "#close_Btn");
   sidebar.classList.toggle("active", open);
+  sidebar.inert = !open;
   toggle.classList.remove("hidenone");
   toggle.setAttribute("role","button");
   toggle.setAttribute("tabindex","0");
   toggle.setAttribute("aria-controls","sidebar");
   toggle.setAttribute("aria-expanded",String(open));
+  toggle.setAttribute("aria-label", open ? "Close student tools" : "Open student tools");
   sidebar.setAttribute("aria-hidden",String(!open));
+  close?.setAttribute("role", "button");
+  close?.setAttribute("tabindex", "0");
+  close?.setAttribute("aria-controls", "sidebar");
+  close?.setAttribute("aria-label", "Close student tools");
+  if (close instanceof HTMLImageElement) close.alt = "";
   icon?.classList.toggle("bi-arrow-right-square-fill", !open);
   icon?.classList.toggle("bi-arrow-left-square-fill", open);
 }
@@ -110,8 +116,7 @@ async function submitLegacyForm(form: HTMLFormElement, page: string, navigate: (
     } else if (currentModal) {
       const confirmation = document.querySelector<HTMLElement>(`#${currentModal.id}2`)
         ?? document.querySelector<HTMLElement>(`#${currentModal.id.replace(/Modal$/, "Modal2")}`);
-      setOpen(currentModal, false);
-      setOpen(confirmation, true);
+      replaceLegacyLayer(currentModal, confirmation);
     } else {
       form.reset();
     }
@@ -171,8 +176,7 @@ async function submitModalPanel(modal: HTMLElement, page: string, button: HTMLBu
     if (!response.ok) throw new Error(result.message || "Unable to submit this form.");
     status.textContent = result.message || "Thank you. Your submission has been received.";
     const confirmation = document.querySelector<HTMLElement>(`#${modal.id.replace(/Modal$/, "Modal2")}`);
-    setOpen(modal, false);
-    setOpen(confirmation, true);
+    replaceLegacyLayer(modal, confirmation);
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : "Unable to submit this form.";
     status.style.color = "#a51d2d";
@@ -223,16 +227,173 @@ async function manageLegacyNotification(target: HTMLElement) {
   }
 }
 
+function disclosurePanel(root: HTMLElement, trigger: HTMLElement): HTMLElement | null {
+  const panelId = trigger.getAttribute("aria-controls");
+  if (!panelId) return null;
+  const panel = document.getElementById(panelId);
+  return panel instanceof HTMLElement && root.contains(panel) ? panel : null;
+}
+
+function setDisclosurePresentation(trigger: HTMLElement, panel: HTMLElement, open: boolean): void {
+  trigger.setAttribute("aria-expanded", String(open));
+  panel.setAttribute("aria-hidden", String(!open));
+  panel.classList.toggle("open", open);
+  panel.classList.toggle("active", open);
+  if (panel.dataset.pgsInlineDisclosure === "true") {
+    panel.style.display = open ? "block" : "none";
+  }
+}
+
+function closeLegacyDisclosures(root: HTMLElement, except?: HTMLElement, restoreFocus = false): void {
+  root.querySelectorAll<HTMLElement>("[data-pgs-disclosure-trigger='true']").forEach((trigger) => {
+    if (trigger === except || trigger.getAttribute("aria-expanded") !== "true") return;
+    const panel = disclosurePanel(root, trigger);
+    if (panel) setDisclosurePresentation(trigger, panel, false);
+    if (restoreFocus) trigger.focus();
+  });
+}
+
+function registerDisclosure(
+  trigger: HTMLElement | null,
+  panel: HTMLElement | null,
+  fallbackId: string,
+  label: string,
+  inlineDisplay: boolean
+): void {
+  if (!trigger || !panel) return;
+  trigger.id ||= `${fallbackId}-trigger`;
+  panel.id ||= `${fallbackId}-panel`;
+  trigger.dataset.pgsDisclosureTrigger = "true";
+  panel.dataset.pgsDisclosurePanel = "true";
+  panel.dataset.pgsInlineDisclosure = String(inlineDisplay);
+  trigger.setAttribute("aria-controls", panel.id);
+  trigger.setAttribute("aria-expanded", String(panel.classList.contains("open") || panel.style.display === "block"));
+  if (trigger instanceof HTMLAnchorElement && trigger.getAttribute("href") === "#") {
+    trigger.setAttribute("role", "button");
+  }
+  if (panel.classList.contains("site-notification-menu")) {
+    panel.setAttribute("role", "region");
+    panel.setAttribute("aria-label", label);
+  }
+  setDisclosurePresentation(trigger, panel, trigger.getAttribute("aria-expanded") === "true");
+}
+
+function prepareLegacyDisclosures(root: HTMLElement, page: string): void {
+  root.querySelectorAll<HTMLElement>(".site-notification-dropdown").forEach((host, index) => {
+    registerDisclosure(
+      host.querySelector<HTMLElement>(".header-notification-wrapper, .mobile-notification-wrapper"),
+      host.querySelector<HTMLElement>(".site-notification-menu"),
+      `pgs-${page}-notifications-${index + 1}`,
+      "Notifications",
+      false
+    );
+  });
+
+  const navigationTriggers = Array.from(root.querySelectorAll<HTMLAnchorElement>("a"))
+    .filter((link) => /#purplePremium|#exploreCountries/i.test(link.textContent ?? ""));
+  navigationTriggers.forEach((trigger, index) => {
+    const premium = /#purplePremium/i.test(trigger.textContent ?? "");
+    const panel = trigger.parentElement?.querySelector<HTMLElement>(
+      premium ? ".dropdown-menu, #mobilePpDropdown" : ".explore-dropdown-menu, #mobileExploreDropdown"
+    ) ?? null;
+    registerDisclosure(
+      trigger,
+      panel,
+      `pgs-${page}-${premium ? "premium" : "countries"}-${index + 1}`,
+      premium ? "Purple Premium options" : "Explore countries options",
+      true
+    );
+  });
+}
+
+function prepareLegacyShell(root: HTMLElement, page: string): void {
+  root.querySelectorAll<HTMLElement>("header nav").forEach((navigation) => {
+    if (!navigation.hasAttribute("aria-label")) navigation.setAttribute("aria-label", "Primary navigation");
+  });
+
+  root.querySelectorAll<HTMLAnchorElement>('header a[href="/"], #drawer a[href="/"]').forEach((homeLink) => {
+    if (!homeLink.hasAttribute("aria-label")) homeLink.setAttribute("aria-label", "PurpleGuide home");
+    homeLink.querySelectorAll<HTMLImageElement>("img").forEach((image) => {
+      if (!image.hasAttribute("alt")) image.alt = "";
+    });
+  });
+
+  const socialNames = new Map([
+    ["instagram.png", "Instagram"],
+    ["facebook.png", "Facebook"],
+    ["threads.png", "Threads"],
+    ["youtube.png", "YouTube"],
+    ["linkdln.png", "LinkedIn"]
+  ]);
+  root.querySelectorAll<HTMLAnchorElement>(".footer-bg .social-img a").forEach((socialLink) => {
+    const image = socialLink.querySelector<HTMLImageElement>("img");
+    const assetName = image?.getAttribute("src")?.split("/").pop()?.toLowerCase();
+    const accessibleName = assetName ? socialNames.get(assetName) : undefined;
+    if (accessibleName && !socialLink.hasAttribute("aria-label")) {
+      socialLink.setAttribute("aria-label", accessibleName);
+    }
+    if (image && !image.hasAttribute("alt")) image.alt = "";
+  });
+  root.querySelectorAll<HTMLImageElement>(
+    '.footer-bg .social-flex > img, .footer-bg img[src$="/mail.png"]'
+  ).forEach((image) => {
+    if (!image.hasAttribute("alt")) image.alt = "";
+  });
+
+  const drawer = uniqueElement(root, "#drawer");
+  const drawerTrigger = root.querySelector<HTMLElement>('button.btn-toggle-mobile:has(img[src*="toggle-lines"])');
+  const drawerClose = drawer?.querySelector<HTMLElement>(".btn-toggle-mobile") ?? null;
+  if (drawer) {
+    prepareLegacyLayer(drawer, "Mobile navigation");
+    drawerClose?.setAttribute("aria-label", "Close mobile navigation");
+    drawerClose?.setAttribute("aria-controls", "drawer");
+  }
+  if (drawerTrigger) {
+    drawerTrigger.id ||= `pgs-${page}-mobile-navigation-trigger`;
+    drawerTrigger.setAttribute("aria-label", "Open mobile navigation");
+    drawerTrigger.setAttribute("aria-controls", "drawer");
+    drawerTrigger.setAttribute("aria-expanded", String(drawer?.classList.contains("active") ?? false));
+    drawerTrigger.setAttribute("aria-haspopup", "dialog");
+  }
+  const overlay = uniqueElement(root, "#overlay");
+  overlay?.setAttribute("aria-hidden", "true");
+
+  root.querySelectorAll<HTMLElement>(".premium-modal-overlay, .pgs-login-popup-overlay").forEach((layer) => {
+    prepareLegacyLayer(layer, "Dialog");
+  });
+
+  const scholarshipOpener = page === "scholarship"
+    ? root.querySelector<HTMLElement>(".graidant-border.cursor-pointer")
+    : null;
+  if (scholarshipOpener) {
+    scholarshipOpener.setAttribute("role", "button");
+    scholarshipOpener.setAttribute("tabindex", "0");
+    scholarshipOpener.setAttribute("aria-controls", "SCHOapplicantPremiumModal");
+    scholarshipOpener.setAttribute("aria-expanded", "false");
+    scholarshipOpener.setAttribute("aria-haspopup", "dialog");
+  }
+
+  const videoOverlay = root.querySelector<HTMLElement>("#premiumVideoOverlay");
+  if (videoOverlay) {
+    videoOverlay.setAttribute("role", "button");
+    videoOverlay.setAttribute("tabindex", "0");
+    videoOverlay.setAttribute("aria-label", "Play Purple Premium video");
+    videoOverlay.setAttribute("aria-controls", "premiumHeroVideo");
+  }
+
+  prepareLegacyDisclosures(root, page);
+}
+
 export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
   const router = useRouter();
   const { open: sidebarOpen } = useStudentSidebarState();
-  const rootRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
   const structuredHtml = useMemo(() => structureLegacyPageHtml(html, page), [html, page]);
 
   useEffect(() => {
     const root = rootRef.current;
     if (root) setSidebarPresentation(root, sidebarOpen);
-  }, [page, sidebarOpen]);
+  }, [page, sidebarOpen, structuredHtml]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -241,6 +402,52 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
     const abort = new AbortController();
     const options = { signal: abort.signal };
     root.dataset.interactionsReady = "true";
+    prepareLegacyShell(root, page);
+    document.dispatchEvent(new Event("pgs:frontend-ready"));
+
+    root.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        const activeLayer = activeLegacyLayer(root);
+        const openDisclosure = root.querySelector<HTMLElement>(
+          "[data-pgs-disclosure-trigger='true'][aria-expanded='true']"
+        );
+        const disclosureBelongsToActiveDrawer = activeLayer?.id === "drawer"
+          && openDisclosure !== null
+          && activeLayer.contains(openDisclosure);
+        if (openDisclosure && (!activeLayer || disclosureBelongsToActiveDrawer)) {
+          event.preventDefault();
+          closeLegacyDisclosures(root, undefined, true);
+          return;
+        }
+      }
+      if (handleLegacyLayerKeydown(root, event)) return;
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      if (event.key === "Escape") {
+        const sidebar = uniqueElement(root, "#sidebar");
+        if (sidebar?.classList.contains("active")) {
+          event.preventDefault();
+          uniqueElement(root, "#close_Btn")?.click();
+        }
+        return;
+      }
+
+      if (!["Enter", " "].includes(event.key)) return;
+      if (target.matches(
+        "#toggleBtn, #close_Btn, .graidant-border.cursor-pointer, #premiumVideoOverlay, [data-pgs-disclosure-trigger='true']"
+      )) {
+        event.preventDefault();
+        target.click();
+      }
+    }, options);
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element) || !root.contains(target)) {
+        closeLegacyDisclosures(root);
+      }
+    }, options);
 
     root.querySelectorAll<HTMLFormElement>("form").forEach((form) => {
       form.dataset.v3SubmitReady = "true";
@@ -261,6 +468,10 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
       const target = event.target as HTMLElement;
       const link = target.closest<HTMLAnchorElement>("a");
       const button = target.closest<HTMLButtonElement>("button");
+
+      if (!target.closest("[data-pgs-disclosure-trigger='true'], [data-pgs-disclosure-panel='true']")) {
+        closeLegacyDisclosures(root);
+      }
 
       if (target.closest("[data-notification-open], [data-notification-delete], [data-notification-clear]")) {
         event.preventDefault();
@@ -296,43 +507,48 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
 
       if (button?.querySelector('img[src*="toggle-lines"]')) {
         event.preventDefault();
-        setOpen(document.querySelector("#drawer"), true);
-        setOpen(document.querySelector("#overlay"), true);
+        const drawer = uniqueElement(root, "#drawer");
+        setLegacyElementOpen(uniqueElement(root, "#overlay"), true);
+        openLegacyLayer(drawer, button);
         return;
       }
 
       if (target.closest("#drawer .btn-toggle-mobile") || target.closest("#overlay")) {
-        setOpen(document.querySelector("#drawer"), false);
-        setOpen(document.querySelector("#overlay"), false);
+        closeLegacyLayer(uniqueElement(root, "#drawer"));
         return;
       }
 
       const notification = target.closest(".header-notification-wrapper, .mobile-notification-wrapper");
       if (notification) {
         event.preventDefault();
-        const menu = notification.parentElement?.querySelector<HTMLElement>(".site-notification-menu") ?? null;
-        setOpen(menu, !menu?.classList.contains("open"));
+        const trigger = notification as HTMLElement;
+        const menu = disclosurePanel(root, trigger);
+        if (menu) {
+          const open = trigger.getAttribute("aria-expanded") !== "true";
+          closeLegacyDisclosures(root, trigger);
+          setDisclosurePresentation(trigger, menu, open);
+        }
         return;
       }
 
       if (link?.textContent?.includes("#purplePremium")) {
-        const dropdown = link.parentElement?.querySelector<HTMLElement>(".dropdown-menu, #mobilePpDropdown") ?? null;
+        const dropdown = disclosurePanel(root, link);
         if (dropdown) {
           event.preventDefault();
-          const open = dropdown.style.display !== "block";
-          dropdown.style.display = open ? "block" : "none";
-          setOpen(dropdown, open);
+          const open = link.getAttribute("aria-expanded") !== "true";
+          closeLegacyDisclosures(root, link);
+          setDisclosurePresentation(link, dropdown, open);
           return;
         }
       }
 
       if (link?.textContent?.includes("#exploreCountries")) {
-        const dropdown = link.parentElement?.querySelector<HTMLElement>(".explore-dropdown-menu, #mobileExploreDropdown") ?? null;
+        const dropdown = disclosurePanel(root, link);
         if (dropdown) {
           event.preventDefault();
-          const open = dropdown.style.display !== "block";
-          dropdown.style.display = open ? "block" : "none";
-          setOpen(dropdown, open);
+          const open = link.getAttribute("aria-expanded") !== "true";
+          closeLegacyDisclosures(root, link);
+          setDisclosurePresentation(link, dropdown, open);
           return;
         }
       }
@@ -352,21 +568,30 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
       if (controlledTarget?.startsWith("#")) {
         const controlled = document.querySelector<HTMLElement>(controlledTarget);
         if (controlled) {
-          event.preventDefault();
           if (controlled.classList.contains("collapse")) {
+            event.preventDefault();
             const open = !controlled.classList.contains("show");
             controlled.classList.toggle("show", open);
             controlled.style.display = open ? "block" : "none";
-          } else {
-            setOpen(controlled, true);
+            controlled.setAttribute("aria-hidden", String(!open));
+            (button ?? link)?.setAttribute("aria-expanded", String(open));
+            if (controlled.id) (button ?? link)?.setAttribute("aria-controls", controlled.id);
+            return;
           }
-          return;
+          if (controlled.matches(".premium-modal-overlay, .pgs-login-popup-overlay, .pgs-modal, [role='dialog']")) {
+            event.preventDefault();
+            openLegacyLayer(controlled, button ?? link);
+            return;
+          }
         }
       }
 
       if (page === "scholarship" && target.closest(".graidant-border.cursor-pointer")) {
         event.preventDefault();
-        setOpen(root.querySelector("#SCHOapplicantPremiumModal"), true);
+        openLegacyLayer(
+          root.querySelector<HTMLElement>("#SCHOapplicantPremiumModal"),
+          target.closest<HTMLElement>(".graidant-border.cursor-pointer")
+        );
         return;
       }
 
@@ -374,7 +599,7 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
         const modal = root.querySelector<HTMLElement>("#joinPremiumModal");
         if (modal) {
           event.preventDefault();
-          setOpen(modal, true);
+          openLegacyLayer(modal, target.closest<HTMLElement>(".btn-join"));
         }
         return;
       }
@@ -383,7 +608,7 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
         const modal = root.querySelector<HTMLElement>("#applicantPremiumModal");
         if (modal) {
           event.preventDefault();
-          setOpen(modal, true);
+          openLegacyLayer(modal, target.closest<HTMLElement>('[data-text="Request it here"]'));
         }
         return;
       }
@@ -399,16 +624,34 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
         return;
       }
 
-      if (target.closest(".save-program, .save-course, .heart-icon, [data-save-id]")) {
+      const saveControl = target.closest<HTMLElement>(".save-program, .save-course, .heart-icon, [data-save-id]");
+      if (saveControl) {
         event.preventDefault();
-        if (root.querySelector(".pgs-auth-account")) void saveCatalogItem(target);
-        else setOpen(document.querySelector("#pgsLoginPopup"), true);
+        if (saveControl && root.querySelector(".pgs-auth-account")) void saveCatalogItem(saveControl);
+        else openLegacyLayer(
+          root.querySelector<HTMLElement>("#pgsLoginPopup"),
+          saveControl?.closest<HTMLElement>("button, a, [role='button'], [tabindex]")
+            ?? saveControl
+        );
         return;
       }
 
-      if (target.closest(".premium-video-play, [data-premium-video], [href='#premiumVideoOverlay']")) {
+      if (target.closest("#premiumVideoOverlay, .premium-video-play, [data-premium-video], [href='#premiumVideoOverlay']")) {
         event.preventDefault();
-        setOpen(document.querySelector("#premiumVideoOverlay"), true);
+        const overlay = root.querySelector<HTMLElement>("#premiumVideoOverlay");
+        const video = root.querySelector<HTMLVideoElement>("#premiumHeroVideo");
+        if (overlay && video) {
+          overlay.dataset.pgsVideoPlaying = "true";
+          overlay.style.display = "none";
+          overlay.setAttribute("aria-hidden", "true");
+          video.focus();
+          void video.play().catch(() => {
+            delete overlay.dataset.pgsVideoPlaying;
+            overlay.style.removeProperty("display");
+            overlay.setAttribute("aria-hidden", "false");
+            overlay.focus();
+          });
+        }
         return;
       }
 
@@ -420,8 +663,12 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
         return;
       }
 
-      if (target.closest(".premium-modal-close, .pgs-modal-close, .close-btn, [data-dismiss='modal']") || target.classList.contains("premium-modal-overlay")) {
-        setOpen(target.closest<HTMLElement>(".premium-modal-overlay, .pgs-login-popup-overlay"), false);
+      const closingLayer = target.closest<HTMLElement>(".premium-modal-overlay, .pgs-login-popup-overlay");
+      if (
+        target.closest(".premium-modal-close, .pgs-modal-close, .pgs-login-popup-close, .close-btn, [data-dismiss='modal']")
+        || (closingLayer && target === closingLayer)
+      ) {
+        closeLegacyLayer(closingLayer);
         return;
       }
 
@@ -439,19 +686,20 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
 
     return () => {
       abort.abort();
+      closeLegacyLayersWithin(root);
       delete root.dataset.interactionsReady;
     };
-  }, [page, router]);
+  }, [page, router, structuredHtml]);
 
   return (
     <>
       <FrontendSkipLink />
-      <div
-        ref={rootRef}
-        data-legacy-page={page}
-        data-student-state={studentState}
-        dangerouslySetInnerHTML={{ __html: structuredHtml }}
-      />
+      {createElement("pgs-legacy-page", {
+        ref: rootRef,
+        "data-legacy-page": page,
+        "data-student-state": studentState,
+        dangerouslySetInnerHTML: { __html: structuredHtml }
+      })}
     </>
   );
 }
