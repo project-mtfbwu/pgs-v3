@@ -12,6 +12,7 @@
     "legacy:generate-home-states": "node scripts/generate-home-root-states.mjs",
     "fixtures:preview": "node scripts/create-preview-role-fixtures.mjs",
     "fixtures:auth-states": "node scripts/create-playwright-auth-states.mjs",
+    "fixtures:teardown": "node scripts/teardown-certification-fixtures.mjs",
     "parity:regions": "node scripts/capture-parity-regions.mjs",
     "predev": "pnpm assets:verify",
     "dev": "next dev",
@@ -27,6 +28,9 @@
     "test:security": "node scripts/security-audit.mjs",
     "config:check": "node scripts/check-production-config.mjs",
     "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test --grep @smoke --project=desktop",
+    "test:e2e:cert": "playwright test --grep @cert --project=desktop",
+    "test:e2e:nightly": "playwright test --project=desktop",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm test:rls && pnpm test:security && pnpm build && pnpm test:e2e"
   },
   "dependencies": {

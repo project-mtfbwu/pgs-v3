@@ -1,8 +1,9 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createServerClient } from "@supabase/ssr";
+import { assertCertificationTarget, emailForFixture } from "./lib/certification-env-guard.mjs";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const { url } = assertCertificationTarget();
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const sharedPassword = process.env.PGS_PREVIEW_FIXTURE_PASSWORD;
@@ -11,20 +12,20 @@ const outputDirectory = resolve(process.env.PLAYWRIGHT_AUTH_STATE_DIR ?? ".auth/
 const requestedRoles = new Set((process.env.PGS_PREVIEW_FIXTURE_ROLES ?? "")
   .split(",").map((value) => value.trim()).filter(Boolean));
 
-if (!url || !key) {
+if (!key) {
   throw new Error("Supabase public config is required.");
 }
 
 const accounts = [
-  { name: "standard-student", email: "pgs-v3-fixture+student-b@example.test", password: process.env.PGS_PREVIEW_STANDARD_PASSWORD ?? sharedPassword },
-  { name: "standard-logout", email: "pgs-v3-fixture+logout-student@example.test", password: process.env.PGS_PREVIEW_LOGOUT_PASSWORD ?? sharedPassword },
-  { name: "state-student", email: "pgs-v3-fixture+state-student@example.test", password: process.env.PGS_PREVIEW_STATE_PASSWORD ?? sharedPassword },
-  { name: "premium-student", email: "pgs-v3-fixture+student-a@example.test", password: process.env.PGS_PREVIEW_PREMIUM_PASSWORD ?? sharedPassword },
-  { name: "mentor", email: "pgs-v3-fixture+mentor-a@example.test", password: process.env.PGS_PREVIEW_MENTOR_PASSWORD ?? sharedPassword },
-  { name: "read-only-staff", email: "pgs-v3-fixture+viewer@example.test", password: process.env.PGS_PREVIEW_READ_ONLY_STAFF_PASSWORD ?? process.env.PGS_PREVIEW_VIEWER_PASSWORD ?? sharedPassword },
-  { name: "admin", email: "pgs-v3-fixture+admin@example.test", password: process.env.PGS_PREVIEW_ADMIN_PASSWORD ?? sharedPassword },
-  { name: "super-admin", email: "pgs-v3-fixture+super-admin@example.test", password: process.env.PGS_PREVIEW_SUPER_ADMIN_PASSWORD ?? sharedPassword },
-  { name: "dual-admin", email: "pgs-v3-fixture+dual-admin@example.test", password: process.env.PGS_PREVIEW_DUAL_ADMIN_PASSWORD ?? sharedPassword },
+  { name: "standard-student", email: emailForFixture("student-b"), password: process.env.PGS_PREVIEW_STANDARD_PASSWORD ?? sharedPassword },
+  { name: "standard-logout", email: emailForFixture("logout-student"), password: process.env.PGS_PREVIEW_LOGOUT_PASSWORD ?? sharedPassword },
+  { name: "state-student", email: emailForFixture("state-student"), password: process.env.PGS_PREVIEW_STATE_PASSWORD ?? sharedPassword },
+  { name: "premium-student", email: emailForFixture("student-a"), password: process.env.PGS_PREVIEW_PREMIUM_PASSWORD ?? sharedPassword },
+  { name: "mentor", email: emailForFixture("mentor-a"), password: process.env.PGS_PREVIEW_MENTOR_PASSWORD ?? sharedPassword },
+  { name: "read-only-staff", email: emailForFixture("viewer"), password: process.env.PGS_PREVIEW_READ_ONLY_STAFF_PASSWORD ?? process.env.PGS_PREVIEW_VIEWER_PASSWORD ?? sharedPassword },
+  { name: "admin", email: emailForFixture("admin"), password: process.env.PGS_PREVIEW_ADMIN_PASSWORD ?? sharedPassword },
+  { name: "super-admin", email: emailForFixture("super-admin"), password: process.env.PGS_PREVIEW_SUPER_ADMIN_PASSWORD ?? sharedPassword },
+  { name: "dual-admin", email: emailForFixture("dual-admin"), password: process.env.PGS_PREVIEW_DUAL_ADMIN_PASSWORD ?? sharedPassword },
 ].filter(({ name }) => requestedRoles.size === 0 || requestedRoles.has(name));
 
 if (!accounts.length || accounts.some(({ password }) => !password || password.length < 16)) {

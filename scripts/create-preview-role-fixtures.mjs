@@ -1,23 +1,20 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import {
+  assertCertificationTarget,
+  certificationUserMetadata,
+  emailForFixture,
+} from "./lib/certification-env-guard.mjs";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const { url, local, projectRef } = assertCertificationTarget();
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const password = process.env.PGS_PREVIEW_FIXTURE_PASSWORD;
 
-if (process.env.PGS_PREVIEW_FIXTURES !== "I_UNDERSTAND_PREVIEW_ONLY") {
-  throw new Error("Set PGS_PREVIEW_FIXTURES=I_UNDERSTAND_PREVIEW_ONLY.");
-}
-if (!url || !serviceKey || !publicKey || !password || password.length < 16) {
+if (!serviceKey || !publicKey || !password || password.length < 16) {
   throw new Error("Preview Supabase URL, publishable key, server key, and a 16+ character fixture password are required.");
-}
-
-const host = new URL(url).hostname;
-const local = /^(127\.0\.0\.1|localhost)$/.test(host);
-const projectRef = host.split(".")[0];
-if (!local && process.env.PGS_PREVIEW_PROJECT_REF !== projectRef) {
-  throw new Error("Refusing non-local fixture creation without an exact PGS_PREVIEW_PROJECT_REF match.");
 }
 
 const admin = createClient(url, serviceKey, {
@@ -26,7 +23,7 @@ const admin = createClient(url, serviceKey, {
 const publicClient = () => createClient(url, publicKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
-const emailFor = (name) => `pgs-v3-fixture+${name}@example.test`;
+const emailFor = emailForFixture;
 const definitions = [
   { name: "super-admin", context: "staff", role: "super_admin" },
   { name: "admin", context: "staff", role: "admin" },
@@ -45,10 +42,7 @@ const users = new Map(listed.data.users.map((user) => [user.email, user]));
 
 for (const definition of definitions) {
   const email = emailFor(definition.name);
-  const metadata = {
-    full_name: `Fixture ${definition.name}`,
-    pgs_context: definition.context,
-  };
+  const metadata = certificationUserMetadata(definition.name, definition.context);
   let user = users.get(email);
   if (!user) {
     const created = await admin.auth.admin.createUser({
@@ -242,4 +236,28 @@ for (const name of ["student-a", "student-b"]) {
 }
 
 await staffClient.auth.signOut();
-console.log("Preview-only Phase 4A actor, Premium, mentor, and saved fixtures are ready. No credentials were written to disk.");
+
+const idsDirectory = resolve(process.env.PLAYWRIGHT_AUTH_STATE_DIR ?? ".auth/phase36");
+await mkdir(idsDirectory, { recursive: true });
+await writeFile(
+  resolve(idsDirectory, "fixture-ids.json"),
+  `${JSON.stringify({
+    namespace: "pgs-v3-cert",
+    environment: local ? "local" : "preview",
+    projectRef,
+    superAdminUserId: superAdmin.id,
+    adminUserId: requireUser("admin").id,
+    mentorUserId: mentor.id,
+    readOnlyStaffUserId: requireUser("viewer").id,
+    dualAdminUserId: dualAdmin.id,
+    assignedStudentId: premiumStudent.id,
+    unassignedStudentId: standardStudent.id,
+    premiumStudentId: premiumStudent.id,
+    standardStudentId: standardStudent.id,
+    stateStudentId: transitionStudent.id,
+    logoutStudentId: logoutStudent.id,
+  }, null, 2)}\n`,
+  { mode: 0o600 },
+);
+
+console.log(`Certification fixtures ready on ${local ? "local" : "preview"} host ${projectRef}. Marker-limited IDs written under ${idsDirectory}. No credentials were written to disk.`);
