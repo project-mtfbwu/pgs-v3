@@ -217,6 +217,43 @@ function synchronizeLegacyCollapse(root: HTMLElement, panel: HTMLElement, open: 
   });
 }
 
+function activateDestinationTab(tab: HTMLElement, focus = false): boolean {
+  const destination = tab.closest<HTMLElement>("[data-pgs-destination-page='true']");
+  const controlledId = tab.getAttribute("aria-controls");
+  const panel = controlledId
+    ? destination?.querySelector<HTMLElement>(`#${CSS.escape(controlledId)}`)
+    : null;
+  if (!destination || !panel) return false;
+
+  const tabs = Array.from(destination.querySelectorAll<HTMLElement>("[data-pgs-destination-tab='true']"));
+  const panels = Array.from(destination.querySelectorAll<HTMLElement>("[data-pgs-destination-panel='true']"));
+  if (tabs.length !== 6 || panels.length !== 6) return false;
+
+  tabs.forEach((candidate) => {
+    const selected = candidate === tab;
+    candidate.setAttribute("aria-selected", String(selected));
+    candidate.setAttribute("tabindex", selected ? "0" : "-1");
+    candidate.closest("li")?.classList.toggle("active", selected);
+  });
+  panels.forEach((candidate) => {
+    const selected = candidate === panel;
+    candidate.hidden = !selected;
+    candidate.setAttribute("aria-hidden", String(!selected));
+    candidate.style.display = selected ? "block" : "none";
+  });
+  if (focus) tab.focus();
+  return true;
+}
+
+function prepareDestinationTabs(root: HTMLElement): void {
+  root.querySelectorAll<HTMLElement>("[data-pgs-destination-page='true']").forEach((destination) => {
+    const tabs = Array.from(destination.querySelectorAll<HTMLElement>("[data-pgs-destination-tab='true']"));
+    if (tabs.length !== 6) return;
+    const selected = tabs.find((tab) => tab.getAttribute("aria-selected") === "true") ?? tabs[0];
+    activateDestinationTab(selected);
+  });
+}
+
 async function submitModalPanel(modal: HTMLElement, page: string, button: HTMLButtonElement) {
   const fields: Record<string, string> = {};
   modal.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("input, select, textarea").forEach((input, index) => {
@@ -451,6 +488,7 @@ function prepareLegacyShell(root: HTMLElement, page: string): void {
   prepareLegacyDisclosures(root, page);
   prepareLegacyCollapses(root);
   prepareStudyJourneys(root);
+  prepareDestinationTabs(root);
 }
 
 export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
@@ -506,6 +544,25 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
 
+      const destinationTab = target.closest<HTMLElement>("[data-pgs-destination-tab='true']");
+      if (destinationTab && ["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+        const destination = destinationTab.closest<HTMLElement>("[data-pgs-destination-page='true']");
+        const tabs = Array.from(
+          destination?.querySelectorAll<HTMLElement>("[data-pgs-destination-tab='true']") ?? []
+        );
+        const currentIndex = tabs.indexOf(destinationTab);
+        if (tabs.length === 6 && currentIndex >= 0) {
+          event.preventDefault();
+          const nextIndex = event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? tabs.length - 1
+              : (currentIndex + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+          activateDestinationTab(tabs[nextIndex], true);
+        }
+        return;
+      }
+
       if (event.key === "Escape") {
         const sidebar = uniqueElement(root, "#sidebar");
         if (sidebar?.classList.contains("active")) {
@@ -517,7 +574,7 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
 
       if (!["Enter", " "].includes(event.key)) return;
       if (target.matches(
-        "#toggleBtn, #close_Btn, .graidant-border.cursor-pointer, #premiumVideoOverlay, [data-pgs-disclosure-trigger='true'], [data-pgs-route-link='true'], [data-pgs-dialog-trigger='true'], [data-bs-toggle='collapse']"
+        "#toggleBtn, #close_Btn, .graidant-border.cursor-pointer, #premiumVideoOverlay, [data-pgs-disclosure-trigger='true'], [data-pgs-route-link='true'], [data-pgs-dialog-trigger='true'], [data-pgs-destination-tab='true'], [data-bs-toggle='collapse']"
       )) {
         event.preventDefault();
         target.click();
@@ -656,6 +713,14 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
         }
       }
 
+      const destinationTab = target.closest<HTMLElement>("[data-pgs-destination-tab='true']");
+      if (destinationTab) {
+        event.preventDefault();
+        event.stopPropagation();
+        activateDestinationTab(destinationTab);
+        return;
+      }
+
       const filter = link?.dataset.filter;
       if (filter?.startsWith(".")) {
         event.preventDefault();
@@ -744,6 +809,7 @@ export function LegacyPage({ html, page, studentState="anonymous" }: Props) {
       const saveControl = target.closest<HTMLElement>(".save-program, .save-course, .heart-icon, [data-save-id]");
       if (saveControl) {
         event.preventDefault();
+        if (saveControl.getAttribute("aria-disabled") === "true") return;
         if (saveControl && root.querySelector(".pgs-auth-account")) void saveCatalogItem(saveControl);
         else openLegacyLayer(
           root.querySelector<HTMLElement>("#pgsLoginPopup"),

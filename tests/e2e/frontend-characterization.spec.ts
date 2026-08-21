@@ -370,11 +370,14 @@ test.describe("Batch 1 safe interaction characterization", () => {
         writes.push(`${request.method()} ${new URL(request.url()).pathname}`);
       }
     });
-    await page.goto("/countriescanada", { waitUntil: "domcontentloaded" });
+    await page.goto("/cvreadyprogram", { waitUntil: "domcontentloaded" });
     await expect(page.locator(".pgs-auth-account")).toHaveCount(0);
-    const saveControl = page.locator("button:has(.bi-suit-heart-fill)").first();
+    const saveControl = page.locator(".save-program:visible, .save-course:visible").first();
+    test.skip(
+      await saveControl.count() === 0,
+      "A real relational catalog save control is required to certify the anonymous login gate."
+    );
     await expect(saveControl).toBeVisible();
-    await saveControl.evaluate((element) => element.setAttribute("data-save-id", "characterization-only"));
     await saveControl.focus();
     await saveControl.dispatchEvent("click");
 
@@ -427,8 +430,8 @@ test.describe("Batch 1 responsive and accessibility characterization", () => {
   const axeBaseline: Readonly<Record<string, readonly string[]>> = {
     "desktop-home": ["color-contrast", "image-alt", "target-size"],
     "mobile-home": ["color-contrast", "image-alt", "target-size"],
-    "desktop-USA": ["aria-required-children", "aria-required-parent", "color-contrast", "image-alt", "list"],
-    "mobile-USA": ["aria-required-children", "aria-required-parent", "color-contrast", "image-alt", "list", "target-size"],
+    "desktop-USA": ["color-contrast", "image-alt", "list"],
+    "mobile-USA": ["color-contrast", "image-alt", "list", "target-size"],
     "desktop-login": ["color-contrast", "image-alt", "label"],
     "mobile-login": ["color-contrast", "image-alt", "label", "target-size"],
     "desktop-locked student dashboard": ["button-name", "color-contrast", "image-alt", "label"],

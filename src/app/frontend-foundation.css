@@ -42,6 +42,39 @@ pgs-legacy-page {
   min-width: 0;
 }
 
+[data-pgs-destination-page="true"] [data-pgs-local-scroller="true"] {
+  max-width: 100%;
+  overflow-x: auto !important;
+}
+
+/* Destination pages retain their desktop geometry while fitting tablet widths. */
+@media (min-width: 768px) and (max-width: 1199px) {
+  [data-pgs-destination-page="true"] .wrapper-content,
+  [data-pgs-destination-page="true"] .w-964px,
+  [data-pgs-destination-page="true"] .mobile-usa-content,
+  [data-pgs-destination-page="true"] .mobile-box-country {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  [data-pgs-destination-page="true"] .w-964px {
+    width: 100% !important;
+    max-width: 964px;
+    box-sizing: border-box;
+  }
+
+  [data-pgs-destination-page="true"] .country-usa-tab-full-width {
+    flex-wrap: wrap;
+    justify-content: flex-start !important;
+    gap: 6px 12px;
+  }
+
+  [data-pgs-destination-page="true"] .mobile-hero-coutry .overlap-gap-section > .row,
+  [data-pgs-destination-page="true"] .w-964px > section > div > .row {
+    margin-inline: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pgs-skip-link,
   :where([data-legacy-page], .developer-student-shell, [data-retained-student-footer]),

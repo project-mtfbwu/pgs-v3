@@ -87,7 +87,8 @@ test("Premium application surfaces are absent while the destination contact acti
   await expect(page.getByRole("link",{name:/Apply for Purple Premium|Purchase to Unlock|Request Premium/i})).toHaveCount(0);
   await goto(page, "/countriesusa");
   await expect(page.locator("#countriesUsaJoinPremiumModal, #ppPremiumModal, #premiumModal")).toHaveCount(0);
-  await page.locator('[href="#contact"]').first().evaluate((element) => (element as HTMLElement).click());
+  await page.locator('a.btn-custom[data-pgs-route-link="true"][href="/contact"]')
+    .evaluate((element) => (element as HTMLElement).click());
   await page.waitForURL("**/contact");
 });
 

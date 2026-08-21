@@ -1,4 +1,5 @@
 import { FRONTEND_MAIN_ID } from "@/components/frontend-skip-link";
+import { structureDestinationPageHtml } from "@/lib/destination-frontend-structure";
 import { structurePublicInformationPageHtml } from "@/lib/public-information-structure";
 
 const headerClosePattern = /<\/header\s*>/i;
@@ -19,30 +20,31 @@ function addAttributes(openingTag: string, attributes: Readonly<Record<string, s
 
 export function structureLegacyPageHtml(html: string, page: string): string {
   const informationHtml = structurePublicInformationPageHtml(html, page);
-  const headerClose = headerClosePattern.exec(informationHtml);
+  const destinationHtml = structureDestinationPageHtml(informationHtml, page);
+  const headerClose = headerClosePattern.exec(destinationHtml);
   if (!headerClose || headerClose.index === undefined) {
     throw new Error(`Legacy frontend structure is missing its header boundary: ${page}`);
   }
 
   const mainStart = headerClose.index + headerClose[0].length;
-  const footerMarker = informationHtml.indexOf("<!-- Footer -->", mainStart);
+  const footerMarker = destinationHtml.indexOf("<!-- Footer -->", mainStart);
   const footerSearchStart = footerMarker >= 0 ? footerMarker : mainStart;
-  const footerOpen = footerOpenPattern.exec(informationHtml.slice(footerSearchStart));
+  const footerOpen = footerOpenPattern.exec(destinationHtml.slice(footerSearchStart));
   if (!footerOpen || footerOpen.index === undefined) {
     throw new Error(`Legacy frontend structure is missing its footer boundary: ${page}`);
   }
 
   const footerStart = footerSearchStart + footerOpen.index;
   const footerTag = addAttribute(footerOpen[0], "role", "contentinfo");
-  const beforeMain = informationHtml.slice(0, mainStart);
-  const mainContent = informationHtml.slice(mainStart, footerStart).replace(
+  const beforeMain = destinationHtml.slice(0, mainStart);
+  const mainContent = destinationHtml.slice(mainStart, footerStart).replace(
     sidebarOpenPattern,
     (tag) => addAttributes(tag, {
       role: "complementary",
       "aria-label": "Student tools"
     })
   );
-  const afterFooterOpen = informationHtml.slice(footerStart + footerOpen[0].length);
+  const afterFooterOpen = destinationHtml.slice(footerStart + footerOpen[0].length);
 
   return `${beforeMain}<main id="${FRONTEND_MAIN_ID}" tabindex="-1">${mainContent}</main>${footerTag}${afterFooterOpen}`;
 }
