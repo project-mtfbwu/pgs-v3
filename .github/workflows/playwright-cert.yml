@@ -1,0 +1,64 @@
+name: Playwright Certification
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: playwright-cert-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  certify:
+    name: Preview Certification
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: Preview
+    env:
+      PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL }}
+      PLAYWRIGHT_PROTECTION_BYPASS: ${{ secrets.PLAYWRIGHT_PROTECTION_BYPASS }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      PGS_PREVIEW_PROJECT_REF: ${{ secrets.PGS_PREVIEW_PROJECT_REF }}
+      PGS_PRODUCTION_PROJECT_REF: ${{ secrets.PGS_PRODUCTION_PROJECT_REF }}
+      PGS_PREVIEW_FIXTURE_PASSWORD: ${{ secrets.PGS_PREVIEW_FIXTURE_PASSWORD }}
+      PGS_PREVIEW_FIXTURES: I_UNDERSTAND_PREVIEW_ONLY
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-pnpm
+      - name: Refuse missing Preview identity
+        run: |
+          if [ -z "${PLAYWRIGHT_BASE_URL}" ] || [ -z "${NEXT_PUBLIC_SUPABASE_URL}" ] || [ -z "${PGS_PREVIEW_PROJECT_REF}" ]; then
+            echo "Preview certification secrets are unavailable; this optional workflow did not run."
+            echo "unavailable=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          node -e 'const host=new URL(process.env.PLAYWRIGHT_BASE_URL).hostname; if (host==="pgs-v3.vercel.app") { console.error("Refusing Production hostname"); process.exit(1); } console.log("Preview app host", host);'
+      - name: Provision marker-limited fixtures
+        if: env.unavailable != 'true'
+        run: |
+          pnpm fixtures:preview
+          pnpm fixtures:auth-states
+      - name: Run Preview certification
+        if: env.unavailable != 'true'
+        run: |
+          set -a
+          eval "$(node scripts/export-playwright-fixture-env.mjs)"
+          set +a
+          pnpm exec playwright install --with-deps chromium
+          pnpm test:e2e:cert
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-cert-artifacts
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+      - name: Marker-limited teardown
+        if: always() && env.unavailable != 'true'
+        run: pnpm fixtures:teardown

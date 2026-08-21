@@ -5,6 +5,10 @@ on:
     - cron: "30 18 * * *"
   workflow_dispatch:
 
+concurrency:
+  group: nightly-playwright
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -12,28 +16,58 @@ jobs:
   regression:
     name: Playwright Role Matrix
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     environment: Preview
+    env:
+      PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL }}
+      PLAYWRIGHT_PROTECTION_BYPASS: ${{ secrets.PLAYWRIGHT_PROTECTION_BYPASS }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      PGS_PREVIEW_PROJECT_REF: ${{ secrets.PGS_PREVIEW_PROJECT_REF }}
+      PGS_PRODUCTION_PROJECT_REF: ${{ secrets.PGS_PRODUCTION_PROJECT_REF }}
+      PGS_PREVIEW_FIXTURE_PASSWORD: ${{ secrets.PGS_PREVIEW_FIXTURE_PASSWORD }}
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-pnpm
       - name: Skip or run nightly
         env:
-          PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL }}
-          PLAYWRIGHT_PROTECTION_BYPASS: ${{ secrets.PLAYWRIGHT_PROTECTION_BYPASS }}
           PLAYWRIGHT_SUPER_ADMIN_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_SUPER_ADMIN_STORAGE_STATE }}
           PLAYWRIGHT_ADMIN_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_ADMIN_STORAGE_STATE }}
           PLAYWRIGHT_MENTOR_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_MENTOR_STORAGE_STATE }}
           PLAYWRIGHT_READ_ONLY_STAFF_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_READ_ONLY_STAFF_STORAGE_STATE }}
+          PLAYWRIGHT_VIEWER_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_VIEWER_STORAGE_STATE }}
           PLAYWRIGHT_PREMIUM_STUDENT_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_PREMIUM_STUDENT_STORAGE_STATE }}
           PLAYWRIGHT_STANDARD_STUDENT_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_STANDARD_STUDENT_STORAGE_STATE }}
+          PLAYWRIGHT_STANDARD_LOGOUT_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_STANDARD_LOGOUT_STORAGE_STATE }}
+          PLAYWRIGHT_STATE_STUDENT_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_STATE_STUDENT_STORAGE_STATE }}
+          PLAYWRIGHT_DUAL_ADMIN_STORAGE_STATE: ${{ secrets.PLAYWRIGHT_DUAL_ADMIN_STORAGE_STATE }}
         run: |
           if [ -z "${PLAYWRIGHT_BASE_URL}" ]; then
             echo "Preview role-matrix secrets unavailable; nightly skipped."
             exit 0
           fi
+          node -e 'const host=new URL(process.env.PLAYWRIGHT_BASE_URL).hostname; if (host==="pgs-v3.vercel.app") { console.error("Refusing Production hostname"); process.exit(1); }'
+          if [ -n "${PGS_PREVIEW_FIXTURE_PASSWORD}" ] && [ -n "${NEXT_PUBLIC_SUPABASE_URL}" ] && [ -n "${PGS_PREVIEW_PROJECT_REF}" ]; then
+            export PGS_PREVIEW_FIXTURES=I_UNDERSTAND_PREVIEW_ONLY
+            pnpm fixtures:preview
+            pnpm fixtures:auth-states
+            set -a
+            eval "$(node scripts/export-playwright-fixture-env.mjs)"
+            set +a
+          fi
           pnpm exec playwright install --with-deps chromium
-          pnpm test:e2e -- --project=desktop
+          pnpm test:e2e:nightly
+          pnpm fixtures:teardown || true
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-playwright-artifacts
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
       - name: Production-dependency audit
         continue-on-error: true
         run: pnpm audit --prod

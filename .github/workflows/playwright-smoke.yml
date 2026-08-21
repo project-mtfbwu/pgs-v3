@@ -26,4 +26,4 @@ jobs:
             exit 0
           fi
           pnpm exec playwright install --with-deps chromium
-          pnpm exec playwright test tests/e2e/smoke.spec.ts --project=desktop
+          pnpm test:e2e:smoke
