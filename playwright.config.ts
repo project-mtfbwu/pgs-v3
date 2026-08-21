@@ -1,16 +1,22 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const isCi = Boolean(process.env.CI);
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
-  forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 2 : 0,
+  forbidOnly: isCi,
+  retries: isCi ? 2 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
+  timeout: 45_000,
+  expect: { timeout: 10_000 },
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000",
-    trace: "retain-on-failure",
-    // Preview deployments sit behind Vercel Deployment Protection; the bypass
-    // header lets the same specs run against them without a Vercel login.
+    timezoneId: "Asia/Kolkata",
+    locale: "en-IN",
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
     extraHTTPHeaders: process.env.PLAYWRIGHT_PROTECTION_BYPASS
       ? { "x-vercel-protection-bypass": process.env.PLAYWRIGHT_PROTECTION_BYPASS }
       : undefined
@@ -18,7 +24,7 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
     command: "./node_modules/.bin/next start",
     url: "http://127.0.0.1:3000",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !isCi,
     timeout: 120_000
   },
   projects: [

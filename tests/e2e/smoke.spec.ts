@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test.describe("enterprise smoke", () => {
+test.describe("enterprise smoke", { tag: ["@smoke", "@cert"] }, () => {
   test("public home is reachable", async ({ request }) => {
     const response = await request.get("/");
     expect(response.status(), "/").toBeLessThan(500);
